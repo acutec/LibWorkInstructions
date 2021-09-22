@@ -10,7 +10,7 @@ namespace LibWorkInstructions {
     public class MockDB {
       public ListJob Jobs { get; set; }
     }
-    private MockDB db;  this should contain anyall state used in this BusinessLogic class.
+    private MockDB db;  //this should contain anyall state used in this BusinessLogic class.
     public BusinessLogic() {
       this.db = new MockDB {
         Jobs = new ListJob()
@@ -54,6 +54,7 @@ namespace LibWorkInstructions {
             db.Jobs.RemoveAt(findIndex(jobId));
         }
 
+    public void 
     static void Main(string[] args)
         {
            
