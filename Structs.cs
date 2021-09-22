@@ -3,7 +3,16 @@ using System.Collections.Generic;
 
 namespace LibWorkInstructions {
   public class Structs {
-
+    
+      // There's a list of operation specifications for a job that can be applied to a list of operations
+    public List<OpSpec> Specs { get; set; }
+      // There's a list of images for a particular work instruction
+    public List<string> Images { get; set; }
+      // Work instructions have an approval status
+    public Boolean Approved { get; set; }
+      
+      // Work instructions have rich text content that 
+    public string TextContent { get; set; }
     public class Job {
       // Jobs are uniquely identified by strings, which follow complex naming conventions we needn't cover here; treat as a blob.
       public string Id { get; set; }
@@ -11,8 +20,11 @@ namespace LibWorkInstructions {
       public string RevCustomer { get; set; }
       // Jobs have a revision identifier representing our internal process, that can change over time.
       public string RevPlan { get; set; }
+      // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
+      public List<Revision> JobRevs { get; set; }
       // Jobs have a series of operations associated with them.
       public List<Op> Ops { get; set; }
+      
     }
 
     public class Op {
@@ -24,7 +36,40 @@ namespace LibWorkInstructions {
       public string OpService { get; set; }
       // Operations have an ordering within a job, this represents that ordering.
       public int Seq { get; set; }
+      
     }
 
-  }
+    public class OpSpec {
+            public string Name { get; set; }
+            public Revision Rev { get; set; }
+            public string Notice { get; set;  }
+            public string Class { get; set; }
+            public string Type { get; set; }
+            public string Method { get; set; }
+            public string Grade { get; set; }
+            public string Level { get; set; }
+            public string Proctype { get; set; }
+            public string Servicecond { get; set; }
+            public string Status { get; set; }
+            public string Comment { get; set; }
+            public List<Revision> SpecRevs { get; set; }
+
+        }
+    
+    public class QualityClause
+        {
+            public string Clause { get; set; }
+
+            public Revision JobRev { get; set; }
+
+            public List<Revision> ClauseRevs { get; set; }
+        }
+
+    public class Revision
+        {
+            public string Category { get; set; }
+            public string Version { get; set; }
+        }
+    }
 }
+

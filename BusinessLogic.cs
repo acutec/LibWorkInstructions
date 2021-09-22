@@ -8,24 +8,55 @@ namespace LibWorkInstructions {
 
     #region database-mocking
     public class MockDB {
-      public List<Job> Jobs { get; set; }
+      public ListJob Jobs { get; set; }
     }
-    private MockDB db; // this should contain any/all state used in this BusinessLogic class.
+    private MockDB db;  this should contain anyall state used in this BusinessLogic class.
     public BusinessLogic() {
       this.db = new MockDB {
-        Jobs = new List<Job>()
+        Jobs = new ListJob()
       };
     }
-    public void DataImport(MockDB replacementDb) => this.db = replacementDb;
-    public MockDB DataExport() => db;
+    public void DataImport(MockDB replacementDb) = this.db = replacementDb;
+    public MockDB DataExport() = db;
     #endregion
 
 
-    public Job GetJob(string jobId) =>
-      db.Jobs.First(y => y.Id == jobId);
+    public Job GetJob(string jobId) =
+      db.Jobs.First(y = y.Id == jobId);
 
-    public Op GetOp(int opId) =>
-      db.Jobs.SelectMany(y => y.Ops).First(y => y.Id == opId);
+    public Op GetOp(int opId) =
+      db.Jobs.SelectMany(y = y.Ops).First(y = y.Id == opId);
 
+    public void addJob(Job newJob)
+        {
+            db.Jobs.Add(newJob);
+        }
+
+    public int findIndex(string jobId)
+        {
+            int count = 0, index = -1;
+            foreach (Job j in db.Jobs)
+            {
+                if (j.Id == jobId)
+                    index = count;
+                count++;
+            }
+            return index;
+        }
+
+    public void changeJob(string jobId, Job newJob)
+        {
+            db.Jobs[findIndex(jobId)] = newJob;
+        }
+
+    public void removeJob(string jobId)
+        {
+            db.Jobs.RemoveAt(findIndex(jobId));
+        }
+
+    static void Main(string[] args)
+        {
+           
+        }
   }
 }
