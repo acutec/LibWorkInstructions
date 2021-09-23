@@ -9,6 +9,7 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public List<Job> Jobs { get; set; }
+      // TODO: Add more structure to Dictionary
       Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
     }
     private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
@@ -34,7 +35,7 @@ namespace LibWorkInstructions {
 
     public int findIndex(string jobId)
         {
-            // Probably don't need indexing, possibly find another solution
+            // TODO: Probably don't need indexing, possibly find another solution
             int count = 0, index = -1;
             foreach (Job j in db.Jobs)
             {

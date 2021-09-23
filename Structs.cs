@@ -4,15 +4,16 @@ using System.Collections.Generic;
 namespace LibWorkInstructions {
   public class Structs {
     
-      // There's a list of operation specifications for a job that can be applied to a list of operations
+    // There's a list of operation specifications for a job that can be applied to a list of operations
     public List<OpSpec> Specs { get; set; }
-      // There's a list of images for a particular work instruction
+    // There's a list of images for a particular work instruction
     public List<string> Images { get; set; }
-      // Work instructions have an approval status
-    public Boolean Approved { get; set; }
+    // Work instructions have an approval status
+    public bool Approved { get; set; }
       
-      // Work instructions have rich text content that 
+    // Work instructions have rich text content that 
     public string TextContent { get; set; }
+
     public class Job {
       // Jobs are uniquely identified by strings, which follow complex naming conventions we needn't cover here; treat as a blob.
       public string Id { get; set; }
@@ -38,6 +39,9 @@ namespace LibWorkInstructions {
       public int Seq { get; set; }
       
     }
+
+    // TODO: Add work instructions class
+    // TODO: Possibly add description of classes
 
     public class OpSpec {
             public string Name { get; set; }
