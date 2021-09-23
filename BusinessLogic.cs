@@ -9,6 +9,7 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public List<Job> Jobs { get; set; }
+      public List<OpSpec> opSpecs {  get; set; }
       // TODO: Add more structure to Dictionary
       Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
     }
@@ -30,7 +31,7 @@ namespace LibWorkInstructions {
             db.Jobs.Add(newJob);
         }
 
-    public int findIndex(string jobId) {
+    public int findIndex(string name) {
             // TODO: Probably don't need indexing, possibly find another solution
             int count = 0, index = -1;
             foreach (OpSpec s in db.opSpecs)
@@ -39,12 +40,7 @@ namespace LibWorkInstructions {
                     index = count;
                 count++;
             }
-            return index
-        }
-
-    public void addJob(Job newJob)
-        {
-            db.Jobs.Add(newJob);
+            return index;
         }
 
     public void changeJob(Job job, Job newJob) {
