@@ -12,7 +12,7 @@ namespace LibWorkInstructions {
       public List<OpSpec> opSpecs { get; set; }
       public List<QualityClause> qualityClauses { get; set; }
     }
-    private MockDB db;  //this should contain any all state used in this BusinessLogic class.
+    private MockDB db;  // this should contain anyall state used in this BusinessLogic class.
     public BusinessLogic() {
       this.db = new MockDB {
         Jobs = new ListJob()
@@ -22,6 +22,7 @@ namespace LibWorkInstructions {
     public MockDB DataExport() = db;
     #endregion
 
+    Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
 
     public Job GetJob(string jobId) =
       db.Jobs.First(y = y.Id == jobId);
@@ -60,7 +61,10 @@ namespace LibWorkInstructions {
 
     public void changeJob(Job job, Job newJob)
         {
-            db.Jobs[findJobIndex(job.Id)] = newJob;
+            db.Jobs[findIndex(job.Id)] = newJob;
+            // To be changed with clarification
+            // string jobID = (job.id) + job.RevCustomer;
+            // pastJobs.Add(job.Id, job);
         }
 
     public void removeJob(string jobId)
