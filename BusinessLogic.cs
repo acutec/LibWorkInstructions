@@ -9,41 +9,29 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public List<Job> Jobs { get; set; }
-      public List<OpSpec> opSpecs { get; set; }
-      public List<QualityClause> qualityClauses { get; set; }
+      // TODO: Add more structure to Dictionary
+      Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
     }
-    private MockDB db;  // this should contain anyall state used in this BusinessLogic class.
+    private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
     public BusinessLogic() {
-      this.db = new MockDB {
-        Jobs = new ListJob()
-      };
+      this.db = new MockDB();
     }
-    public void DataImport(MockDB replacementDb) = this.db = replacementDb;
-    public MockDB DataExport() = db;
+    public void DataImport(MockDB replacementDb) => this.db = replacementDb;
+    public MockDB DataExport() => db;
     #endregion
 
-    Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
+    public Job GetJob(string jobId) =>
+      db.Jobs.First(y => y.Id == jobId);
 
-    public Job GetJob(string jobId) =
-      db.Jobs.First(y = y.Id == jobId);
+    public Op GetOp(int opId) =>
+      db.Jobs.SelectMany(y => y.Ops).First(y => y.Id == opId);
 
-    public Op GetOp(int opId) =
-      db.Jobs.SelectMany(y = y.Ops).First(y = y.Id == opId);
-
-    public int findJobIndex(string jobId)
-        {
-            int count = 0, index = -1;
-            foreach (Job j in db.Jobs)
-            {
-                if (j.Id == jobId)
-                    index = count;
-                count++;
-            }
-            return index;
+    public void addJob(Job newJob) {
+            db.Jobs.Add(newJob);
         }
 
-    public int findSpecIndex(string name)
-        {
+    public int findIndex(string jobId) {
+            // TODO: Probably don't need indexing, possibly find another solution
             int count = 0, index = -1;
             foreach (OpSpec s in db.opSpecs)
             {
@@ -59,42 +47,16 @@ namespace LibWorkInstructions {
             db.Jobs.Add(newJob);
         }
 
-    public void changeJob(Job job, Job newJob)
-        {
+    public void changeJob(Job job, Job newJob) {
             db.Jobs[findIndex(job.Id)] = newJob;
             // To be changed with clarification
             // string jobID = (job.id) + job.RevCustomer;
             // pastJobs.Add(job.Id, job);
         }
 
-    public void removeJob(string jobId)
-        {
-            db.Jobs.RemoveAt(findJobIndex(jobId));
-        }
-
-     public void addSpec(OpSpec spec)
-        {
-            db.opSpecs.Add(spec);
-        }
-
-    public void changeSpec(OpSpec spec, OpSpec newSpec)
-        {
-            db.opSpecs[findSpecIndex(spec.Name)] = newSpec;
-        }
-
-    public void removeSpec(string specName)
-        {
-            db.opSpecs.RemoveAt(findSpecIndex(specName));
-        }
-
-    public void addQualityClause(QualityClause clause)
-        {
-            db.qualityClauses.Add(clause);
-        }
-
-    static void Main(string[] args)
-        {
-           
-        }
+    public void removeJob(string jobId) {
+            db.Jobs.RemoveAt(findIndex(jobId));
+    }
   }
 }
+

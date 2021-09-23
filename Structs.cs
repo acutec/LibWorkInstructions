@@ -4,15 +4,12 @@ using System.Collections.Generic;
 namespace LibWorkInstructions {
   public class Structs {
     
-      // There's a list of operation specifications for a job that can be applied to a list of operations
+    // There's a list of operation specifications for a job that can be applied to a list of operations
     public List<OpSpec> Specs { get; set; }
-      // There's a list of images for a particular work instruction
-    public List<string> Images { get; set; }
-      // Work instructions have an approval status
-    public Boolean Approved { get; set; }
       
-      // Work instructions have rich text content that 
+    // Work instructions have rich text content that 
     public string TextContent { get; set; }
+
     public class Job {
       // Jobs are uniquely identified by strings, which follow complex naming conventions we needn't cover here; treat as a blob.
       public string Id { get; set; }
@@ -39,36 +36,55 @@ namespace LibWorkInstructions {
       
     }
 
+    // Work instructions are specific to a particular revision of an operation
+    public class WorkInstruction {
+        // Identifier for work instructions
+        public string Id { get; set; }
+        // There's a list of images for a particular work instruction
+        public List<string> Images { get; set; }
+        // Work instructions have an approval status
+        public bool Approved { get; set; }
+        // Work instructions can have one or more revisions
+        public List<Revision> WorkRevs { get; set;}
+        // Placeholder for rich content
+        public List<string> HtmlBlob { get; set;}
+        
+        }
+    // TODO: Possibly add description of classes
+
     public class OpSpec {
-            public string Name { get; set; }
-            public Revision Rev { get; set; }
-            public string Notice { get; set;  }
-            public string Class { get; set; }
-            public string Type { get; set; }
-            public string Method { get; set; }
-            public string Grade { get; set; }
-            public string Level { get; set; }
-            public string Proctype { get; set; }
-            public string Servicecond { get; set; }
-            public string Status { get; set; }
-            public string Comment { get; set; }
-            public List<Revision> SpecRevs { get; set; }
+        public string Name { get; set; }
+        public Revision Rev { get; set; }
+        public string Notice { get; set;  }
+        public string Class { get; set; }
+        public string Type { get; set; }
+        public string Method { get; set; }
+        public string Grade { get; set; }
+        public string Level { get; set; }
+        public string Proctype { get; set; }
+        public string Servicecond { get; set; }
+        public string Status { get; set; }
+        public string Comment { get; set; }
+        public List<Revision> SpecRevs { get; set; }
 
         }
     
     public class QualityClause
         {
-            public string Clause { get; set; }
+        public string Clause { get; set; }
 
-            public Revision JobRev { get; set; }
+        public Revision JobRev { get; set; }
 
-            public List<Revision> ClauseRevs { get; set; }
+        public List<Revision> ClauseRevs { get; set; }
         }
 
     public class Revision
         {
-            public string Category { get; set; }
-            public string Version { get; set; }
+        public string Category { get; set; }
+        public string Version { get; set; }
+        #nullable enable
+        public WorkInstruction? Instruction { get; set; }
+        #nullable disable
         }
     }
 }
