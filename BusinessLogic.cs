@@ -8,9 +8,9 @@ namespace LibWorkInstructions {
 
     #region database-mocking
     public class MockDB {
-      public ListJob Jobs { get; set; }
+      public List<Job> Jobs { get; set; }
     }
-    private MockDB db;  // this should contain anyall state used in this BusinessLogic class.
+    private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
     public BusinessLogic() {
       this.db = new MockDB {
         Jobs = new ListJob()
@@ -22,11 +22,11 @@ namespace LibWorkInstructions {
 
     Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
 
-    public Job GetJob(string jobId) =
-      db.Jobs.First(y = y.Id == jobId);
+    public Job GetJob(string jobId) =>
+      db.Jobs.First(y => y.Id == jobId);
 
-    public Op GetOp(int opId) =
-      db.Jobs.SelectMany(y = y.Ops).First(y = y.Id == opId);
+    public Op GetOp(int opId) =>
+      db.Jobs.SelectMany(y => y.Ops).First(y => y.Id == opId);
 
     public void addJob(Job newJob)
         {
