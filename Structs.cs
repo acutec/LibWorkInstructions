@@ -82,7 +82,9 @@ namespace LibWorkInstructions {
         {
         public string Category { get; set; }
         public string Version { get; set; }
+        #nullable enable
         public WorkInstruction? Instruction { get; set; }
+        #nullable disable
         }
     }
 }
