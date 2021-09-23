@@ -9,6 +9,7 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public List<Job> Jobs { get; set; }
+      Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
     }
     private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
     public BusinessLogic() {
@@ -19,8 +20,6 @@ namespace LibWorkInstructions {
     public void DataImport(MockDB replacementDb) = this.db = replacementDb;
     public MockDB DataExport() = db;
     #endregion
-
-    Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
 
     public Job GetJob(string jobId) =>
       db.Jobs.First(y => y.Id == jobId);
@@ -35,6 +34,7 @@ namespace LibWorkInstructions {
 
     public int findIndex(string jobId)
         {
+            // Probably don't need indexing, possibly find another solution
             int count = 0, index = -1;
             foreach (Job j in db.Jobs)
             {
@@ -58,9 +58,5 @@ namespace LibWorkInstructions {
             db.Jobs.RemoveAt(findIndex(jobId));
         }
 
-    static void Main(string[] args)
-        {
-           
-        }
   }
 }
