@@ -33,8 +33,8 @@ namespace LibWorkInstructions {
 
     public void changeWorkInstruction(string id, WorkInstruction newWorkInstruction)
         {
-            oldWorkInstruction = db.workInstructions.First(i=> i.Id == id);
-            var index = db.workInstructions.indexOf(oldWorkInstruction);
+            WorkInstruction oldWorkInstruction = db.workInstructions.First(i=> i.Id == id);
+            var index = db.workInstructions.IndexOf(oldWorkInstruction);
             
             if(index != -1)
                 db.workInstructions[index] = newWorkInstruction;
