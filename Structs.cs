@@ -48,6 +48,8 @@ namespace LibWorkInstructions {
         public List<Revision> WorkRevs { get; set;}
         // Placeholder for rich content
         public List<string> HtmlBlob { get; set;}
+
+        public List<OpSpec> opSpecs {  get; set; }
         
         }
     // TODO: Possibly add description of classes

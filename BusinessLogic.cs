@@ -9,9 +9,9 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public List<Job> Jobs { get; set; }
-      public List<OpSpec> opSpecs {  get; set; }
+      public List<WorkInstruction> workInstructions { get; set; }
       // TODO: Add more structure to Dictionary
-      Dictionary<string, Job> pastJobs = new Dictionary<string, Job>();
+      Dictionary<string, List<Job>> pastJobs = new Dictionary<string, List<Job>>();
     }
     private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
     public BusinessLogic() {
@@ -27,32 +27,41 @@ namespace LibWorkInstructions {
     public Op GetOp(int opId) =>
       db.Jobs.SelectMany(y => y.Ops).First(y => y.Id == opId);
 
-    public void addJob(Job newJob) {
-            db.Jobs.Add(newJob);
+    public void addWorkInstruction(WorkInstruction newWorkInstruction) {
+            db.workInstructions.Add(newWorkInstruction);
         }
 
-    public int findIndex(string name) {
-            // TODO: Probably don't need indexing, possibly find another solution
-            int count = 0, index = -1;
-            foreach (OpSpec s in db.opSpecs)
-            {
-                if(s.Name == name)
-                    index = count;
-                count++;
-            }
-            return index;
+    public void changeWorkInstruction(string id, WorkInstruction newWorkInstruction)
+        {
+            oldWorkInstruction = db.workInstructions.First(i=> i.Id == id);
+            var index = db.workInstructions.indexOf(oldWorkInstruction);
+            
+            if(index != -1)
+                db.workInstructions[index] = newWorkInstruction;
         }
 
-    public void changeJob(Job job, Job newJob) {
-            db.Jobs[findIndex(job.Id)] = newJob;
-            // To be changed with clarification
-            // string jobID = (job.id) + job.RevCustomer;
-            // pastJobs.Add(job.Id, job);
+    public IEnumerable<WorkInstruction> removeWorkInstruction(string id)
+        {
+            return (from workInstruction in db.workInstructions 
+                    where workInstruction.Id != id 
+                    select workInstruction);
         }
 
-    public void removeJob(string jobId) {
-            db.Jobs.RemoveAt(findIndex(jobId));
-    }
+    public void addSpec(string workId, OpSpec spec)
+        {
+            db.workInstructions.First(y => y.Id == workId).opSpecs.Add(spec);
+        }
+
+    public void changeSpec(string workId, string oldSpecName, OpSpec newSpec)
+        {
+            WorkInstruction workInstruction = db.workInstructions.First(y => y.Id == workId);
+            OpSpec oldOpSpec = workInstruction.opSpecs.First(y => y.Name == oldSpecName);
+
+            var index = workInstruction.opSpecs.IndexOf(oldOpSpec);
+
+            if (index != -1)
+                workInstruction.opSpecs[index] = newSpec;
+        }
   }
 }
 
