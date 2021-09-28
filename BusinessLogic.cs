@@ -40,11 +40,9 @@ namespace LibWorkInstructions {
                 db.workInstructions[index] = newWorkInstruction;
         }
 
-    public IEnumerable<WorkInstruction> removeWorkInstruction(string id)
+    public void removeWorkInstruction(string id)
         {
-            return (from workInstruction in db.workInstructions 
-                    where workInstruction.Id != id 
-                    select workInstruction);
+            db.workInstructions.Remove(db.workInstructions.First(i => i.Id == id));
         }
 
     public void addSpec(string workId, OpSpec spec)
@@ -61,6 +59,20 @@ namespace LibWorkInstructions {
 
             if (index != -1)
                 workInstruction.opSpecs[index] = newSpec;
+        }
+
+    public void deleteSpec(string workId, string specName)
+        {
+            db.workInstructions.First(y => y.Id == workId).opSpecs.Remove(
+                db.workInstructions.First(y =>y.Id == workId).opSpecs.First(y => y.Name == specName));
+        }
+
+    public void createQualityClause(Revision revision, QualityClause qualityClause)
+        {
+            if(revision.Category == "job")
+                revision.Clauses.Add(qualityClause);
+            else
+                Console.Write("You can only add a quality clause to a particular revision of a job.");
         }
   }
 }

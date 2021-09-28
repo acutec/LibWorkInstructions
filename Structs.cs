@@ -56,7 +56,6 @@ namespace LibWorkInstructions {
 
     public class OpSpec {
         public string Name { get; set; }
-        public Revision Rev { get; set; }
         public string Notice { get; set;  }
         public string Class { get; set; }
         public string Type { get; set; }
@@ -75,8 +74,6 @@ namespace LibWorkInstructions {
         {
         public string Clause { get; set; }
 
-        public Revision JobRev { get; set; }
-
         public List<Revision> ClauseRevs { get; set; }
         }
 
@@ -84,6 +81,7 @@ namespace LibWorkInstructions {
         {
         public string Category { get; set; }
         public string Version { get; set; }
+        public List<QualityClause> Clauses { get; set; }
         #nullable enable
         public WorkInstruction? Instruction { get; set; }
         #nullable disable
