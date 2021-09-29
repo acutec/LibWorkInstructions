@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace LibWorkInstructions {
   public class Structs {
-    
-    // There's a list of operation specifications for a job that can be applied to a list of operations
-    public List<OpSpec> Specs { get; set; }
-      
-    // Work instructions have rich text content that 
-    public string TextContent { get; set; }
 
     public class Job {
       // Jobs are uniquely identified by strings, which follow complex naming conventions we needn't cover here; treat as a blob.
@@ -21,6 +15,8 @@ namespace LibWorkInstructions {
       public List<Revision> JobRevs { get; set; }
       // Jobs have a series of operations associated with them.
       public List<Op> Ops { get; set; }
+
+      public List<WorkInstruction> workInstructions { get; set; }
       
     }
 

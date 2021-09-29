@@ -45,6 +45,12 @@ namespace LibWorkInstructions {
             db.workInstructions.Remove(db.workInstructions.First(i => i.Id == id));
         }
 
+    public void mergeWorkInstructions(string id1, string id2)
+        {
+            WorkInstruction workInstruction1 = db.workInstructions.First(i => i.Id == id1);
+            WorkInstruction workInstruction2 = db.workInstructions.First(i => i.Id == id2);
+        }
+
     public void addSpec(string workId, OpSpec spec)
         {
             db.workInstructions.First(y => y.Id == workId).opSpecs.Add(spec);
@@ -57,14 +63,44 @@ namespace LibWorkInstructions {
 
             var index = workInstruction.opSpecs.IndexOf(oldOpSpec);
 
-            if (index != -1)
+            if (index != -1) { 
                 workInstruction.opSpecs[index] = newSpec;
+                workInstruction.Approved = false;
+             }
         }
 
     public void deleteSpec(string workId, string specName)
         {
             db.workInstructions.First(y => y.Id == workId).opSpecs.Remove(
                 db.workInstructions.First(y =>y.Id == workId).opSpecs.First(y => y.Name == specName));
+        }
+
+    public void mergeSpecs(string workId1, string workId2)
+        {
+            WorkInstruction workInstruction1 = db.workInstructions.First(y => y.Id == workId1);
+            WorkInstruction workInstruction2 = db.workInstructions.First(y => y.Id == workId2);
+            workInstruction1.opSpecs = workInstruction1.opSpecs.Union(workInstruction2.opSpecs).ToList();
+        }
+
+    public List<IEnumerable<OpSpec>> splitSpecs (string workId) 
+        {
+            WorkInstruction workInstruction = db.workInstructions.First(y => y.Id == workId);
+            List<IEnumerable<OpSpec>> splitList = new List<IEnumerable<OpSpec>>();
+            splitList.Add(from spec in workInstruction.opSpecs
+                          where workInstruction.opSpecs.IndexOf(spec) < workInstruction.opSpecs.Count / 2
+                          select spec);
+            splitList.Add(from spec in workInstruction.opSpecs
+                          where workInstruction.opSpecs.IndexOf(spec) >= workInstruction.opSpecs.Count / 2
+                          select spec);
+            return splitList;
+        }
+
+    public List<List<OpSpec>> cloneSpecs (string workId)
+        {
+            WorkInstruction workInstruction = db.workInstructions.First(y => y.Id == workId);
+            List<List<OpSpec>> clonedList = new List<List<OpSpec>>() {workInstruction.opSpecs};
+            clonedList.Add(workInstruction.opSpecs);
+            return clonedList;
         }
 
     public void createQualityClause(Revision revision, QualityClause qualityClause)
@@ -74,6 +110,33 @@ namespace LibWorkInstructions {
             else
                 Console.Write("You can only add a quality clause to a particular revision of a job.");
         }
+
+    public void mergeQualityClauses(Revision rev1, Revision rev2)
+        {
+            rev1.Clauses = rev1.Clauses.Union(rev2.Clauses).ToList();
+        }
+
+    public List<IEnumerable<QualityClause>> splitQualityClauses(Revision rev)
+        {
+            List<IEnumerable<QualityClause>> splitList = new List<IEnumerable<QualityClause>>();
+            splitList.Add(from clause in rev.Clauses
+                          where rev.Clauses.IndexOf(clause) < rev.Clauses.Count / 2
+                          select clause);
+            splitList.Add(from clause in rev.Clauses
+                          where rev.Clauses.IndexOf(clause) >= rev.Clauses.Count / 2
+                          select clause);
+            return splitList;
+        }
+
+    public List<List<QualityClause>> cloneQualityClauses(Revision rev)
+        {
+            List<List<QualityClause>> clonedList = new List<List<QualityClause>>() {rev.Clauses};
+            clonedList.Add(rev.Clauses);
+            return clonedList;
+        }
+
+
+
   }
 }
 
