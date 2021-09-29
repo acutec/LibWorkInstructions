@@ -15,8 +15,6 @@ namespace LibWorkInstructions {
       public List<Revision> JobRevs { get; set; }
       // Jobs have a series of operations associated with them.
       public List<Op> Ops { get; set; }
-
-      public List<WorkInstruction> workInstructions { get; set; }
       
     }
 
@@ -41,11 +39,11 @@ namespace LibWorkInstructions {
         // Work instructions have an approval status
         public bool Approved { get; set; }
         // Work instructions can have one or more revisions
-        public List<Revision> WorkRevs { get; set;}
+        public Revision Rev { get; set;}
         // Placeholder for rich content
         public List<string> HtmlBlob { get; set;}
 
-        public List<OpSpec> opSpecs {  get; set; }
+        public List<OpSpec> OpSpecs {  get; set; }
         
         }
     // TODO: Possibly add description of classes
