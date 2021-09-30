@@ -24,6 +24,7 @@ namespace LibWorkInstructions {
     public MockDB DataExport() => db;
     #endregion
 
+    /*
     public Job GetJob(string jobId) =>
       db.JobWorkInstructions.Keys.First(y => y.Id == jobId);
 
@@ -185,6 +186,7 @@ namespace LibWorkInstructions {
       Console.Write(latest.OpSpecs + "\n");
       Console.Write(latest.Revs.Last().Clauses + "\n");
     }
+    */
 
   }
 }
