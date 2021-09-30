@@ -9,10 +9,10 @@ namespace LibWorkInstructions {
     #region database-mocking
     public class MockDB {
       public Dictionary<string, Job> Jobs = new Dictionary<string, Job>();
-      public Dictionary<int, OpSpec>> OpSpecs = new Dictionary<int, OpSpec>();
-      public Dictionary<int, QualityClause>> QualityClauses = new Dictionary<int, QualityClause>();
+      public Dictionary<int, OpSpec> OpSpecs = new Dictionary<int, OpSpec>();
+      public Dictionary<int, QualityClause> QualityClauses = new Dictionary<int, QualityClause>();
       // revs clone an existing one under a new id, with a same groupid
-      public Dictionary<int, WorkInstruction>> WorkInstructions = new Dictionary<int, WorkInstruction>();
+      public Dictionary<int, WorkInstruction> WorkInstructions = new Dictionary<int, WorkInstruction>();
       public Dictionary<string, List<List<int>>> JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>>();
       public Dictionary<string, List<int>> JobRefToQualityClauseRefs = new Dictionary<string, List<int>>();
     }
