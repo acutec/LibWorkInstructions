@@ -13,6 +13,8 @@ namespace LibWorkInstructions {
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
       public string Rev { get; set; }
+      // Jobs have a sequence of operations.
+      public List<Op> Ops { get; set; }
     }
 
     public class Op {
@@ -29,15 +31,15 @@ namespace LibWorkInstructions {
     // Work instructions are specific to a particular revision of an operation
     public class WorkInstruction {
       // Identifier for work instructions (unique per rev)
-      public string Id { get; set; }
+      public int Id { get; set; }
       // Identifier for work instructions (unique per group of revs)
-      public string IdRevGroup { get; set; }
+      public int IdRevGroup { get; set; }
       // There's a list of images for a particular work instruction
       public List<string> Images { get; set; }
       // Work instructions have an approval status
       public bool Approved { get; set; }
       // Placeholder for rich content
-      public List<string> HtmlBlob { get; set;}
+      public string HtmlBlob { get; set;}
 
       public List<int> OpSpecs { get; set; }
     }
