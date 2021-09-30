@@ -12,9 +12,7 @@ namespace LibWorkInstructions {
       // Jobs have a revision identifier representing our internal process, that can change over time.
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
-      public List<Revision> JobRevs { get; set; }
-      // Jobs have a series of operations associated with them.
-      public List<Op> Ops { get; set; }
+      public Revision Rev { get; set; }
       
     }
 
@@ -39,7 +37,7 @@ namespace LibWorkInstructions {
         // Work instructions have an approval status
         public bool Approved { get; set; }
         // Work instructions can have one or more revisions
-        public Revision Rev { get; set;}
+        public List<Revision> Revs { get; set;}
         // Placeholder for rich content
         public List<string> HtmlBlob { get; set;}
 
@@ -60,7 +58,7 @@ namespace LibWorkInstructions {
         public string Servicecond { get; set; }
         public string Status { get; set; }
         public string Comment { get; set; }
-        public List<Revision> SpecRevs { get; set; }
+        public List<Revision> Revs { get; set; }
 
         }
     
@@ -68,16 +66,16 @@ namespace LibWorkInstructions {
         {
         public string Clause { get; set; }
 
-        public List<Revision> ClauseRevs { get; set; }
+        public List<Revision> Revs { get; set; }
         }
 
     public class Revision
         {
         public string Category { get; set; }
         public string Version { get; set; }
-        public List<QualityClause> Clauses { get; set; }
         #nullable enable
-        public WorkInstruction? Instruction { get; set; }
+        public List<QualityClause>? Clauses { get; set; }
+        public List<List<Op>>? Ops { get; set; }
         #nullable disable
         }
     }
