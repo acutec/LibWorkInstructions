@@ -8,8 +8,13 @@ namespace LibWorkInstructions {
 
     #region database-mocking
     public class MockDB {
-      // For each job, there's a list of work instructions, each of them having a different collection of revisions
-      public Dictionary<Job, List<WorkInstruction>> JobWorkInstructions = new Dictionary<Job, List<WorkInstruction>>();
+      public Dictionary<string, Job> Jobs = new Dictionary<string, Job>();
+      public Dictionary<int, OpSpec>> OpSpecs = new Dictionary<int, OpSpec>();
+      public Dictionary<int, QualityClause>> QualityClauses = new Dictionary<int, QualityClause>();
+      // revs clone an existing one under a new id, with a same groupid
+      public Dictionary<int, WorkInstruction>> WorkInstructions = new Dictionary<int, WorkInstruction>();
+      public Dictionary<string, List<List<int>>> JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>>();
+      public Dictionary<string, List<int>> JobRefToQualityClauseRefs = new Dictionary<string, List<int>>();
     }
     private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
     public BusinessLogic() {
@@ -30,9 +35,7 @@ namespace LibWorkInstructions {
     public void ChangeWorkInstruction(string jobId, string workId, WorkInstruction newWorkInstruction) {
       Job job = db.JobWorkInstructions.Keys.First(y => y.Id == jobId);
       List<WorkInstruction> instructionList = db.JobWorkInstructions[job];
-
       int index = instructionList.IndexOf(instructionList.First(y => y.Id == workId));
-
       if (index != -1)
         db.JobWorkInstructions[job][index] = newWorkInstruction;
     }
@@ -76,9 +79,7 @@ namespace LibWorkInstructions {
       Job job = db.JobWorkInstructions.Keys.First(y => y.Id == jobId);
       WorkInstruction workInstruction = db.JobWorkInstructions[job].First(y => y.Id == workId);
       OpSpec oldOpSpec = workInstruction.OpSpecs.First(y => y.Name == oldSpecName);
-
       var index = workInstruction.OpSpecs.IndexOf(oldOpSpec);
-
       if (index != -1) {
         workInstruction.OpSpecs[index] = newSpec;
         workInstruction.Approved = false;
@@ -88,7 +89,7 @@ namespace LibWorkInstructions {
     public void DeleteSpec(string jobId, string workId, string specName) {
       Job job = db.JobWorkInstructions.Keys.First(y => y.Id == jobId);
       db.JobWorkInstructions[job].First(y => y.Id == workId).OpSpecs.Remove(
-          db.JobWorkInstructions[job].First(y => y.Id == workId).OpSpecs.First(y => y.Name == specName));
+        db.JobWorkInstructions[job].First(y => y.Id == workId).OpSpecs.First(y => y.Name == specName));
     }
 
     public void MergeSpecs(string jobId, string workId1, string workId2) {
@@ -120,10 +121,11 @@ namespace LibWorkInstructions {
     }
 
     public void CreateQualityClause(Revision revision, QualityClause qualityClause) {
-      if (revision.Category == "job")
+      if (revision.Category == "job") {
         revision.Clauses.Add(qualityClause);
-      else
+      } else {
         Console.Write("You can only add a quality clause to a particular revision of a job.");
+      }
     }
 
     public void MergeQualityClauses(Revision rev1, Revision rev2) {
@@ -174,14 +176,15 @@ namespace LibWorkInstructions {
     public void DisplayLatestRevision(Revision JobRev) {
       WorkInstruction latest = new WorkInstruction();
       foreach (Job job in db.JobWorkInstructions.Keys) {
-        if (job.Rev == JobRev)
+        if (job.Rev == JobRev) {
           latest = db.JobWorkInstructions[job].First();
+        }
       }
       Console.Write(latest.Revs.Last().Version + "\n");
       Console.Write(latest.Images + "\n");
       Console.Write(latest.OpSpecs + "\n");
       Console.Write(latest.Revs.Last().Clauses + "\n");
-
     }
+
   }
 }
