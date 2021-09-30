@@ -13,7 +13,6 @@ namespace LibWorkInstructions {
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
       public Revision Rev { get; set; }
-
     }
 
     public class Op {
@@ -25,30 +24,29 @@ namespace LibWorkInstructions {
       public string OpService { get; set; }
       // Operations have an ordering within a job, this represents that ordering.
       public int Seq { get; set; }
-
     }
 
     // Work instructions are specific to a particular revision of an operation
     public class WorkInstruction {
-      // Identifier for work instructions
+      // Identifier for work instructions (unique per rev)
       public string Id { get; set; }
+      // Identifier for work instructions (unique per group of revs)
+      public string IdRevGroup { get; set; }
       // There's a list of images for a particular work instruction
       public List<string> Images { get; set; }
       // Work instructions have an approval status
       public bool Approved { get; set; }
-      // Work instructions can have one or more revisions
-      public List<Revision> Revs { get; set; }
       // Placeholder for rich content
-      public List<string> HtmlBlob { get; set; }
+      public List<string> HtmlBlob { get; set;}
 
-      public List<OpSpec> OpSpecs { get; set; }
-
+      public List<int> OpSpecs { get; set; }
     }
-    // TODO: Possibly add description of classes
 
     public class OpSpec {
+      public int Id { get; set; }
+      public int IdRevGroup { get; set; }
       public string Name { get; set; }
-      public string Notice { get; set; }
+      public string Notice { get; set;  }
       public string Class { get; set; }
       public string Type { get; set; }
       public string Method { get; set; }
@@ -58,23 +56,13 @@ namespace LibWorkInstructions {
       public string Servicecond { get; set; }
       public string Status { get; set; }
       public string Comment { get; set; }
-      public List<Revision> Revs { get; set; }
-
     }
-
+    
     public class QualityClause {
+      public int Id { get; set; }
+      public int IdRevGroup { get; set; }
       public string Clause { get; set; }
-
-      public List<Revision> Revs { get; set; }
     }
 
-    public class Revision {
-      public string Category { get; set; }
-      public string Version { get; set; }
-#nullable enable
-      public List<QualityClause>? Clauses { get; set; }
-      public List<List<Op>>? Ops { get; set; }
-#nullable disable
-    }
   }
 }
