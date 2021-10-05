@@ -22,8 +22,151 @@ namespace LibWorkInstructions {
     }
     public void DataImport(MockDB replacementDb) => this.db = replacementDb;
     public MockDB DataExport() => db;
-    #endregion
+        #endregion
 
+        public Job getJob(string jobId) =>
+                db.Jobs.First(y => y.Key == jobId).Value;
+
+        public void AddWorkInstruction(WorkInstruction newWorkInstruction)
+        {
+            db.WorkInstructions.Add(newWorkInstruction.Id, newWorkInstruction);
+        }
+        public void ChangeWorkInstruction(int oldWorkId, WorkInstruction newWorkInstruction)
+        {
+            db.WorkInstructions[oldWorkId] = newWorkInstruction;
+        }
+        public void RemoveWorkInstruction(int workId)
+        {
+            db.WorkInstructions.Remove(workId);
+        }
+        public void MergeWorkInstructions(int workId1, int workId2)
+        {
+            List<int> workInstruction1, workInstruction2, mergedInstruction;
+
+            foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            {
+                foreach(List<int> workInstruction in list)
+                {
+                    if(workInstruction.Contains(workId1))
+                        workInstruction1 = list;
+                    if(workInstruction.Contains(workId2))
+                        workInstruction2 = list;
+                }
+            }
+
+            string job1 = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(workInstruction1);
+            string job2 = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(workInstruction2);
+
+            mergedInstruction = workInstruction1.Union(workInstruction2);
+
+            db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
+            db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
+            db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
+        }
+
+        public void SplitWorkInstruction(int workId)
+        {
+            List<int> duplicate;
+
+            foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            {
+                foreach(List<int> workInstruction in list)
+                {
+                    if(workInstruction.Contains(workId))
+                        duplicate = workInstruction;
+                }
+            }
+
+            string job = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(duplicate);
+
+            db.JobRefToWorkInstructionRefs[job].Add(duplicate);
+        }
+
+        public void CloneWorkInstructions(int workId, string newJobId)
+        {
+            List<List<int>> duplicate;
+            Job newJob = new Job();
+            newJob.Id = newJobId;
+
+            foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            {
+                foreach(List<int> workInstruction in list)
+                {
+                    if(workInstruction.Contains(workId))
+                        duplicate = list;
+                }
+            }
+
+            db.Jobs.Add(newJobId, newJob);
+            db.JobRefToWorkInstructionRefs.Add(newJobId, duplicate);
+        }
+
+        public void AddSpec(OpSpec opSpec)
+        {
+            db.OpSpecs.Add(opSpec.Id, opSpec);
+        }
+
+        public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
+        {
+            db.OpSpecs[oldSpecId] = newOpSpec;
+        }
+        
+        public void DeleteSpec(int specId)
+        {
+            db.OpSpecs.Remove(specId);
+        }
+
+        public void MergeSpecs(int workId1, int workId2)
+        {
+            db.WorkInstructions[workId1].OpSpecs = 
+                db.WorkInstructions[workId1].OpSpecs.Union(db.WorkInstructions[workId2].OpSpecs);
+            db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
+        }
+
+        public void SplitSpecs(int workId1, int workId2)
+        {
+            db.WorkInstructions[workId2].opSpecs = db.WorkInstructions[workId1].opSpecs;
+        }
+
+        public void CloneSpecs(int workId, int newWorkId)
+        {
+            WorkInstruction newInstruction = new WorkInstruction();
+            newInstruction.Id = newWorkId;
+            newInstruction.OpSpecs = db.WorkInstructions[workId].OpSpecs;
+            db.WorkInstructions.Add(newInstruction.Id, newInstruction);
+        }
+
+        public void CreateQualityClause(QualityClause qualityClause)
+        {
+            db.QualityClauses.Add(qualityClause.Id, qualityClause);
+        }
+
+        public void MergeQualityClauses(string job1, string job2)
+        {
+            db.JobRefToQualityClauseRefs[job1] = 
+                db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]);
+            db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
+        }
+
+        public void SplitQualityClauses(string job1, string job2)
+        {
+            db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
+        }
+
+        public void CloneQualityClauses(string job, string newJobId)
+        {
+            Job newJob = new Job();
+            newJob.Id = newJobId;
+            db.Jobs.Add(newJobId, newJob);
+            db.JobRefToQualityClauseRefs.Add(newJob.Id, newJob);
+            db.JobRefToQualityClauseRefs[newJobId] = db.JobRefToQualityClauseRefs[job];
+        }
+
+        public void DisplayPriorRevisionsOfWorkInstruction(string job, int latestWorkId)
+        {
+            List<int> workInstructionRevisions = db.JobRefToWorkInstructionRefs[job].First(y => y.Last() == latestWorkId);
+            Console.Write(workInstructionRevisions);
+        }
     /*
     public Job GetJob(string jobId) =>
       db.JobWorkInstructions.Keys.First(y => y.Id == jobId);
