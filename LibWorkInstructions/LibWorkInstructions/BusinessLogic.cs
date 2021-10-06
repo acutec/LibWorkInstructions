@@ -41,7 +41,7 @@ namespace LibWorkInstructions {
         }
         public void MergeWorkInstructions(int workId1, int workId2)
         {
-            List<int> workInstruction1, workInstruction2, mergedInstruction;
+            List<List<int>> workInstruction1, workInstruction2, mergedInstruction;
 
             foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
             {
@@ -54,8 +54,8 @@ namespace LibWorkInstructions {
                 }
             }
 
-            string job1 = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(workInstruction1);
-            string job2 = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(workInstruction2);
+            string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value == workInstruction1);
+            string job2 = db.JobRefToWorkInstructionRefs.Keys.First(y => y.Value == workInstruction2);
 
             mergedInstruction = workInstruction1.Union(workInstruction2);
 
@@ -66,7 +66,7 @@ namespace LibWorkInstructions {
 
         public void SplitWorkInstruction(int workId)
         {
-            List<int> duplicate;
+            List<List<int>> duplicate;
 
             foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
             {
