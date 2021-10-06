@@ -41,23 +41,25 @@ namespace LibWorkInstructions {
         }
         public void MergeWorkInstructions(int workId1, int workId2)
         {
-            List<List<int>> workInstruction1, workInstruction2, mergedInstruction;
+            List<int> workInstruction1 = new List<int>();
+            List<int> workInstruction2 = new List<int>();
+            List<int> mergedInstruction = new List<int>();
 
-            foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            foreach(List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
             {
-                foreach(List<int> workInstruction in list)
+                foreach(List<int> workInstruction in value)
                 {
                     if(workInstruction.Contains(workId1))
-                        workInstruction1 = list;
+                        workInstruction1 = workInstruction;
                     if(workInstruction.Contains(workId2))
-                        workInstruction2 = list;
+                        workInstruction2 = workInstruction;
                 }
             }
 
-            string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value == workInstruction1);
-            string job2 = db.JobRefToWorkInstructionRefs.Keys.First(y => y.Value == workInstruction2);
+            string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction1)).Key;
+            string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction2)).Key;
 
-            mergedInstruction = workInstruction1.Union(workInstruction2);
+            mergedInstruction = Enumerable.ToList(workInstruction1.Union(workInstruction2));
 
             db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
             db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
@@ -66,25 +68,25 @@ namespace LibWorkInstructions {
 
         public void SplitWorkInstruction(int workId)
         {
-            List<List<int>> duplicate;
+            List<int> duplicate = new List<int>();
 
-            foreach(List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            foreach(List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
             {
-                foreach(List<int> workInstruction in list)
+                foreach(List<int> workInstruction in value)
                 {
                     if(workInstruction.Contains(workId))
                         duplicate = workInstruction;
                 }
             }
 
-            string job = db.JobRefToWorkInstructionRefs.FindFirstKeyByValue(duplicate);
+            string job = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate)).Key;
 
             db.JobRefToWorkInstructionRefs[job].Add(duplicate);
         }
 
         public void CloneWorkInstructions(int workId, string newJobId)
         {
-            List<List<int>> duplicate;
+            List<List<int>> duplicate = new List<List<int>>();
             Job newJob = new Job();
             newJob.Id = newJobId;
 
@@ -109,7 +111,7 @@ namespace LibWorkInstructions {
         public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
         {
             db.OpSpecs[oldSpecId] = newOpSpec;
-            List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Keys
+            List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Values
                                                                 where workInstruction.Value.OpSpecs.Contains(oldSpecId)
                                                                 select workInstruction;
             foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
@@ -124,7 +126,7 @@ namespace LibWorkInstructions {
         public void MergeSpecs(int workId1, int workId2)
         {
             db.WorkInstructions[workId1].OpSpecs = 
-                db.WorkInstructions[workId1].OpSpecs.Union(db.WorkInstructions[workId2].OpSpecs);
+                Enumerable.ToList(db.WorkInstructions[workId1].OpSpecs.Union(db.WorkInstructions[workId2].OpSpecs));
             db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
         }
 
@@ -149,7 +151,7 @@ namespace LibWorkInstructions {
         public void MergeQualityClauses(string job1, string job2)
         {
             db.JobRefToQualityClauseRefs[job1] = 
-                db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]);
+                Enumerable.ToList(db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]));
             db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
         }
 
