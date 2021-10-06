@@ -111,9 +111,9 @@ namespace LibWorkInstructions {
         public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
         {
             db.OpSpecs[oldSpecId] = newOpSpec;
-            List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Values
-                                                                where workInstruction.Value.OpSpecs.Contains(oldSpecId)
-                                                                select workInstruction;
+            List<WorkInstruction> invalidateWorkInstructions =  Enumerable.ToList(from workInstruction in db.WorkInstructions.Values
+                                                                where workInstruction.OpSpecs.Contains(oldSpecId)
+                                                                select workInstruction);
             foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
                 workInstruction.Approved = false;
         }
@@ -163,10 +163,10 @@ namespace LibWorkInstructions {
         public void CloneQualityClauses(string job, string newJobId)
         {
             Job newJob = new Job();
+            List<int> qualityClauseList = db.JobRefToQualityClauseRefs[job];
             newJob.Id = newJobId;
             db.Jobs.Add(newJobId, newJob);
-            db.JobRefToQualityClauseRefs.Add(newJob.Id, newJob);
-            db.JobRefToQualityClauseRefs[newJobId] = db.JobRefToQualityClauseRefs[job];
+            db.JobRefToQualityClauseRefs.Add(newJob.Id, qualityClauseList);
         }
 
         public void DisplayPriorRevisionsOfWorkInstruction(string job, int latestWorkId)
@@ -178,14 +178,14 @@ namespace LibWorkInstructions {
         {
             Console.Write((from qualityClause in db.QualityClauses.Values
                            where qualityClause.IdRevGroup == idRevGroup
-                           select qualityClause.Value.Id));
+                           select qualityClause.Id));
         }
 
         public void DisplayPriorRevisionsOfSpecs(int idRevGroup)
         {
             Console.Write((from spec in db.OpSpecs.Values
                            where spec.IdRevGroup == idRevGroup
-                           select QualityClause.Value.Id));
+                           select spec.Id));
         }
 
         public void DisplayLatestRevisionOfWorkInstruction(string jobRev)
