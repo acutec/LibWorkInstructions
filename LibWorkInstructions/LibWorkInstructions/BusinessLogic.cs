@@ -109,9 +109,9 @@ namespace LibWorkInstructions {
         public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
         {
             db.OpSpecs[oldSpecId] = newOpSpec;
-            List<WorkInstruction> invalidateWorkInstructions = (from workInstruction in db.WorkInstructions.Keys
+            List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Keys
                                                                 where workInstruction.Value.OpSpecs.Contains(oldSpecId)
-                                                                select workInstruction);
+                                                                select workInstruction;
             foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
                 workInstruction.Approved = false;
         }
@@ -130,7 +130,7 @@ namespace LibWorkInstructions {
 
         public void SplitSpecs(int workId1, int workId2)
         {
-            db.WorkInstructions[workId2].opSpecs = db.WorkInstructions[workId1].opSpecs;
+            db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
         }
 
         public void CloneSpecs(int workId, int newWorkId)
