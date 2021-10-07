@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace LibWorkInstructionsTests {
@@ -79,5 +80,28 @@ namespace LibWorkInstructionsTests {
       var export = n.DataExport();
       // FIXME: assert some things on the exported data...
     }
+    
+
+    [Test]
+    public void testGetJob()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, LibWorkInstructions.Structs.Job> {
+              { "F110", new LibWorkInstructions.Structs.Job {
+                Id = "F110",
+                Rev = "A",
+                RevCustomer = "CUSTX",
+                RevPlan = "1.0.0",
+              }},
+            }
+            };
+            n.DataImport(sampleData);
+            var dbVar = n.DataExport();
+            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job{Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0",};
+            Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
+            Assert.True(dbVar.Jobs["F110"].Equals(testJob));
+        }
   }
 }

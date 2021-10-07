@@ -26,6 +26,11 @@ namespace LibWorkInstructions {
 
         public Job getJob(string jobId) =>
                 db.Jobs.First(y => y.Key == jobId).Value;
+        
+        public void addJob(Job newJob)
+        {
+            db.Jobs.Add(newJob.Id, newJob);
+        }
 
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
         {
@@ -108,15 +113,15 @@ namespace LibWorkInstructions {
             db.OpSpecs.Add(opSpec.Id, opSpec);
         }
 
-        public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
-        {
-            db.OpSpecs[oldSpecId] = newOpSpec;
-            List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Values
-                                                                where workInstruction.Value.OpSpecs.Contains(oldSpecId)
-                                                                select workInstruction;
-            foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
-                workInstruction.Approved = false;
-        }
+        //public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
+        //{
+        //    db.OpSpecs[oldSpecId] = newOpSpec;
+        //    List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Values
+        //                                                        where workInstruction.Value.OpSpecs.Contains(oldSpecId)
+        //                                                        select workInstruction;
+        //    foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
+        //        workInstruction.Approved = false;
+        //}
         
         public void DeleteSpec(int specId)
         {
@@ -160,14 +165,14 @@ namespace LibWorkInstructions {
             db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
         }
 
-        public void CloneQualityClauses(string job, string newJobId)
-        {
-            Job newJob = new Job();
-            newJob.Id = newJobId;
-            db.Jobs.Add(newJobId, newJob);
-            db.JobRefToQualityClauseRefs.Add(newJob.Id, newJob);
-            db.JobRefToQualityClauseRefs[newJobId] = db.JobRefToQualityClauseRefs[job];
-        }
+        //public void CloneQualityClauses(string job, string newJobId)
+        //{
+        //    Job newJob = new Job();
+        //    newJob.Id = newJobId;
+        //    db.Jobs.Add(newJobId, newJob);
+        //    db.JobRefToQualityClauseRefs.Add(newJob.Id, newJob);
+        //    db.JobRefToQualityClauseRefs[newJobId] = db.JobRefToQualityClauseRefs[job];
+        //}
 
         public void DisplayPriorRevisionsOfWorkInstruction(string job, int latestWorkId)
         {
@@ -178,15 +183,15 @@ namespace LibWorkInstructions {
         {
             Console.Write((from qualityClause in db.QualityClauses.Values
                            where qualityClause.IdRevGroup == idRevGroup
-                           select qualityClause.Value.Id));
+                           select qualityClause.Id));
         }
 
-        public void DisplayPriorRevisionsOfSpecs(int idRevGroup)
-        {
-            Console.Write((from spec in db.OpSpecs.Values
-                           where spec.IdRevGroup == idRevGroup
-                           select QualityClause.Value.Id));
-        }
+        //public void DisplayPriorRevisionsOfSpecs(int idRevGroup)
+        //{
+        //    Console.Write((from spec in db.OpSpecs.Values
+        //                   where spec.IdRevGroup == idRevGroup
+        //                   select QualityClause));
+        //}
 
         public void DisplayLatestRevisionOfWorkInstruction(string jobRev)
         {
