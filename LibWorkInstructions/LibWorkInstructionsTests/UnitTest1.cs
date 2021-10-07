@@ -144,5 +144,40 @@ namespace LibWorkInstructionsTests {
             Assert.True(dbVar.Jobs["F110"].RevCustomer.Equals(testJob.RevCustomer));
             Assert.True(dbVar.Jobs["F110"].RevPlan.Equals(testJob.RevPlan));
         }
+
+    [Test]
+    public void testGetWorkInstruction()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+            WorkInstructions = new Dictionary<int, LibWorkInstructions.Structs.WorkInstruction> {
+                { 0, new LibWorkInstructions.Structs.WorkInstruction {
+                Id = 0,
+                IdRevGroup = 0,
+                Approved = true,
+                HtmlBlob = "<h1>do something</h1>",
+                Images = new List<string>{ "image" },
+                OpSpecs = new List<int> { 1 },
+                }},
+                },
+            };
+            LibWorkInstructions.Structs.WorkInstruction testWorkInstruction = new LibWorkInstructions.Structs.WorkInstruction
+            {
+                Id = 0,
+                IdRevGroup = 0,
+                Approved = true,
+                HtmlBlob = "<h1>do something</h1>",
+                Images = new List<string> { "image" },
+                OpSpecs = new List<int> { 1 },
+            };
+            n.DataImport(sampleData);
+            Assert.True(n.getWorkInstruction(0).Id.Equals(testWorkInstruction.Id));
+            Assert.True(n.getWorkInstruction(0).IdRevGroup.Equals(testWorkInstruction.IdRevGroup));
+            Assert.True(n.getWorkInstruction(0).Approved.Equals(testWorkInstruction.Approved));
+            Assert.True(n.getWorkInstruction(0).HtmlBlob.Equals(testWorkInstruction.HtmlBlob));
+            Assert.True(n.getWorkInstruction(0).Images[0].Equals(testWorkInstruction.Images[0]));
+            Assert.True(n.getWorkInstruction(0).OpSpecs[0].Equals(testWorkInstruction.OpSpecs[0]));
+        }
   }
 }

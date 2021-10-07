@@ -35,6 +35,9 @@ namespace LibWorkInstructions
         {
             db.Jobs.Add(newJob.Id, newJob);
         }
+        
+        public WorkInstruction getWorkInstruction(int instructionId) =>
+            db.WorkInstructions.First(y => y.Key == instructionId).Value;
 
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
         {
