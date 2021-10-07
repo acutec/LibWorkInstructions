@@ -117,15 +117,15 @@ namespace LibWorkInstructions
             db.OpSpecs.Add(opSpec.Id, opSpec);
         }
 
-        //public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
-        //{
-        //    db.OpSpecs[oldSpecId] = newOpSpec;
-        //    List<WorkInstruction> invalidateWorkInstructions =  from workInstruction in db.WorkInstructions.Values
-        //                                                        where workInstruction.Value.OpSpecs.Contains(oldSpecId)
-        //                                                        select workInstruction;
-        //    foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
-        //        workInstruction.Approved = false;
-        //}
+        public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
+        {
+            db.OpSpecs[oldSpecId] = newOpSpec;
+            List<WorkInstruction> invalidateWorkInstructions =  (from workInstruction in db.WorkInstructions.Values
+                                                                where workInstruction.OpSpecs.Contains(oldSpecId)
+                                                                select workInstruction).ToList();
+            foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
+                workInstruction.Approved = false;
+        }
 
         public void DeleteSpec(int specId)
         {
@@ -169,14 +169,13 @@ namespace LibWorkInstructions
             db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
         }
 
-        //public void CloneQualityClauses(string job, string newJobId)
-        //{
-        //    Job newJob = new Job();
-        //    newJob.Id = newJobId;
-        //    db.Jobs.Add(newJobId, newJob);
-        //    db.JobRefToQualityClauseRefs.Add(newJob.Id, newJob);
-        //    db.JobRefToQualityClauseRefs[newJobId] = db.JobRefToQualityClauseRefs[job];
-        //}
+        public void CloneQualityClauses(string sourceJobId, string targetJobId)
+        {
+            db.JobRefToQualityClauseRefs[targetJobId]
+                .AddRange(db.JobRefToQualityClauseRefs[sourceJobId]);
+            db.JobRefToQualityClauseRefs[targetJobId] =
+                    db.JobRefToQualityClauseRefs[targetJobId].Distinct().ToList();
+        }
 
         public void DisplayPriorRevisionsOfWorkInstruction(string job, int latestWorkId)
         {
@@ -190,12 +189,12 @@ namespace LibWorkInstructions
                            select qualityClause.Id));
         }
 
-        //public void DisplayPriorRevisionsOfSpecs(int idRevGroup)
-        //{
-        //    Console.Write((from spec in db.OpSpecs.Values
-        //                   where spec.IdRevGroup == idRevGroup
-        //                   select QualityClause));
-        //}
+        public void DisplayPriorRevisionsOfSpecs(int idRevGroup)
+        {
+            Console.Write((from spec in db.OpSpecs.Values
+                           where spec.IdRevGroup == idRevGroup
+                           select spec));
+        }
 
         public void DisplayLatestRevisionOfWorkInstruction(string jobRev)
         {
