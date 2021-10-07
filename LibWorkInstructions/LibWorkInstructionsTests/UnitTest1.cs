@@ -83,7 +83,7 @@ namespace LibWorkInstructionsTests {
     
 
     [Test]
-    public void testGetJob()
+    public void testJobCalling()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -100,8 +100,49 @@ namespace LibWorkInstructionsTests {
             n.DataImport(sampleData);
             var dbVar = n.DataExport();
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job{Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0",};
-            Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
-            Assert.True(dbVar.Jobs["F110"].Equals(testJob));
+            // Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
+            Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
+            Assert.True(dbVar.Jobs["F110"].Rev.Equals(testJob.Rev));
+            Assert.True(dbVar.Jobs["F110"].RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(dbVar.Jobs["F110"].RevPlan.Equals(testJob.RevPlan));
+        }
+
+    [Test]
+    public void testGetJob()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, LibWorkInstructions.Structs.Job> {
+              { "F110", new LibWorkInstructions.Structs.Job {
+                Id = "F110",
+                Rev = "A",
+                RevCustomer = "CUSTX",
+                RevPlan = "1.0.0",
+              }},
+            }
+            };
+            n.DataImport(sampleData);
+            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
+            //Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
+            Assert.True(n.getJob("F110").Id.Equals(testJob.Id));
+            Assert.True(n.getJob("F110").Rev.Equals(testJob.Rev));
+            Assert.True(n.getJob("F110").RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(n.getJob("F110").RevPlan.Equals(testJob.RevPlan));
+        }
+
+    [Test]
+    public void testAddJob()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
+            n.addJob(testJob);
+            var dbVar = n.DataExport();
+            // Check that List is empty
+            Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
+            Assert.True(dbVar.Jobs["F110"].Rev.Equals(testJob.Rev));
+            Assert.True(dbVar.Jobs["F110"].RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(dbVar.Jobs["F110"].RevPlan.Equals(testJob.RevPlan));
         }
   }
 }
