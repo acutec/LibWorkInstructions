@@ -18,6 +18,7 @@ namespace LibWorkInstructions
             public Dictionary<int, WorkInstruction> WorkInstructions = new Dictionary<int, WorkInstruction>();
             public Dictionary<string, List<List<int>>> JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>>();
             public Dictionary<string, List<int>> JobRefToQualityClauseRefs = new Dictionary<string, List<int>>();
+            public List<Event> AuditLog = new List<Event>();
         }
         private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
         public BusinessLogic()
@@ -31,9 +32,17 @@ namespace LibWorkInstructions
         public Job getJob(string jobId) =>
                 db.Jobs.First(y => y.Key == jobId).Value;
 
-        public void addJob(Job newJob)
+        public void addJob(List<Event> log, Job newJob)
         {
             db.Jobs.Add(newJob.Id, newJob);
+            var args = new Dictionary<string, Job>();
+            args["Job"] = newJob;
+            log.Add(new Event
+            {
+                Action = "addJob",
+                newJob = args,
+                When = DateTime.Now,
+            });
         }
         
         public WorkInstruction getWorkInstruction(int instructionId) =>
