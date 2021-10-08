@@ -134,9 +134,10 @@ namespace LibWorkInstructionsTests {
     [Test]
     public void testAddJob()
         {
+            var audit = new List<LibWorkInstructions.Structs.Event>();
             var n = new LibWorkInstructions.BusinessLogic();
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
-            n.addJob(testJob);
+            n.addJob(audit, testJob);
             var dbVar = n.DataExport();
             // Check that List is empty
             Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
