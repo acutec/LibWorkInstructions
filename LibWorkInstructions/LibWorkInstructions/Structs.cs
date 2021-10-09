@@ -66,5 +66,11 @@ namespace LibWorkInstructions {
       public string Clause { get; set; }
     }
 
-  }
+    public class Event {
+      public string Kind { get; set; }
+      public Dictionary<string, string> Args { get; set; }
+      public DateTime When { get; set; }
+    }
+
+    }
 }

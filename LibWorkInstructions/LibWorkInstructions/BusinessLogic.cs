@@ -18,6 +18,7 @@ namespace LibWorkInstructions
             public Dictionary<int, WorkInstruction> WorkInstructions = new Dictionary<int, WorkInstruction>();
             public Dictionary<string, List<List<int>>> JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>>();
             public Dictionary<string, List<int>> JobRefToQualityClauseRefs = new Dictionary<string, List<int>>();
+            public List<Event> events = new List<Event>();
         }
         private MockDB db;  // this should contain any/all state used in this BusinessLogic class.
         public BusinessLogic()
