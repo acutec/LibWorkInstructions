@@ -83,7 +83,7 @@ namespace LibWorkInstructionsTests {
     
 
     [Test]
-    public void testGetJob()
+    public void testJobCalling()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -100,8 +100,85 @@ namespace LibWorkInstructionsTests {
             n.DataImport(sampleData);
             var dbVar = n.DataExport();
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job{Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0",};
-            Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
-            Assert.True(dbVar.Jobs["F110"].Equals(testJob));
+            // Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
+            Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
+            Assert.True(dbVar.Jobs["F110"].Rev.Equals(testJob.Rev));
+            Assert.True(dbVar.Jobs["F110"].RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(dbVar.Jobs["F110"].RevPlan.Equals(testJob.RevPlan));
+        }
+
+    [Test]
+    public void testGetJob()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, LibWorkInstructions.Structs.Job> {
+              { "F110", new LibWorkInstructions.Structs.Job {
+                Id = "F110",
+                Rev = "A",
+                RevCustomer = "CUSTX",
+                RevPlan = "1.0.0",
+              }},
+            }
+            };
+            n.DataImport(sampleData);
+            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
+            //Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
+            Assert.True(n.getJob("F110").Id.Equals(testJob.Id));
+            Assert.True(n.getJob("F110").Rev.Equals(testJob.Rev));
+            Assert.True(n.getJob("F110").RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(n.getJob("F110").RevPlan.Equals(testJob.RevPlan));
+        }
+
+    [Test]
+    public void testAddJob()
+        {
+            var audit = new List<LibWorkInstructions.Structs.Event>();
+            var n = new LibWorkInstructions.BusinessLogic();
+            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
+            n.addJob(audit, testJob);
+            var dbVar = n.DataExport();
+            // Check that List is empty
+            Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
+            Assert.True(dbVar.Jobs["F110"].Rev.Equals(testJob.Rev));
+            Assert.True(dbVar.Jobs["F110"].RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(dbVar.Jobs["F110"].RevPlan.Equals(testJob.RevPlan));
+        }
+
+    [Test]
+    public void testGetWorkInstruction()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+            WorkInstructions = new Dictionary<int, LibWorkInstructions.Structs.WorkInstruction> {
+                { 0, new LibWorkInstructions.Structs.WorkInstruction {
+                Id = 0,
+                IdRevGroup = 0,
+                Approved = true,
+                HtmlBlob = "<h1>do something</h1>",
+                Images = new List<string>{ "image" },
+                OpSpecs = new List<int> { 1 },
+                }},
+                },
+            };
+            LibWorkInstructions.Structs.WorkInstruction testWorkInstruction = new LibWorkInstructions.Structs.WorkInstruction
+            {
+                Id = 0,
+                IdRevGroup = 0,
+                Approved = true,
+                HtmlBlob = "<h1>do something</h1>",
+                Images = new List<string> { "image" },
+                OpSpecs = new List<int> { 1 },
+            };
+            n.DataImport(sampleData);
+            Assert.True(n.getWorkInstruction(0).Id.Equals(testWorkInstruction.Id));
+            Assert.True(n.getWorkInstruction(0).IdRevGroup.Equals(testWorkInstruction.IdRevGroup));
+            Assert.True(n.getWorkInstruction(0).Approved.Equals(testWorkInstruction.Approved));
+            Assert.True(n.getWorkInstruction(0).HtmlBlob.Equals(testWorkInstruction.HtmlBlob));
+            Assert.True(n.getWorkInstruction(0).Images[0].Equals(testWorkInstruction.Images[0]));
+            Assert.True(n.getWorkInstruction(0).OpSpecs[0].Equals(testWorkInstruction.OpSpecs[0]));
         }
   }
 }

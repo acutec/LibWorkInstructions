@@ -66,11 +66,21 @@ namespace LibWorkInstructions {
       public string Clause { get; set; }
     }
 
-    public class Event {
-      public string Kind { get; set; }
-      public Dictionary<string, string> Args { get; set; }
-      public DateTime When { get; set; }
-    }
+        public class Event
+        {
+            public string Action { get; set; }
+            // Set values below to nullable values, until we find a better way to hanlde these multiple types
+            // Should be handled fine, given that each function that will use these will be simple and be able to call upon what it needs
+            #nullable enable
+            public Dictionary<string, string>? Args { get; set;}
+            public Dictionary<string, Job>? newJob { get; set; }
+            public Dictionary<string, WorkInstruction>? newWorkI { get; set; }
+            public Dictionary<string, QualityClause>? newQualityC { get; set; }
+            public Dictionary<string, OpSpec>? newOpSpec { get; set; }
+            public Dictionary<string, Op>? newOp { get; set; }
+            #nullable disable
+            public DateTime When { get; set; }
+        }
 
-    }
+  }
 }
