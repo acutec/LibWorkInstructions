@@ -32,15 +32,16 @@ namespace LibWorkInstructions
         public Job getJob(string jobId) =>
                 db.Jobs.First(y => y.Key == jobId).Value;
 
-        public void addJob(List<Event> log, Job newJob)
+        public void addJob(Job newJob)
         {
             db.Jobs.Add(newJob.Id, newJob);
-            var args = new Dictionary<string, Job>();
-            args["Job"] = newJob;
-            log.Add(new Event
+
+            var args = new Dictionary<string, string>();
+            args["Job"] = newJob.Id;
+            db.AuditLog.Add(new Event
             {
-                Action = "addJob",
-                newJob = args,
+                Action = "AddJob",
+                Args = args,
                 When = DateTime.Now,
             });
         }
@@ -51,14 +52,42 @@ namespace LibWorkInstructions
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
         {
             db.WorkInstructions.Add(newWorkInstruction.Id, newWorkInstruction);
+
+            var args = new Dictionary<string, string>();
+            args["WorkInstruction"] = newWorkInstruction.Id.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "AddWorkInstruction",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
         public void ChangeWorkInstruction(int oldWorkId, WorkInstruction newWorkInstruction)
         {
             db.WorkInstructions[oldWorkId] = newWorkInstruction;
+
+            var args = new Dictionary<string, string>();
+            args["OldWorkInstruction"] = oldWorkId.ToString();
+            args["NewWorkInstruction"] = newWorkInstruction.Id.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "ChangeWorkInstruction",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
         public void RemoveWorkInstruction(int workId)
         {
             db.WorkInstructions.Remove(workId);
+
+            var args = new Dictionary<string, string>();
+            args["WorkInstruction"] = workId.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "RemoveWorkInstruction",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
         public void MergeWorkInstructions(int workId1, int workId2)
         {
@@ -85,6 +114,16 @@ namespace LibWorkInstructions
             db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
             db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
             db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
+
+            var args = new Dictionary<string, string>();
+            args["WorkInstruction1"] = workId1.ToString();
+            args["WorkInstruction2"] = workId2.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "MergeWorkInstructions",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
 
         public void SplitWorkInstruction(int workId)
@@ -103,25 +142,40 @@ namespace LibWorkInstructions
             string job = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate)).Key;
 
             db.JobRefToWorkInstructionRefs[job].Add(duplicate);
+
+            var args = new Dictionary<string, string>();
+            args["WorkInstruction"] = workId.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "SplitWorkInstruction",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
 
-        public void CloneWorkInstructions(int workId, string newJobId)
+        public void CloneWorkInstruction(int workId, string targetJobId)
         {
-            List<List<int>> duplicate = new List<List<int>>();
-            Job newJob = new Job();
-            newJob.Id = newJobId;
-
+            List<int> duplicate = new List<int>();
             foreach (List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
             {
                 foreach (List<int> workInstruction in list)
                 {
                     if (workInstruction.Contains(workId))
-                        duplicate = list;
+                        duplicate = workInstruction;
                 }
             }
 
-            db.Jobs.Add(newJobId, newJob);
-            db.JobRefToWorkInstructionRefs.Add(newJobId, duplicate);
+            db.JobRefToWorkInstructionRefs[targetJobId].Add(duplicate);
+
+            var args = new Dictionary<string, string>();
+            args["WorkInstruction"] = workId.ToString();
+            args["TargetJob"] = targetJobId;
+            db.AuditLog.Add(new Event
+            {
+                Action = "CloneWorkInstruction",
+                Args = args,
+                When = DateTime.Now,
+            });
         }
 
         public void AddSpec(OpSpec opSpec)
