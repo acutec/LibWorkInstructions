@@ -29,24 +29,29 @@ namespace LibWorkInstructions
         public MockDB DataExport() => db;
         #endregion
 
-        public Job getJob(string jobId) =>
+        public Job GetJob(string jobId) =>
                 db.Jobs.First(y => y.Key == jobId).Value;
 
-        public void addJob(Job newJob)
+        public void AddJob(Job newJob)
         {
-            db.Jobs.Add(newJob.Id, newJob);
-
-            var args = new Dictionary<string, string>();
-            var jobDict = new Dictionary<string, Job>();
-            args["Job"] = newJob.Id;
-            jobDict[args["Job"]] = newJob;
-            db.AuditLog.Add(new Event
+            if (!db.Jobs.ContainsKey(newJob.Id))
             {
-                Action = "AddJob",
-                Args = args,
-                newJob = jobDict,
-                When = DateTime.Now,
-            });
+                db.Jobs.Add(newJob.Id, newJob);
+
+                var args = new Dictionary<string, string>();
+                var jobDict = new Dictionary<string, Job>();
+                args["Job"] = newJob.Id;
+                jobDict[args["Job"]] = newJob;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "AddJob",
+                    Args = args,
+                    newJob = jobDict,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("Job already exists in the database");
         }
         
         public WorkInstruction getWorkInstruction(int instructionId) =>
@@ -54,300 +59,396 @@ namespace LibWorkInstructions
 
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
         {
-            db.WorkInstructions.Add(newWorkInstruction.Id, newWorkInstruction);
-
-            var args = new Dictionary<string, string>();
-            var workIDict = new Dictionary<string, WorkInstruction>();
-            args["WorkInstruction"] = newWorkInstruction.Id.ToString();
-            workIDict[args["WorkInstruction"]] = newWorkInstruction;
-            db.AuditLog.Add(new Event
+            if (db.WorkInstructions.ContainsKey(newWorkInstruction.Id))
             {
-                Action = "AddWorkInstruction",
-                Args = args,
-                newWorkI = workIDict,
-                When = DateTime.Now,
-            });
+                db.WorkInstructions.Add(newWorkInstruction.Id, newWorkInstruction);
+
+                var args = new Dictionary<string, string>();
+                var workIDict = new Dictionary<string, WorkInstruction>();
+                args["WorkInstruction"] = newWorkInstruction.Id.ToString();
+                workIDict[args["WorkInstruction"]] = newWorkInstruction;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "AddWorkInstruction",
+                    Args = args,
+                    newWorkI = workIDict,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("Work instruction already exists in the database");
         }
-        public void ChangeWorkInstruction(int oldWorkId, WorkInstruction newWorkInstruction)
+        public void ChangeWorkInstruction(int targetWorkId, WorkInstruction newWorkInstruction)
         {
-            db.WorkInstructions[oldWorkId] = newWorkInstruction;
-
-            var args = new Dictionary<string, string>();
-            args["OldWorkInstruction"] = oldWorkId.ToString();
-            args["NewWorkInstruction"] = newWorkInstruction.Id.ToString();
-            db.AuditLog.Add(new Event
+            if (db.WorkInstructions.ContainsKey(targetWorkId) && !db.WorkInstructions.ContainsKey(newWorkInstruction.Id))
             {
-                Action = "ChangeWorkInstruction",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.WorkInstructions[targetWorkId] = newWorkInstruction;
+
+                var args = new Dictionary<string, string>();
+                args["OldWorkInstruction"] = targetWorkId.ToString();
+                args["NewWorkInstruction"] = newWorkInstruction.Id.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "ChangeWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                if (!db.WorkInstructions.ContainsKey(targetWorkId))
+                    Console.Write("The work instruction being replaced doesn't exist in the database");
+                else
+                    Console.Write("The new work instruction already exists in the database");
+            }
         }
         public void RemoveWorkInstruction(int workId)
         {
-            db.WorkInstructions.Remove(workId);
+            if (db.WorkInstructions.ContainsKey(workId)) {
+                db.WorkInstructions.Remove(workId);
 
-            var args = new Dictionary<string, string>();
-            args["WorkInstruction"] = workId.ToString();
-            db.AuditLog.Add(new Event
-            {
-                Action = "RemoveWorkInstruction",
-                Args = args,
-                When = DateTime.Now,
-            });
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction"] = workId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "RemoveWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("This work instruction doesn't exist in the database");
         }
         public void MergeWorkInstructions(int workId1, int workId2)
         {
-            List<int> workInstruction1 = new List<int>();
-            List<int> workInstruction2 = new List<int>();
-            List<int> mergedInstruction = new List<int>();
-
-            foreach (List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
+            if (db.WorkInstructions.ContainsKey(workId1) && db.WorkInstructions.ContainsKey(workId2))
             {
-                foreach (List<int> workInstruction in value)
+                List<int> workInstruction1 = new List<int>();
+                List<int> workInstruction2 = new List<int>();
+                List<int> mergedInstruction = new List<int>();
+
+                foreach (List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
                 {
-                    if (workInstruction.Contains(workId1))
-                        workInstruction1 = workInstruction;
-                    if (workInstruction.Contains(workId2))
-                        workInstruction2 = workInstruction;
+                    foreach (List<int> workInstruction in value)
+                    {
+                        if (workInstruction.Contains(workId1))
+                            workInstruction1 = workInstruction;
+                        if (workInstruction.Contains(workId2))
+                            workInstruction2 = workInstruction;
+                    }
                 }
+
+                string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction1)).Key;
+                string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction2)).Key;
+
+                mergedInstruction = Enumerable.ToList(workInstruction1.Union(workInstruction2));
+
+                db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
+                db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
+                db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction1"] = workId1.ToString();
+                args["WorkInstruction2"] = workId2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeWorkInstructions",
+                    Args = args,
+                    When = DateTime.Now,
+                });
             }
-
-            string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction1)).Key;
-            string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction2)).Key;
-
-            mergedInstruction = Enumerable.ToList(workInstruction1.Union(workInstruction2));
-
-            db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
-            db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
-            db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
-
-            var args = new Dictionary<string, string>();
-            args["WorkInstruction1"] = workId1.ToString();
-            args["WorkInstruction2"] = workId2.ToString();
-            db.AuditLog.Add(new Event
-            {
-                Action = "MergeWorkInstructions",
-                Args = args,
-                When = DateTime.Now,
-            });
+            else
+                Console.Write("One(or both) of the work instructions doesn't exist in the database");
         }
 
         public void SplitWorkInstruction(int workId)
         {
-            List<int> duplicate = new List<int>();
-
-            foreach (List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
+            if (db.WorkInstructions.ContainsKey(workId))
             {
-                foreach (List<int> workInstruction in value)
+                List<int> duplicate = new List<int>();
+
+                foreach (List<List<int>> value in db.JobRefToWorkInstructionRefs.Values)
                 {
-                    if (workInstruction.Contains(workId))
-                        duplicate = workInstruction;
+                    foreach (List<int> workInstruction in value)
+                    {
+                        if (workInstruction.Contains(workId))
+                            duplicate = workInstruction;
+                    }
                 }
+
+                string job = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate)).Key;
+
+                db.JobRefToWorkInstructionRefs[job].Add(duplicate);
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction"] = workId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "SplitWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
             }
-
-            string job = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate)).Key;
-
-            db.JobRefToWorkInstructionRefs[job].Add(duplicate);
-
-            var args = new Dictionary<string, string>();
-            args["WorkInstruction"] = workId.ToString();
-            db.AuditLog.Add(new Event
-            {
-                Action = "SplitWorkInstruction",
-                Args = args,
-                When = DateTime.Now,
-            });
+            else
+                Console.Write("The work instruction doesn't exist in the database");
         }
 
         public void CloneWorkInstruction(int sourceWorkId, string targetJobId)
         {
-            List<int> duplicate = new List<int>();
-            foreach (List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
+            if (db.WorkInstructions.ContainsKey(sourceWorkId) && db.Jobs.ContainsKey(targetJobId))
             {
-                foreach (List<int> workInstruction in list)
+                List<int> duplicate = new List<int>();
+                foreach (List<List<int>> list in db.JobRefToWorkInstructionRefs.Values)
                 {
-                    if (workInstruction.Contains(sourceWorkId))
-                        duplicate = workInstruction;
+                    foreach (List<int> workInstruction in list)
+                    {
+                        if (workInstruction.Contains(sourceWorkId))
+                            duplicate = workInstruction;
+                    }
                 }
+
+                db.JobRefToWorkInstructionRefs[targetJobId].Add(duplicate);
+
+                var args = new Dictionary<string, string>();
+                args["SourceWorkInstruction"] = sourceWorkId.ToString();
+                args["TargetJob"] = targetJobId;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
             }
-
-            db.JobRefToWorkInstructionRefs[targetJobId].Add(duplicate);
-
-            var args = new Dictionary<string, string>();
-            args["SourceWorkInstruction"] = sourceWorkId.ToString();
-            args["TargetJob"] = targetJobId;
-            db.AuditLog.Add(new Event
+            else
             {
-                Action = "CloneWorkInstruction",
-                Args = args,
-                When = DateTime.Now,
-            });
+                if (!db.WorkInstructions.ContainsKey(sourceWorkId))
+                    Console.Write("The work instruction doesn't exist in the database");
+                else
+                    Console.Write("The job doesn't exist in the database");
+            }
         }
 
         public void AddSpec(OpSpec opSpec)
         {
-            db.OpSpecs.Add(opSpec.Id, opSpec);
-
-            var args = new Dictionary<string, string>();
-            var specDict = new Dictionary<string, OpSpec>();
-            args["OpSpec"] = opSpec.Id.ToString();
-            specDict[args["OpSpec"]] = opSpec;
-            db.AuditLog.Add(new Event
+            if (db.OpSpecs.ContainsKey(opSpec.Id))
             {
-                Action = "AddSpec",
-                Args = args,
-                newOpSpec = specDict,
-                When = DateTime.Now,
-            });
+                db.OpSpecs.Add(opSpec.Id, opSpec);
+
+                var args = new Dictionary<string, string>();
+                var specDict = new Dictionary<string, OpSpec>();
+                args["OpSpec"] = opSpec.Id.ToString();
+                specDict[args["OpSpec"]] = opSpec;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "AddSpec",
+                    Args = args,
+                    newOpSpec = specDict,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("The spec already exists in the database");
         }
 
         public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
         {
-            db.OpSpecs[oldSpecId] = newOpSpec;
-            List<WorkInstruction> invalidateWorkInstructions =  (from workInstruction in db.WorkInstructions.Values
-                                                                where workInstruction.OpSpecs.Contains(oldSpecId)
-                                                                select workInstruction).ToList();
-            foreach(WorkInstruction workInstruction in invalidateWorkInstructions)
-                workInstruction.Approved = false;
-
-            var args = new Dictionary<string, string>();
-            args["OldSpec"] = oldSpecId.ToString();
-            args["NewSpec"] = newOpSpec.Id.ToString();
-            db.AuditLog.Add(new Event
+            if (db.OpSpecs.ContainsKey(oldSpecId) && !db.OpSpecs.ContainsKey(newOpSpec.Id))
             {
-                Action = "ChangeSpec",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.OpSpecs[oldSpecId] = newOpSpec;
+                List<WorkInstruction> invalidateWorkInstructions = (from workInstruction in db.WorkInstructions.Values
+                                                                    where workInstruction.OpSpecs.Contains(oldSpecId)
+                                                                    select workInstruction).ToList();
+                foreach (WorkInstruction workInstruction in invalidateWorkInstructions)
+                    workInstruction.Approved = false;
+
+                var args = new Dictionary<string, string>();
+                args["OldSpec"] = oldSpecId.ToString();
+                args["NewSpec"] = newOpSpec.Id.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "ChangeSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                if (!db.OpSpecs.ContainsKey(oldSpecId))
+                    Console.Write("The spec being replaced doesn't exist in the database");
+                else
+                    Console.Write("The new spec already exists in the database");
+            }
         }
 
         public void DeleteSpec(int specId)
         {
-            db.OpSpecs.Remove(specId);
-
-            var args = new Dictionary<string, string>();
-            args["DeletedSpec"] = specId.ToString();
-            db.AuditLog.Add(new Event
+            if (db.OpSpecs.ContainsKey(specId))
             {
-                Action = "DeleteSpec",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.OpSpecs.Remove(specId);
+
+                var args = new Dictionary<string, string>();
+                args["DeletedSpec"] = specId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                Console.Write("The spec doesn't exist in the database");
+            }
         }
 
         public void MergeSpecs(int workId1, int workId2)
         {
-            db.WorkInstructions[workId1].OpSpecs =
-                Enumerable.ToList(db.WorkInstructions[workId1].OpSpecs.Union(db.WorkInstructions[workId2].OpSpecs));
-            db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
-
-            var args = new Dictionary<string, string>();
-            args["WorkInstruction1"] = workId1.ToString();
-            args["WorkInstruction2"] = workId2.ToString();
-            db.AuditLog.Add(new Event
+            if (db.WorkInstructions.ContainsKey(workId1) && db.WorkInstructions.ContainsKey(workId2))
             {
-                Action = "MergeSpecs",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.WorkInstructions[workId1].OpSpecs =
+                    Enumerable.ToList(db.WorkInstructions[workId1].OpSpecs.Union(db.WorkInstructions[workId2].OpSpecs));
+                db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction1"] = workId1.ToString();
+                args["WorkInstruction2"] = workId2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeSpecs",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the specs doesn't exist in the database");
         }
 
-        public void SplitSpecs(int workId1, int workId2)
+        public void SplitSpecs(int sourceWorkId, int targetWorkId)
         {
-            db.WorkInstructions[workId2].OpSpecs = db.WorkInstructions[workId1].OpSpecs;
-
-            var args = new Dictionary<string, string>();
-            args["WorkInstruction1"] = workId1.ToString();
-            args["WorkInstruction2"] = workId2.ToString();
-            db.AuditLog.Add(new Event
+            if (db.WorkInstructions.ContainsKey(sourceWorkId) && db.WorkInstructions.ContainsKey(targetWorkId))
             {
-                Action = "SplitSpecs",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.WorkInstructions[targetWorkId].OpSpecs = db.WorkInstructions[sourceWorkId].OpSpecs;
+
+                var args = new Dictionary<string, string>();
+                args["SourceWorkId"] = sourceWorkId.ToString();
+                args["TargetWorkId"] = targetWorkId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "SplitSpecs",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the work instructions doesn't exist in the database");
         }
 
         public void CloneSpecs(int sourceWorkId, int targetWorkId)
         {
-            db.WorkInstructions[targetWorkId].OpSpecs =
+            if (db.WorkInstructions.ContainsKey(sourceWorkId) && db.WorkInstructions.ContainsKey(targetWorkId))
+            {
+                db.WorkInstructions[targetWorkId].OpSpecs =
                 Enumerable.ToList(db.WorkInstructions[sourceWorkId].OpSpecs.Union(db.WorkInstructions[targetWorkId].OpSpecs));
 
-            var args = new Dictionary<string, string>();
-            args["SourceWorkId"] = sourceWorkId.ToString();
-            args["TargetWorkId"] = targetWorkId.ToString();
-            db.AuditLog.Add(new Event
-            {
-                Action = "CloneSpecs",
-                Args = args,
-                When = DateTime.Now,
-            });
+                var args = new Dictionary<string, string>();
+                args["SourceWorkId"] = sourceWorkId.ToString();
+                args["TargetWorkId"] = targetWorkId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneSpecs",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the work instructions doesn't exist in the database");
         }
 
         public void CreateQualityClause(QualityClause qualityClause)
         {
-            db.QualityClauses.Add(qualityClause.Id, qualityClause);
-
-            var args = new Dictionary<string, string>();
-            var clauseDict = new Dictionary<string, QualityClause>();
-            args["QualityClause"] = qualityClause.Id.ToString();
-            clauseDict[args["QualityClause"]] = qualityClause;
-            db.AuditLog.Add(new Event
+            if (!db.QualityClauses.ContainsKey(qualityClause.Id))
             {
-                Action = "CreateQualityClause",
-                Args = args,
-                newQualityC = clauseDict,
-                When = DateTime.Now,
-            });
+                db.QualityClauses.Add(qualityClause.Id, qualityClause);
+
+                var args = new Dictionary<string, string>();
+                var clauseDict = new Dictionary<string, QualityClause>();
+                args["QualityClause"] = qualityClause.Id.ToString();
+                clauseDict[args["QualityClause"]] = qualityClause;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreateQualityClause",
+                    Args = args,
+                    newQualityC = clauseDict,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("The quality clause already exists in the database");
         }
 
         public void MergeQualityClauses(string job1, string job2)
         {
-            db.JobRefToQualityClauseRefs[job1] =
-                db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]).ToList();
-            db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
-
-            var args = new Dictionary<string, string>();
-            args["Job1"] = job1;
-            args["Job2"] = job2;
-            db.AuditLog.Add(new Event
+            if (db.Jobs.ContainsKey(job1) && db.Jobs.ContainsKey(job2))
             {
-                Action = "MergeQualityClauses",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.JobRefToQualityClauseRefs[job1] =
+                    db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]).ToList();
+                db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
+
+                var args = new Dictionary<string, string>();
+                args["Job1"] = job1;
+                args["Job2"] = job2;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeQualityClauses",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the jobs doesn't exist in the database");
         }
 
         public void SplitQualityClauses(string sourceJob, string targetJob)
         {
-            db.JobRefToQualityClauseRefs[targetJob] = db.JobRefToQualityClauseRefs[sourceJob];
-
-            var args = new Dictionary<string, string>();
-            args["SourceJob"] = sourceJob;
-            args["TargetJob"] = targetJob;
-            db.AuditLog.Add(new Event
+            if (db.Jobs.ContainsKey(sourceJob) && db.Jobs.ContainsKey(targetJob))
             {
-                Action = "SplitQualityClauses",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.JobRefToQualityClauseRefs[targetJob] = db.JobRefToQualityClauseRefs[sourceJob];
+
+                var args = new Dictionary<string, string>();
+                args["SourceJob"] = sourceJob;
+                args["TargetJob"] = targetJob;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "SplitQualityClauses",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the jobs doesn't exist in the database");
         }
 
         public void CloneQualityClauses(string sourceJobId, string targetJobId)
         {
-            db.JobRefToQualityClauseRefs[targetJobId]
-                .AddRange(db.JobRefToQualityClauseRefs[sourceJobId]);
-            db.JobRefToQualityClauseRefs[targetJobId] =
-                    db.JobRefToQualityClauseRefs[targetJobId].Distinct().ToList();
-
-            var args = new Dictionary<string, string>();
-            args["SourceJob"] = sourceJobId;
-            args["TargetJob"] = targetJobId;
-            db.AuditLog.Add(new Event
+            if (db.Jobs.ContainsKey(sourceJobId) && db.Jobs.ContainsKey(targetJobId))
             {
-                Action = "CloneQualityClauses",
-                Args = args,
-                When = DateTime.Now,
-            });
+                db.JobRefToQualityClauseRefs[targetJobId]
+                .AddRange(db.JobRefToQualityClauseRefs[sourceJobId]);
+                db.JobRefToQualityClauseRefs[targetJobId] =
+                        db.JobRefToQualityClauseRefs[targetJobId].Distinct().ToList();
+
+                var args = new Dictionary<string, string>();
+                args["SourceJob"] = sourceJobId;
+                args["TargetJob"] = targetJobId;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneQualityClauses",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+                Console.Write("One(or both) of the jobs doesn't exist in the database");
         }
 
         public void DisplayPriorRevisionsOfWorkInstruction(string job, int latestWorkId)
