@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LibWorkInstructionsTests {
   public class Tests {
@@ -83,7 +84,7 @@ namespace LibWorkInstructionsTests {
     
 
     [Test]
-    public void testJobCalling()
+    public void TestJobCalling()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -108,7 +109,7 @@ namespace LibWorkInstructionsTests {
         }
 
     [Test]
-    public void testGetJob()
+    public void TestGetJob()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -132,7 +133,7 @@ namespace LibWorkInstructionsTests {
         }
 
     [Test]
-    public void testAddJob()
+    public void TestAddJob()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
@@ -146,7 +147,7 @@ namespace LibWorkInstructionsTests {
         }
 
     [Test]
-    public void testGetWorkInstruction()
+    public void TestGetWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -172,16 +173,16 @@ namespace LibWorkInstructionsTests {
                 OpSpecs = new List<int> { 1 },
             };
             n.DataImport(sampleData);
-            Assert.True(n.getWorkInstruction(0).Id.Equals(testWorkInstruction.Id));
-            Assert.True(n.getWorkInstruction(0).IdRevGroup.Equals(testWorkInstruction.IdRevGroup));
-            Assert.True(n.getWorkInstruction(0).Approved.Equals(testWorkInstruction.Approved));
-            Assert.True(n.getWorkInstruction(0).HtmlBlob.Equals(testWorkInstruction.HtmlBlob));
-            Assert.True(n.getWorkInstruction(0).Images[0].Equals(testWorkInstruction.Images[0]));
-            Assert.True(n.getWorkInstruction(0).OpSpecs[0].Equals(testWorkInstruction.OpSpecs[0]));
+            Assert.True(n.GetWorkInstruction(0).Id.Equals(testWorkInstruction.Id));
+            Assert.True(n.GetWorkInstruction(0).IdRevGroup.Equals(testWorkInstruction.IdRevGroup));
+            Assert.True(n.GetWorkInstruction(0).Approved.Equals(testWorkInstruction.Approved));
+            Assert.True(n.GetWorkInstruction(0).HtmlBlob.Equals(testWorkInstruction.HtmlBlob));
+            Assert.True(n.GetWorkInstruction(0).Images[0].Equals(testWorkInstruction.Images[0]));
+            Assert.True(n.GetWorkInstruction(0).OpSpecs[0].Equals(testWorkInstruction.OpSpecs[0]));
         }
 
     [Test]
-    public void testAddWorkInstruction()
+    public void TestAddWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             LibWorkInstructions.Structs.WorkInstruction sampleData = new LibWorkInstructions.Structs.WorkInstruction {
@@ -212,7 +213,7 @@ namespace LibWorkInstructionsTests {
         }
 
         [Test]
-        public void testChangeWorkInstruction()
+        public void TestChangeWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -249,7 +250,7 @@ namespace LibWorkInstructionsTests {
         }
 
         [Test]
-        public void testRemoveWorkInstruction()
+        public void TestRemoveWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -274,12 +275,94 @@ namespace LibWorkInstructionsTests {
                 }
             };
             n.DataImport(sampleData);
-            Assert.True(n.getWorkInstruction(0).Id.Equals(0));
-            Assert.True(n.getWorkInstruction(1).Id.Equals(1));
+            Assert.True(n.GetWorkInstruction(0).Id.Equals(0));
+            Assert.True(n.GetWorkInstruction(1).Id.Equals(1));
             n.RemoveWorkInstruction(0);
             var dbVar = n.DataExport();
             Assert.False(dbVar.WorkInstructions.ContainsKey(0));
             Assert.True(dbVar.WorkInstructions.ContainsKey(1));
+        }
+        [Test]
+        public void TestMergeWorkInstructions()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>> {
+                    {"job1" , new List<List<int>>()
+                    {new List<int> {0001, 0002, 0003}, new List<int> {1001, 1002, 1003} }},
+                    {"job2", new List<List<int>>()
+                    {new List<int> {2001, 2002, 2003}, new List<int> {3001, 3002, 3003} } },
+                }
+            };
+            n.DataImport(sampleData);
+            var dbPreMerge = n.DataExport();
+            n.MergeWorkInstructions(2001, 1001);
+            var dbPostMerge = n.DataExport();
+            var mergedInstruction = new List<int>{ 0001, 0002, 0003, 2001, 2002, 2003 };
+            var workInstruction1 = dbPreMerge.JobRefToWorkInstructionRefs["job1"][0];
+            var workInstruction2 = dbPreMerge.JobRefToWorkInstructionRefs["job2"][0];
+            Assert.True(dbPostMerge.JobRefToWorkInstructionRefs["job1"].Contains(mergedInstruction));
+            Assert.True(dbPostMerge.JobRefToWorkInstructionRefs["job1"].Contains(mergedInstruction));
+            Assert.False(dbPostMerge.JobRefToWorkInstructionRefs["job1"].Contains(workInstruction1));
+            Assert.False(dbPostMerge.JobRefToWorkInstructionRefs["job2"].Contains(workInstruction2));
+        }
+
+        [Test]
+        public void TestSplitWorkInstruction()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>> {
+                    {"job1" , new List<List<int>>()
+                    {new List<int> {0001, 0002, 0003}, new List<int> {1001, 1002, 1003} }},
+                    {"job2", new List<List<int>>()
+                    {new List<int> {2001, 2002, 2003}, new List<int> {3001, 3002, 3003} } },
+                }
+            };
+            n.DataImport(sampleData);
+            n.SplitWorkInstruction(2001);
+            var dbPostSplit = n.DataExport();
+
+            Assert.True(Enumerable.ToList(dbPostSplit.JobRefToWorkInstructionRefs["job2"])
+                .Where(y => y.Equals(new List<int> { 2001, 2002, 2003})).Count() == 2);
+        }
+
+        [Test]
+        public void TestCloneWorkInstruction()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                JobRefToWorkInstructionRefs = new Dictionary<string, List<List<int>>> {
+                    {"job1" , new List<List<int>>()
+                    {new List<int> {0001, 0002, 0003}, new List<int> {1001, 1002, 1003} }},
+                    {"job2", new List<List<int>>()
+                    {new List<int> {2001, 2002, 2003}, new List<int> {3001, 3002, 3003} } },
+                }
+            };
+
+            n.DataImport(sampleData);
+            n.CloneWorkInstruction(2001, "job1");
+            var dbPostClone = n.DataExport();
+
+            Assert.True(dbPostClone.JobRefToWorkInstructionRefs["job1"].Contains(new List<int> { 2001, 2002, 2003 }));
+        }
+
+        [Test]
+        public void TestAddSpec()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<int, LibWorkInstructions.Structs.OpSpec>()
+            };
+
+            n.DataImport(sampleData);
+            n.AddSpec(new LibWorkInstructions.Structs.OpSpec { Id = 1 });
+            var dbPostAdd = n.DataExport();
+            Assert.True(dbPostAdd.OpSpecs.ContainsKey(1));
         }
   }
 }
