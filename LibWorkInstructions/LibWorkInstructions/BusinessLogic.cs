@@ -46,7 +46,7 @@ namespace LibWorkInstructions
                 {
                     Action = "AddJob",
                     Args = args,
-                    newJob = jobDict,
+                    NewJob = jobDict,
                     When = DateTime.Now,
                 });
             }
@@ -54,7 +54,7 @@ namespace LibWorkInstructions
                 Console.Write("Job already exists in the database");
         }
         
-        public WorkInstruction getWorkInstruction(int instructionId) =>
+        public WorkInstruction GetWorkInstruction(int instructionId) =>
             db.WorkInstructions.First(y => y.Key == instructionId).Value;
 
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
@@ -71,7 +71,7 @@ namespace LibWorkInstructions
                 {
                     Action = "AddWorkInstruction",
                     Args = args,
-                    newWorkI = workIDict,
+                    NewWorkI = workIDict,
                     When = DateTime.Now,
                 });
             }
@@ -144,6 +144,7 @@ namespace LibWorkInstructions
                 mergedInstruction = Enumerable.ToList(workInstruction1.Union(workInstruction2));
 
                 db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
+                db.JobRefToWorkInstructionRefs[job2].Add(mergedInstruction);
                 db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
                 db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
 
@@ -242,7 +243,7 @@ namespace LibWorkInstructions
                 {
                     Action = "AddSpec",
                     Args = args,
-                    newOpSpec = specDict,
+                    NewOpSpec = specDict,
                     When = DateTime.Now,
                 });
             }
@@ -378,7 +379,7 @@ namespace LibWorkInstructions
                 {
                     Action = "CreateQualityClause",
                     Args = args,
-                    newQualityC = clauseDict,
+                    NewQualityC = clauseDict,
                     When = DateTime.Now,
                 });
             }

@@ -73,11 +73,11 @@ namespace LibWorkInstructions {
             // Should be handled fine, given that each function that will use these will be simple and be able to call upon what it needs
             #nullable enable
             public Dictionary<string, string>? Args { get; set;}
-            public Dictionary<string, Job>? newJob { get; set; }
-            public Dictionary<string, WorkInstruction>? newWorkI { get; set; }
-            public Dictionary<string, QualityClause>? newQualityC { get; set; }
-            public Dictionary<string, OpSpec>? newOpSpec { get; set; }
-            public Dictionary<string, Op>? newOp { get; set; }
+            public Dictionary<string, Job>? NewJob { get; set; }
+            public Dictionary<string, WorkInstruction>? NewWorkI { get; set; }
+            public Dictionary<string, QualityClause>? NewQualityC { get; set; }
+            public Dictionary<string, OpSpec>? NewOpSpec { get; set; }
+            public Dictionary<string, Op>? NewOp { get; set; }
             #nullable disable
             public DateTime When { get; set; }
         }
