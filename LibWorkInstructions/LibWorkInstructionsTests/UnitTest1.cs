@@ -125,10 +125,10 @@ namespace LibWorkInstructionsTests {
             n.DataImport(sampleData);
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
             //Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
-            Assert.True(n.getJob("F110").Id.Equals(testJob.Id));
-            Assert.True(n.getJob("F110").Rev.Equals(testJob.Rev));
-            Assert.True(n.getJob("F110").RevCustomer.Equals(testJob.RevCustomer));
-            Assert.True(n.getJob("F110").RevPlan.Equals(testJob.RevPlan));
+            Assert.True(n.GetJob("F110").Id.Equals(testJob.Id));
+            Assert.True(n.GetJob("F110").Rev.Equals(testJob.Rev));
+            Assert.True(n.GetJob("F110").RevCustomer.Equals(testJob.RevCustomer));
+            Assert.True(n.GetJob("F110").RevPlan.Equals(testJob.RevPlan));
         }
 
     [Test]
@@ -136,7 +136,7 @@ namespace LibWorkInstructionsTests {
         {
             var n = new LibWorkInstructions.BusinessLogic();
             LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
-            n.addJob(testJob);
+            n.AddJob(testJob);
             var dbVar = n.DataExport();
             // Check that List is empty
             Assert.True(dbVar.Jobs["F110"].Id.Equals(testJob.Id));
@@ -281,6 +281,5 @@ namespace LibWorkInstructionsTests {
             Assert.False(dbVar.WorkInstructions.ContainsKey(0));
             Assert.True(dbVar.WorkInstructions.ContainsKey(1));
         }
-
   }
 }
