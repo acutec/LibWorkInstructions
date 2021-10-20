@@ -59,7 +59,7 @@ namespace LibWorkInstructions
 
         public void AddWorkInstruction(WorkInstruction newWorkInstruction)
         {
-            if (db.WorkInstructions.ContainsKey(newWorkInstruction.Id))
+            if (!db.WorkInstructions.ContainsKey(newWorkInstruction.Id))
             {
                 db.WorkInstructions.Add(newWorkInstruction.Id, newWorkInstruction);
 
@@ -141,9 +141,10 @@ namespace LibWorkInstructions
                 string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction1)).Key;
                 string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction2)).Key;
 
-                mergedInstruction = Enumerable.ToList(workInstruction1.Union(workInstruction2));
+                mergedInstruction = workInstruction1.Union(workInstruction2).ToList();
 
-                db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
+                if(job1 != job2)
+                    db.JobRefToWorkInstructionRefs[job1].Add(mergedInstruction);
                 db.JobRefToWorkInstructionRefs[job2].Add(mergedInstruction);
                 db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1);
                 db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2);
@@ -162,9 +163,9 @@ namespace LibWorkInstructions
                 Console.Write("One(or both) of the work instructions doesn't exist in the database");
         }
 
-        public void SplitWorkInstruction(int workId)
+        public void SplitWorkInstruction(int workId, string targetJob)
         {
-            if (db.WorkInstructions.ContainsKey(workId))
+            if (db.WorkInstructions.ContainsKey(workId) && db.Jobs.ContainsKey(targetJob))
             {
                 List<int> duplicate = new List<int>();
 
@@ -177,9 +178,8 @@ namespace LibWorkInstructions
                     }
                 }
 
-                string job = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate)).Key;
-
-                db.JobRefToWorkInstructionRefs[job].Add(duplicate);
+                if(!db.JobRefToWorkInstructionRefs[targetJob].Contains(duplicate))
+                    db.JobRefToWorkInstructionRefs[targetJob].Add(duplicate);
 
                 var args = new Dictionary<string, string>();
                 args["WorkInstruction"] = workId.ToString();
@@ -231,7 +231,7 @@ namespace LibWorkInstructions
 
         public void AddSpec(OpSpec opSpec)
         {
-            if (db.OpSpecs.ContainsKey(opSpec.Id))
+            if (!db.OpSpecs.ContainsKey(opSpec.Id))
             {
                 db.OpSpecs.Add(opSpec.Id, opSpec);
 
@@ -253,14 +253,16 @@ namespace LibWorkInstructions
 
         public void ChangeSpec(int oldSpecId, OpSpec newOpSpec)
         {
-            if (db.OpSpecs.ContainsKey(oldSpecId) && !db.OpSpecs.ContainsKey(newOpSpec.Id))
+            if (db.OpSpecs.ContainsKey(oldSpecId))
             {
                 db.OpSpecs[oldSpecId] = newOpSpec;
-                List<WorkInstruction> invalidateWorkInstructions = (from workInstruction in db.WorkInstructions.Values
-                                                                    where workInstruction.OpSpecs.Contains(oldSpecId)
-                                                                    select workInstruction).ToList();
-                foreach (WorkInstruction workInstruction in invalidateWorkInstructions)
-                    workInstruction.Approved = false;
+                foreach ( WorkInstruction workInstruction in db.WorkInstructions.Values)
+                {
+                    if (workInstruction.OpSpecs.Contains(oldSpecId))
+                        workInstruction.Approved = false;
+                }
+
+                
 
                 var args = new Dictionary<string, string>();
                 args["OldSpec"] = oldSpecId.ToString();
@@ -365,7 +367,7 @@ namespace LibWorkInstructions
                 Console.Write("One(or both) of the work instructions doesn't exist in the database");
         }
 
-        public void CreateQualityClause(QualityClause qualityClause)
+        public void AddQualityClause(QualityClause qualityClause)
         {
             if (!db.QualityClauses.ContainsKey(qualityClause.Id))
             {
