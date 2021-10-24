@@ -19,7 +19,7 @@ namespace LibWorkInstructions {
 
     public class Op {
       // Operations are uniquely identified by integers, we have over 1.5 million of them in our database.
-      public int Id { get; set; }
+      public Guid Id { get; set; }
       // Operations are associated with a single job (this and Seq below are encoded in the in-memory data structure but listed here as the DB would store them).
       public string JobId { get; set; }
       // Operations are known by most people by this displaytext rather than the integer identifier, e.g. "Op 20", "Op 30", etc.
@@ -31,9 +31,9 @@ namespace LibWorkInstructions {
     // Work instructions are specific to a particular revision of an operation
     public class WorkInstruction {
       // Identifier for work instructions (unique per rev)
-      public int Id { get; set; }
+      public Guid Id { get; set; }
       // Identifier for work instructions (unique per group of revs)
-      public int IdRevGroup { get; set; }
+      public Guid IdRevGroup { get; set; }
       // There's a list of images for a particular work instruction
       public List<string> Images { get; set; }
       // Work instructions have an approval status
@@ -41,12 +41,14 @@ namespace LibWorkInstructions {
       // Placeholder for rich content
       public string HtmlBlob { get; set;}
 
-      public List<int> OpSpecs { get; set; }
+      public List<Guid> OpSpecs { get; set; }
+      
+      public List<Guid> Ops { get; set; }
     }
 
     public class OpSpec {
-      public int Id { get; set; }
-      public int IdRevGroup { get; set; }
+      public Guid Id { get; set; }
+      public Guid IdRevGroup { get; set; }
       public string Name { get; set; }
       public string Notice { get; set;  }
       public string Class { get; set; }
@@ -61,8 +63,8 @@ namespace LibWorkInstructions {
     }
     
     public class QualityClause {
-      public int Id { get; set; }
-      public int IdRevGroup { get; set; }
+      public Guid Id { get; set; }
+      public Guid IdRevGroup { get; set; }
       public string Clause { get; set; }
     }
 
@@ -72,12 +74,8 @@ namespace LibWorkInstructions {
             // Set values below to nullable values, until we find a better way to hanlde these multiple types
             // Should be handled fine, given that each function that will use these will be simple and be able to call upon what it needs
             #nullable enable
-            public Dictionary<string, string>? Args { get; set;}
-            public Dictionary<string, Job>? NewJob { get; set; }
-            public Dictionary<string, WorkInstruction>? NewWorkI { get; set; }
-            public Dictionary<string, QualityClause>? NewQualityC { get; set; }
-            public Dictionary<string, OpSpec>? NewOpSpec { get; set; }
-            public Dictionary<string, Op>? NewOp { get; set; }
+            public Dictionary<string, string>? Args { get; set; }
+            public string? NewData { get; set; }
             #nullable disable
             public DateTime When { get; set; }
         }
