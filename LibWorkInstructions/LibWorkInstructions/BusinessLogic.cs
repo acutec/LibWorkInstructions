@@ -517,24 +517,39 @@ namespace LibWorkInstructions
             }
         }
 
-        public void DisplayPriorRevisionsOfWorkInstruction(Guid groupId)
+        public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(WorkInstruction workInstruction)
         {
-            Console.Write(db.WorkInstructions[groupId]);
+            return db.WorkInstructions[workInstruction.IdRevGroup];
         }
 
-        public void DisplayPriorRevisionsOfQualityClauses(Guid groupId)
+        public List<QualityClause> DisplayPriorRevisionsOfQualityClauses(QualityClause qualityClause)
         {
-            Console.Write(db.QualityClauses[groupId]);
+            return db.QualityClauses[qualityClause.IdRevGroup];
         }
 
-        public void DisplayPriorRevisionsOfSpecs(Guid groupId)
+        public List<OpSpec> DisplayPriorRevisionsOfSpecs(OpSpec opSpec)
         {
-            Console.Write(db.OpSpecs[groupId]);
+            return db.OpSpecs[opSpec.IdRevGroup];
         }
 
-        public void DisplayLatestRevisionOfWorkInstruction(string jobRev)
+        public WorkInstruction DisplayLatestRevisionOfWorkInstruction(string jobRev)
         {
             Job job = db.Jobs.Values.First(y => y.Rev == jobRev);
+            List<Guid> ops = db.JobRefToWorkInstructionRefs[job.Id].Last();
+            WorkInstruction latestRevision = new WorkInstruction();
+
+            foreach (List<WorkInstruction> list in db.WorkInstructions.Values)
+            {
+                foreach (WorkInstruction workInstruction in list)
+                {
+                    if(workInstruction.Ops == ops)
+                    {
+                        latestRevision = workInstruction;
+                    }
+                }
+            }
+
+            return latestRevision;
         }
 
     }
