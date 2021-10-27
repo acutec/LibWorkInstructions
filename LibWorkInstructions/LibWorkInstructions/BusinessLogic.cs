@@ -63,6 +63,7 @@ namespace LibWorkInstructions
         public WorkInstruction AddWorkInstruction(string jobId)
         {
             List<Guid> newOpList = new List<Guid>();
+            Guid groupId = Guid.NewGuid();
             foreach (Op op in db.Jobs[jobId].Ops)
             {
                 newOpList.Add(op.Id);
@@ -70,11 +71,12 @@ namespace LibWorkInstructions
             WorkInstruction newWorkInstruction = new WorkInstruction
             {
                 Id = Guid.NewGuid(),
-                IdRevGroup = Guid.NewGuid(),
+                IdRevGroup = groupId,
                 OpSpecs = new List<Guid>(),
                 Ops = newOpList
             };
-            db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
+            db.WorkInstructions[groupId] = new List<WorkInstruction>();
+            db.WorkInstructions[groupId].Add(newWorkInstruction);
             db.JobRefToWorkInstructionRefs[jobId].Add(newWorkInstruction.Ops);
 
             var args = new Dictionary<string, string>();
@@ -225,9 +227,9 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneWorkInstruction(Guid groupId, Guid sourceWorkId, string targetJobId)
+        public void CloneWorkInstruction(Guid sourceGroupId, Guid sourceWorkId, string targetJobId)
         {
-            if (db.WorkInstructions.ContainsKey(groupId) && db.Jobs.ContainsKey(targetJobId))
+            if (db.WorkInstructions.ContainsKey(sourceGroupId) && db.Jobs.ContainsKey(targetJobId))
             {
                 WorkInstruction duplicate = new WorkInstruction();
                 foreach (List<WorkInstruction> workInstructionGroup in db.WorkInstructions.Values)
@@ -243,7 +245,7 @@ namespace LibWorkInstructions
                 db.JobRefToWorkInstructionRefs[targetJobId].Add(duplicate.Ops);
 
                 var args = new Dictionary<string, string>();
-                args["GroupId"] = groupId.ToString();
+                args["SourceGroupId"] = sourceGroupId.ToString();
                 args["SourceWorkId"] = sourceWorkId.ToString();
                 args["TargetJobId"] = targetJobId;
                 db.AuditLog.Add(new Event
@@ -255,7 +257,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                if (!db.WorkInstructions.ContainsKey(groupId))
+                if (!db.WorkInstructions.ContainsKey(sourceGroupId))
                 {
                     throw new Exception("This group id doesn't exist in the database");
                 }
