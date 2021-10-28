@@ -496,6 +496,15 @@ namespace LibWorkInstructions
         {
             if (db.JobRefToQualityClauseRefs[Job].Contains(ClauseId)) {
                 db.JobRefToQualityClauseRefs[Job].Remove(ClauseId);
+                var args = new Dictionary<string, string>();
+                args["QualityClause"] = ClauseId.ToString();
+                args["Job"] = Job;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteQualityClauseFromJob",
+                    Args = args,
+                    When = DateTime.Now,
+                });
             } else
             {
                 throw new Exception("This Quality Clause doesn't exist within this Job");
