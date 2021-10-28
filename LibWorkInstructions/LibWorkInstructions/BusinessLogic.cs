@@ -474,7 +474,7 @@ namespace LibWorkInstructions
                 db.QualityClauses[ClauseId].Remove(targetQualityClause);
                 foreach (var clause in db.JobRefToQualityClauseRefs.Where(y => y.Value.Contains(targetQualityClause.Id)))
                 {
-                    db.JobRefToQualityClauseRefs.Remove(clause.Key);
+                    db.JobRefToQualityClauseRefs[clause.Key].Remove(targetQualityClause.Id);
                 }
 
                 var args = new Dictionary<string, string>();
