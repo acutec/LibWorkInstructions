@@ -163,16 +163,16 @@ namespace LibWorkInstructions
                         }
                     }
                 }
-                string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction1.Ops)).Key;
-                string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(workInstruction2.Ops)).Key;
+                string job1 = db.JobRefToWorkInstructionRefs.First(y => y.Value.FindIndex( y => y.SequenceEqual(workInstruction1.Ops)) >= 0).Key;
+                string job2 = db.JobRefToWorkInstructionRefs.First(y => y.Value.FindIndex( y => y.SequenceEqual(workInstruction2.Ops)) >= 0).Key;
                 mergedInstructionOps = workInstruction1.Ops.Union(workInstruction2.Ops).ToList();
                 if (job1 != job2)
                 {
                     db.JobRefToWorkInstructionRefs[job1].Add(mergedInstructionOps);
                 }
                 db.JobRefToWorkInstructionRefs[job2].Add(mergedInstructionOps);
-                db.JobRefToWorkInstructionRefs[job1].Remove(workInstruction1.Ops);
-                db.JobRefToWorkInstructionRefs[job2].Remove(workInstruction2.Ops);
+                db.JobRefToWorkInstructionRefs[job1].RemoveAt(db.JobRefToWorkInstructionRefs[job1].FindIndex(y => y.SequenceEqual(workInstruction1.Ops)));
+                db.JobRefToWorkInstructionRefs[job2].RemoveAt(db.JobRefToWorkInstructionRefs[job2].FindIndex(y => y.SequenceEqual(workInstruction2.Ops)));
 
                 var args = new Dictionary<string, string>();
                 args["GroupId1"] = groupId1.ToString();
@@ -208,7 +208,7 @@ namespace LibWorkInstructions
                         }
                     }
                 }
-                string targetJobId = db.JobRefToWorkInstructionRefs.First(y => y.Value.Contains(duplicate.Ops)).Key;
+                string targetJobId = db.JobRefToWorkInstructionRefs.First(y => y.Value.FindIndex(y => y.SequenceEqual(duplicate.Ops)) >= 0).Key;
                 db.JobRefToWorkInstructionRefs[targetJobId].Add(duplicate.Ops);
 
                 var args = new Dictionary<string, string>();
@@ -499,7 +499,8 @@ namespace LibWorkInstructions
                 else
                 {
                     db.JobRefToQualityClauseRefs[targetJobId] =
-                        db.JobRefToQualityClauseRefs[targetJobId].Union(db.JobRefToQualityClauseRefs[sourceJobId]).ToList();
+                        db.JobRefToQualityClauseRefs[sourceJobId].Union(db.JobRefToQualityClauseRefs[targetJobId]).ToList();
+
                 }
 
                 var args = new Dictionary<string, string>();
