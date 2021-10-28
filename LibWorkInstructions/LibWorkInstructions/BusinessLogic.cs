@@ -466,6 +466,42 @@ namespace LibWorkInstructions
             }
         }
 
+        public void DeleteQualityClause(Guid ClauseId)
+        {
+            if (db.QualityClauses.ContainsKey(ClauseId))
+            {
+                QualityClause targetQualityClause = db.QualityClauses[ClauseId].First(y => y.Id == ClauseId);
+                db.QualityClauses[ClauseId].Remove(targetQualityClause);
+                foreach (var clause in db.JobRefToQualityClauseRefs.Where(y => y.Value.Contains(targetQualityClause.Id)))
+                {
+                    db.JobRefToQualityClauseRefs.Remove(clause.Key);
+                }
+
+                var args = new Dictionary<string, string>();
+                args["QualityClause"] = ClauseId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteQualityClauses",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("This Quality Clause doesn't exist within the database");
+            }
+        }
+
+        public void DeleteQualityClauseFromJob(Guid ClauseId, string Job)
+        {
+            if (db.JobRefToQualityClauseRefs[Job].Contains(ClauseId)) {
+                db.JobRefToQualityClauseRefs[Job].Remove(ClauseId);
+            } else
+            {
+                throw new Exception("This Quality Clause doesn't exist within this Job");
+            }
+        }
+
         public void SplitQualityClause(Guid sourceGroupId, Guid sourceClauseId)
         {
             if (db.QualityClauses.ContainsKey(sourceGroupId))
