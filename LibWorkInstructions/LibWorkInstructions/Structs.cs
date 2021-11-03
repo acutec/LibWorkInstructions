@@ -19,31 +19,46 @@ namespace LibWorkInstructions {
 
     public class Op {
       // Operations are uniquely identified by integers, we have over 1.5 million of them in our database.
-      public Guid Id { get; set; }
+      public int Id { get; set; }
       // Operations are associated with a single job (this and Seq below are encoded in the in-memory data structure but listed here as the DB would store them).
       public string JobId { get; set; }
       // Operations are known by most people by this displaytext rather than the integer identifier, e.g. "Op 20", "Op 30", etc.
       public string OpService { get; set; }
       // Operations have an ordering within a job, this represents that ordering.
       public int Seq { get; set; }
+      
+      public List<OpSpec> OpSpecs { get; set; }
     }
 
     // Work instructions are specific to a particular revision of an operation
-    public class WorkInstruction {
-      // Identifier for work instructions (unique per rev)
-      public Guid Id { get; set; }
-      // Identifier for work instructions (unique per group of revs)
-      public Guid IdRevGroup { get; set; }
-      // There's a list of images for a particular work instruction
-      public List<string> Images { get; set; }
-      // Work instructions have an approval status
-      public bool Approved { get; set; }
-      // Placeholder for rich content
-      public string HtmlBlob { get; set;}
+    public class WorkInstruction
+    {
+        // Identifier for work instructions (unique per rev)
+        public Guid Id { get; set; }
+        // Identifier for work instructions (unique per group of revs)
+        public Guid IdRevGroup { get; set; }
+        // There's a list of images for a particular work instruction
+        public List<string> Images { get; set; }
+        // Work instructions have an approval status
+        public bool Approved { get; set; }
+        // Placeholder for rich content
+        public string HtmlBlob { get; set; }
 
-      public List<Guid> OpSpecs { get; set; }
-      
-      public List<Guid> Ops { get; set; }
+        public int OpId { get; set; }
+        public bool Equals(WorkInstruction obj)
+        {
+            if (Id != obj.Id)
+                return false;
+            if (IdRevGroup != obj.IdRevGroup)
+                return false;
+            if (Images != obj.Images)
+                return false;
+            if (Approved != obj.Approved)
+                return false;
+            if (HtmlBlob != obj.HtmlBlob)
+                return false;
+            return true;
+        }
     }
 
     public class OpSpec {
@@ -75,7 +90,6 @@ namespace LibWorkInstructions {
             // Should be handled fine, given that each function that will use these will be simple and be able to call upon what it needs
             #nullable enable
             public Dictionary<string, string>? Args { get; set; }
-            public string? NewData { get; set; }
             #nullable disable
             public DateTime When { get; set; }
         }
