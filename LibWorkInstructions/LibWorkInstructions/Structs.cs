@@ -88,9 +88,7 @@ namespace LibWorkInstructions {
             public string Action { get; set; }
             // Set values below to nullable values, until we find a better way to hanlde these multiple types
             // Should be handled fine, given that each function that will use these will be simple and be able to call upon what it needs
-            #nullable enable
-            public Dictionary<string, string>? Args { get; set; }
-            #nullable disable
+            public Dictionary<string, string> Args { get; set; }
             public DateTime When { get; set; }
         }
 
