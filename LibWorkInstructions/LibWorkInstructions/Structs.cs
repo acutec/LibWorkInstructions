@@ -15,6 +15,8 @@ namespace LibWorkInstructions {
       public string Rev { get; set; }
       // Jobs have a sequence of operations.
       public List<Op> Ops { get; set; }
+      
+      public List<QualityClause> QualityClauses { get; set; }
     }
 
     public class Op {
