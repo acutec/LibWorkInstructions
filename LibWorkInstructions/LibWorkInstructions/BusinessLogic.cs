@@ -350,11 +350,11 @@ namespace LibWorkInstructions
                 List<OpSpec> mergedList = sourceList.Union(targetList).ToList();
                 if (overwrite) 
                 {
-                    targetList = sourceList;
+                    db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs = sourceList;
                 }
                 else
                 {
-                    targetList = mergedList;
+                    db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs = mergedList;
                 }
 
                 var args = new Dictionary<string, string>();
