@@ -297,8 +297,8 @@ namespace LibWorkInstructions
                 List<OpSpec> list2 = db.Jobs.Values.ToList()[opIndex2].Ops.First(y => y.Id == opId2).OpSpecs;
                 List<OpSpec> mergedList = list1.Union(list2).ToList();
 
-                list1 = mergedList;
-                list2 = mergedList;
+                db.Jobs.Values.ToList()[opIndex1].Ops.First(y => y.Id == opId1).OpSpecs = mergedList;
+                db.Jobs.Values.ToList()[opIndex2].Ops.First(y => y.Id == opId2).OpSpecs = mergedList;
 
                 var args = new Dictionary<string, string>();
                 args["opId1"] = opId1.ToString();
