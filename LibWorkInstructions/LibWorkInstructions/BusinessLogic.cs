@@ -23,7 +23,6 @@ namespace LibWorkInstructions
             public List<Guid> OpSpecRevs = new List<Guid>();
             public List<Guid> WorkInstructionRevs = new List<Guid>();
 
-            public Dictionary<string, List<List<Guid>>> JobRefToWorkInstructionRefs = new Dictionary<string, List<List<Guid>>>();
             public Dictionary<string, List<Guid>> JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>>();
             public Dictionary<string, List<string>> JobRefToJobRevRefs = new Dictionary<string, List<string>>();
             public Dictionary<string, List<Guid>> JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>();
@@ -934,7 +933,7 @@ namespace LibWorkInstructions
         {
             if (db.Ops.ContainsKey(op.Id))
             {
-                if (db.Ops[op.Id].FindIndex(y => y.Rev == op.Rev) != -1)
+                if (db.Ops[op.Id].FindIndex(y => y.Rev == op.Rev) == -1)
                 {
                     db.Ops[op.Id].Add(op);
 
@@ -974,7 +973,7 @@ namespace LibWorkInstructions
 
         }
 
-        public void AddWorkInstruction(WorkInstruction workInstruction)
+        public void CreateWorkInstruction(WorkInstruction workInstruction)
         {
             WorkInstruction newWorkInstruction = workInstruction;
             if(!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup))
@@ -985,19 +984,13 @@ namespace LibWorkInstructions
             {
                 db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
                 db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id;
-                db.WorkInstructionRefToWorkInstructionRevRefs.Add(newWorkInstruction.Id, new List<Guid> { newWorkInstruction.IdRevGroup });
-                string jobId = db.Jobs.First(y => y.Value.FindIndex(y => y.Ops.FindIndex(y => y.Id == newWorkInstruction.OpId) >= 0) >= 0).Key;
-                int opIndex = db.Jobs[jobId].FindIndex(y => y.Ops.FindIndex(y => y.Id == newWorkInstruction.OpId) >= 0);
-                if (opIndex >= 0)
-                {
-                    db.JobRefToWorkInstructionRefs[jobId][opIndex].Add(newWorkInstruction.Id);
-                }
+                db.WorkInstructionRefToWorkInstructionRevRefs.Add(newWorkInstruction.Id, new List<Guid> { newWorkInstruction.Id });
 
                 var args = new Dictionary<string, string>();
                 args["workInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
                 db.AuditLog.Add(new Event
                 {
-                    Action = "AddWorkInstruction",
+                    Action = "CreateWorkInstruction",
                     Args = args,
                     When = DateTime.Now,
                 });
@@ -1007,6 +1000,7 @@ namespace LibWorkInstructions
                 throw new Exception("Work instruction already exists in the database.");
             }
          }
+
         public void UpdateWorkInstruction(WorkInstruction newWorkInstruction)
         {
             if (db.WorkInstructions.ContainsKey(newWorkInstruction.IdRevGroup))
@@ -1014,43 +1008,39 @@ namespace LibWorkInstructions
                 if (db.WorkInstructions[newWorkInstruction.IdRevGroup].FindIndex(y => y.Equals(newWorkInstruction)) < 0)
                 {
                     db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
-                    /*
-                    string jobId = db.Jobs.First(y => y.Value.Ops.FindIndex(y => y.Id == newWorkInstruction.OpId) >= 0).Key;
-                    int opIndex = db.Jobs[jobId].Ops.FindIndex(y => y.Id == newWorkInstruction.OpId);
-                    if (opIndex >= 0)
-                        db.JobRefToWorkInstructionRefs[jobId][opIndex].Add(newWorkInstruction.Id);
-                    */
+                    List<Guid> revisions = db.WorkInstructions[newWorkInstruction.IdRevGroup].Select(y => y.Id).ToList();
+                    foreach (Guid id in revisions)
+                    {
+                        db.WorkInstructionRefToWorkInstructionRevRefs[id] = revisions;
+                    }
+                    db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id;
+
+                    var args = new Dictionary<string, string>();
+                    args["newWorkInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UpdateWorkInstruction",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
                 }
                 else
                     throw new Exception("The new work instruction already exists in the database");
-
-                var args = new Dictionary<string, string>();
-                args["newWorkInstruction"] = JsonSerializer.Serialize(db.WorkInstructions[newWorkInstruction.IdRevGroup].Last());
-                db.AuditLog.Add(new Event
-                {
-                    Action = "UpdateWorkInstruction",
-                    Args = args,
-                    When = DateTime.Now,
-                });
             }
             else
             {
                 throw new Exception("This old work instruction doesn't exist in the database");
             }
         }
+
         public void RemoveWorkInstruction(Guid targetGroupId, Guid targetWorkId)
         {
             if (db.WorkInstructions.ContainsKey(targetGroupId)) 
             {
                 WorkInstruction targetWorkInstruction = db.WorkInstructions[targetGroupId].First(y => y.Id == targetWorkId);
-                foreach (var value in db.JobRefToWorkInstructionRefs.Values.Where(y => y.FindIndex(y => y.Contains(targetWorkInstruction.Id)) >= 0))
-                {
-                    foreach (List<Guid> list in value)
-                    {
-                        list.Remove(targetWorkInstruction.Id);
-                    }
-                }
                 db.WorkInstructions[targetGroupId].Remove(targetWorkInstruction);
+                db.OpRefToWorkInstructionRef.Remove(targetWorkInstruction.OpId);
+                db.WorkInstructionRefToWorkInstructionRevRefs.Values.First(y => y.Contains(targetWorkInstruction.Id)).Remove(targetWorkInstruction.Id);
 
                 var args = new Dictionary<string, string>();
                 args["TargetGroupId"] = targetGroupId.ToString();
@@ -1067,27 +1057,37 @@ namespace LibWorkInstructions
                 throw new Exception("This work instruction group doesn't exist in the database");
             }
         }
-        public void MergeWorkInstructions(string jobId1, string jobId2)
+        public void MergeWorkInstructions(Guid groupId1, Guid workId1, Guid groupId2, Guid workId2)
         {
-            if (db.Jobs.ContainsKey(jobId1) && db.Jobs.ContainsKey(jobId2))
+            if (db.WorkInstructions.ContainsKey(groupId1) && db.WorkInstructions.ContainsKey(groupId2))
             {
-                List<List<Guid>> mergedList = db.JobRefToWorkInstructionRefs[jobId1].Union(db.JobRefToWorkInstructionRefs[jobId2]).ToList();
-                db.JobRefToWorkInstructionRefs[jobId1] = mergedList;
-                db.JobRefToWorkInstructionRefs[jobId2] = mergedList;
-
-                var args = new Dictionary<string, string>();
-                args["jobId1"] = jobId1;
-                args["jobId2"] = jobId2;
-                db.AuditLog.Add(new Event
+                if (db.WorkInstructions[groupId1].FindIndex(y => y.Id == workId1) >= 0 && 
+                    db.WorkInstructions[groupId2].FindIndex(y => y.Id == workId2) >= 0)
                 {
-                    Action = "MergeWorkInstructions",
-                    Args = args,
-                    When = DateTime.Now,
-                });
+                    List<Guid> mergedList = db.WorkInstructionRefToWorkInstructionRevRefs[workId1].Union(db.WorkInstructionRefToWorkInstructionRevRefs[workId2]).ToList();
+                    db.WorkInstructionRefToWorkInstructionRevRefs[workId1] = mergedList;
+                    db.WorkInstructionRefToWorkInstructionRevRefs[workId2] = mergedList;
+
+                    var args = new Dictionary<string, string>();
+                    args["GroupId1"] = groupId1.ToString();
+                    args["GroupId2"] = groupId2.ToString();
+                    args["WorkId1"] = workId1.ToString();
+                    args["WorkId2"] = workId2.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "MergeWorkInstructions",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
+                }
+                else
+                {
+                    throw new Exception("One or both of the work instructions doesn't exist within the group ids");
+                }
             }
             else
             {
-                throw new Exception("One or both of the jobs doesn't exist in the database");
+                throw new Exception("One or both of the group ids doesn't exist in the database");
             }
         }
 
@@ -1107,12 +1107,6 @@ namespace LibWorkInstructions
                         }
                     }
                 }
-                /*
-                string jobId = db.Jobs.First(y => y.Value.Ops.FindIndex(y => y.Id == duplicate.OpId) >= 0).Key;
-                int opIndex = db.Jobs[jobId].Ops.FindIndex(y => y.Id == duplicate.OpId);
-                if (opIndex >= 0)
-                    db.JobRefToWorkInstructionRefs[jobId][opIndex].Add(duplicate.Id);
-                */
 
                 var args = new Dictionary<string, string>();
                 args["GroupId"] = groupId.ToString();
@@ -1152,7 +1146,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public OpSpec AddSpec(OpSpec newSpec)
+        public void AddSpec(OpSpec newSpec)
         {
             OpSpec opSpec = newSpec;
             db.OpSpecs.Add(opSpec.IdRevGroup, new List<OpSpec> { opSpec });
@@ -1166,7 +1160,6 @@ namespace LibWorkInstructions
                 Args = args,
                 When = DateTime.Now,
             });
-            return opSpec;
         }
 
         public void UpdateSpec(OpSpec newSpec)
