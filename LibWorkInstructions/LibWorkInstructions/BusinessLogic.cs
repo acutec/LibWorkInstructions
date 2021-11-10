@@ -1128,7 +1128,6 @@ namespace LibWorkInstructions
         {
             if (db.Jobs.ContainsKey(targetJobId))
             {
-                db.JobRefToWorkInstructionRefs[targetJobId].Add(new List<Guid> { sourceWorkId });
 
                 var args = new Dictionary<string, string>();
                 args["SourceWorkId"] = sourceWorkId.ToString();
