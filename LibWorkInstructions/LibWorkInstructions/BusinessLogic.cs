@@ -123,7 +123,7 @@ namespace LibWorkInstructions
         }
         public void CreateJobRev(string jobRev)
         {
-            if (db.JobRevs.Contains(jobRev))
+            if (!db.JobRevs.Contains(jobRev))
             {
                 db.JobRevs.Add(jobRev);
                 db.JobRevRefToQualityClauseRevRefs[jobRev] = new List<Guid>();
@@ -1399,6 +1399,38 @@ namespace LibWorkInstructions
             {
                 throw new Exception("One or both of the jobs doesn't exist in the database");
             }
+        }
+
+        public void CreateOpSpecRev(Guid specRev)
+        {
+            if (!db.OpSpecRevs.Contains(specRev))
+            {
+                db.OpSpecRevs.Add(specRev);
+                db.OpSpecRevRefToOpRefs[specRev] = new List<int>();
+
+                var args = new Dictionary<string, string>();
+                args["specRev"] = specRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreatespecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("OpSpec revision already exists in the database");
+            }
+        }
+
+        public void UpdateOpSpecRev()
+        {
+
+        }
+
+        public void DeleteOpSpecRev()
+        {
+
         }
 
         public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(WorkInstruction workInstruction)
