@@ -123,7 +123,7 @@ namespace LibWorkInstructions
         }
         public void CreateJobRev(string jobRev)
         {
-            if (!db.JobRevs.Contains(jobRev))
+            if (db.JobRevs.Contains(jobRev))
             {
                 db.JobRevs.Add(jobRev);
                 db.JobRevRefToQualityClauseRevRefs[jobRev] = new List<Guid>();
@@ -1412,25 +1412,51 @@ namespace LibWorkInstructions
                 args["specRev"] = specRev.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CreatespecRev",
+                    Action = "CreateSpecRev",
                     Args = args,
                     When = DateTime.Now
                 });
             }
             else
             {
-                throw new Exception("OpSpec revision already exists in the database");
+                throw new Exception("OpSpec Revision already exists in the database");
             }
         }
 
-        public void UpdateOpSpecRev()
+        public void UpdateOpSpecRev(Guid oldSpecRev, Guid newSpecRev)
         {
+            if (!db.OpSpecRevs.Contains(oldSpecRev) && !db.OpSpecRevs.Contains(newSpecRev))
+            {
+                if(!db.OpSpecRevs.Contains(newSpecRev))
+                {
+                    db.OpSpecRevs.Add(newSpecRev);
+                    db.OpSpecRevRefToOpRefs[newSpecRev] = new List<int>();
+                }
+                else
+                {
+                    throw new Exception("OpSpec Revision already exists in the datbase");
+                }
 
+            } 
+            else
+            {
+                throw new Exception("OpSpec Revision does not exist in the database");
+            }
         }
 
-        public void DeleteOpSpecRev()
+        public void DeleteOpSpecRev(Guid specRev)
         {
+            db.OpSpecRevs.Remove(specRev);
+            db.OpSpecRevRefToOpRefs.Remove(specRev);
 
+            var args = new Dictionary<string, string>();
+            args["SpecRev"] = specRev.ToString();
+            db.AuditLog.Add(new Event
+            {
+                Action = "DeleteSpecRev",
+                Args = args,
+                When = DateTime.Now
+            });
         }
 
         public void CreateWorkInstructionRev()
