@@ -1,9 +1,11 @@
 Red circles: Job, Job Rev, QualityClauseRev, QualityClause, JobOp, OpSpecRev, OpSpec, WorkInstruction, WorkInstructionRev
 Links: JobRev -> Job, QualityClauseRev -> JobRev, QualityClauseRev -> QualityClause, JobOp -> JobRev, OpSpecRev -> JobOp, OpSpecRev -> OpSpec, WorkInstruction -> JobOp, WorkInstructionRev -> WorkInstruction
 
-CreateJob
-UpdateJob
-DeleteJob
+* = Completed
+
+*CreateJob
+*UpdateJob
+*DeleteJob
 CreateJobRev
 UpdateJobRev
 DeleteJobRev
