@@ -1433,6 +1433,157 @@ namespace LibWorkInstructions
 
         }
 
+        public void CreateWorkInstructionRev()
+        {
+
+        }
+
+        public void UpdateWorkInstructionRev()
+        {
+
+        }
+
+        public void DeleteWorkInstructionRev()
+        {
+
+        }
+
+
+        public void LinkJobOpToJobRev()
+        {
+
+        }
+        
+        public void UnlinkJobOpToJobRev()
+        {
+
+        }
+        
+        public void MergeJobOpToJobRev()
+        {
+
+        }
+
+        public void SplitJobOpToJobRev()
+        {
+
+        }
+        
+        public void CloneJobOpToJobRev()
+        {
+
+        }
+
+        public void LinkJobOpToOpSpecRev()
+        {
+
+        }
+        
+        public void UnlinkJobOpToOpSpecRev()
+        {
+
+        }
+
+        public void MergeJobOpToOpSpecRev()
+        {
+
+        }
+
+        public void SplitJobOpToOpSpecRev()
+        {
+
+        }
+
+        public void CloneJobOpToOpSpecRev()
+        {
+
+        }
+
+        public void LinkOpSpecRevToJobOp()
+        {
+
+        }
+
+        public void UnlinkOpSpecRevToJobOp()
+        {
+
+        }
+
+        public void MergeOpSpecRevToJobOp()
+        {
+
+        }
+
+        public void SplitOpSpecRevToJobOp()
+        {
+
+        }
+
+        public void CloneOpSpecRevToJobOp()
+        {
+
+        }
+
+        public void LinkOpSpecRevToOpSpec()
+        {
+
+        }
+
+        public void UnlinkOpSpecRevToOpSpec()
+        {
+
+        }
+
+        public void MergeOpSpecRevToOpSpec()
+        {
+
+        }
+
+        public void SplitOpSpecRevToOpSpec()
+        {
+
+        }
+
+        public void CloneOpSpecRevToOpSpec()
+        {
+
+        }
+
+        public void LinkWorkInstructionToJobOp()
+        {
+
+        }
+
+        public void UnlinkWorkInstructionToJobOp()
+        {
+
+        }
+
+        public void LinkWorkInstructionRevToWorkInstruction()
+        {
+
+        }
+
+        public void UnlinkWorkInstructionRevToWorkInstruction()
+        {
+
+        }
+
+        public void MergeWorkInstructionRevToWorkInstruction()
+        {
+
+        }
+
+        public void SplitWorkInstructionRevToWorkInstruction()
+        {
+
+        }
+
+        public void CloneWorkInstructionRevToWorkInstruction()
+        {
+
+        }
+
         public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(WorkInstruction workInstruction)
         {
             return db.WorkInstructions[workInstruction.IdRevGroup];
