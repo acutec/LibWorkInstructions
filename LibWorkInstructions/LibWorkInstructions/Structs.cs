@@ -13,6 +13,7 @@ namespace LibWorkInstructions {
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
       public string Rev { get; set; }
+      public int RevSeq { get; set; }
       // Jobs have a sequence of operations.
       public List<Op> Ops { get; set; }
       public List<QualityClause> QualityClauses { get; set; }
@@ -22,6 +23,7 @@ namespace LibWorkInstructions {
       // Operations are uniquely identified by integers, we have over 1.5 million of them in our database.
       public int Id { get; set; }
       public Guid Rev { get; set; }
+      public int RevSeq { get; set; }
       // Operations are associated with a single job (this and Seq below are encoded in the in-memory data structure but listed here as the DB would store them).
       public string JobId { get; set; }
       // Operations are known by most people by this displaytext rather than the integer identifier, e.g. "Op 20", "Op 30", etc.
@@ -37,6 +39,7 @@ namespace LibWorkInstructions {
         public Guid Id { get; set; }
         // Identifier for work instructions (unique per group of revs)
         public Guid IdRevGroup { get; set; }
+        public int RevSeq { get; set; }
         // There's a list of images for a particular work instruction
         public List<string> Images { get; set; }
         // Work instructions have an approval status
@@ -64,6 +67,7 @@ namespace LibWorkInstructions {
     public class OpSpec {
       public Guid Id { get; set; }
       public Guid IdRevGroup { get; set; }
+      public int RevSeq { get; set; }
       public string Name { get; set; }
       public string Notice { get; set;  }
       public string Class { get; set; }
@@ -80,6 +84,7 @@ namespace LibWorkInstructions {
     public class QualityClause {
       public Guid Id { get; set; }
       public Guid Rev { get; set; }
+      public int RevSeq { get; set; }
       public string Clause { get; set; }
     }
 
