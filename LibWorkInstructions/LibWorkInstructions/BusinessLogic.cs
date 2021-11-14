@@ -54,6 +54,7 @@ namespace LibWorkInstructions
         {
             if (!db.Jobs.ContainsKey(newJob.Id + "-" + newJob.RevCustomer))
             {
+                newJob.RevSeq = 0;
                 db.Jobs.Add(newJob.Id + "-" + newJob.RevCustomer, new List<Job> { newJob });
                 db.JobRefToJobRevRefs[newJob.Id + "-" + newJob.RevCustomer] = new List<string> { newJob.RevPlan };
 
@@ -76,8 +77,9 @@ namespace LibWorkInstructions
         {
             if (db.Jobs.ContainsKey(newJob.Id + "-" + newJob.RevCustomer))
             {
-                if (db.Jobs[newJob.Id + "-" + newJob.RevCustomer].FindIndex(y => y.RevPlan == newJob.RevPlan) == -1)
+                if (!db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Any(y => y.RevPlan == newJob.RevPlan))
                 {
+                    newJob.RevSeq = db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Count;
                     db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Add(newJob);
 
                     var args = new Dictionary<string, string>();
@@ -123,7 +125,7 @@ namespace LibWorkInstructions
         }
         public void CreateJobRev(string jobRev)
         {
-            if (db.JobRevs.Contains(jobRev))
+            if (!db.JobRevs.Contains(jobRev))
             {
                 db.JobRevs.Add(jobRev);
                 db.JobRevRefToQualityClauseRevRefs[jobRev] = new List<Guid>();
@@ -147,27 +149,12 @@ namespace LibWorkInstructions
         public void UpdateJobRev(string oldRev, string newRev)
         {
             int objIndex = db.JobRevs.FindIndex(y => y == oldRev);
-            int[] refIndices;
             if (objIndex != -1)
             {
                 db.JobRevs[objIndex] = newRev;
             }
-            for (int i = 0; i < db.JobRefToJobRevRefs.Count; i++)
-            {
-                for (int j = 0; j < db.JobRefToJobRevRefs.Values.ToList()[i].Count; j++)
-                {
-                    refIndices = Enumerable.Range(0, db.JobRefToJobRevRefs.Values.ToList()[i].Count()).Where(i => db.JobRefToJobRevRefs.Values.ToList()[i][j] == oldRev).ToArray();
-                    Array.ForEach(refIndices, i => db.JobRefToJobRevRefs.Values.ToList()[i][j] = newRev);
-                }
-            }
-            for (int i = 0; i < db.QualityClauseRevRefToJobRevRefs.Count; i++)
-            {
-                for (int j = 0; j < db.QualityClauseRevRefToJobRevRefs.Values.ToList()[i].Count; j++)
-                {
-                    refIndices = Enumerable.Range(0, db.QualityClauseRevRefToJobRevRefs.Values.ToList()[i].Count()).Where(i => db.QualityClauseRevRefToJobRevRefs.Values.ToList()[i][j] == oldRev).ToArray();
-                    Array.ForEach(refIndices, i => db.QualityClauseRevRefToJobRevRefs.Values.ToList()[i][j] = newRev);
-                }
-            }
+            db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
+            db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
             List<int> jobOpList = db.JobRevRefToOpRefs[oldRev];
             db.JobRevRefToOpRefs.Remove(oldRev);
             db.JobRevRefToOpRefs[newRev] = jobOpList;
@@ -189,14 +176,8 @@ namespace LibWorkInstructions
         public void DeleteJobRev(string jobRev)
         {
             db.JobRevs.Remove(jobRev);
-            for (int i = db.JobRefToJobRevRefs.Count - 1; i >= 0; i--)
-            {
-                db.JobRefToJobRevRefs.Values.ToList()[i].RemoveAll(y => y == jobRev);
-            }
-            for (int i = db.QualityClauseRevRefToJobRevRefs.Count - 1; i >= 0; i--)
-            {
-                db.QualityClauseRevRefToJobRevRefs.Values.ToList()[i].RemoveAll(y => y == jobRev);
-            }
+            db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
+            db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
             db.JobRevRefToQualityClauseRevRefs.Remove(jobRev);
             db.JobRevRefToOpRefs.Remove(jobRev);
 
@@ -310,11 +291,11 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneJobRevsToJob(string sourceJob, string targetJob, bool overwrite)
+        public void CloneJobRevsToJob(string sourceJob, string targetJob, bool additive)
         {
             if(db.JobRefToJobRevRefs.ContainsKey(sourceJob) && db.JobRefToJobRevRefs.ContainsKey(targetJob))
             {
-                if(overwrite)
+                if(!additive)
                 {
                     db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[sourceJob];
                 }
@@ -326,7 +307,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceJob"] = sourceJob;
                 args["TargetJob"] = targetJob;
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CloneJobRevsToJob",
@@ -364,38 +345,16 @@ namespace LibWorkInstructions
 
         public void UpdateQualityClauseRev(Guid oldRev, Guid newRev)
         {
-            if (db.QualityClauseRevs.Contains(oldRev) && db.QualityClauseRevs.Contains(newRev))
+            if (db.QualityClauseRevs.Contains(oldRev))
             {
-                int[] refIndices;
                 int objIndex = db.QualityClauseRevs.FindIndex(y => y == oldRev);
                 if (objIndex != -1)
                 {
                     db.QualityClauseRevs[objIndex] = newRev;
                 }
-                for (int i = 0; i < db.JobRevRefToQualityClauseRevRefs.Count; i++)
-                {
-                    for (int j = 0; j < db.JobRevRefToQualityClauseRevRefs.Values.ToList()[i].Count; j++)
-                    {
-                        refIndices = Enumerable.Range(0, db.JobRevRefToQualityClauseRevRefs.Values.ToList()[i].Count()).Where(i => db.JobRevRefToQualityClauseRevRefs.Values.ToList()[i][j] == oldRev).ToArray();
-                        Array.ForEach(refIndices, i => db.JobRevRefToQualityClauseRevRefs.Values.ToList()[i][j] = newRev);
-                    }
-                }
-                for (int i = 0; i < db.QualityClauseRefToQualityClauseRevRefs.Count; i++)
-                {
-                    for (int j = 0; j < db.QualityClauseRefToQualityClauseRevRefs.Values.ToList()[i].Count; j++)
-                    {
-                        refIndices = Enumerable.Range(0, db.QualityClauseRefToQualityClauseRevRefs.Values.ToList()[i].Count()).Where(i => db.QualityClauseRefToQualityClauseRevRefs.Values.ToList()[i][j] == oldRev).ToArray();
-                        Array.ForEach(refIndices, i => db.QualityClauseRefToQualityClauseRevRefs.Values.ToList()[i][j] = newRev);
-                    }
-                }
-                for (int i = 0; i < db.QualityClauses.Count; i++)
-                {
-                    for (int j = 0; j < db.QualityClauses.Values.ToList()[i].Count; j++)
-                    {
-                        refIndices = Enumerable.Range(0, db.QualityClauses.Values.ToList()[i].Count()).Where(i => db.QualityClauses.Values.ToList()[i][j].Rev == oldRev).ToArray();
-                        Array.ForEach(refIndices, i => db.QualityClauses.Values.ToList()[i][j].Rev = newRev);
-                    }
-                }
+                db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
+                db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
+                db.QualityClauses.Values.Select(y => y = y.Where(y => y.Rev == oldRev).Select(y => { y.Rev = newRev; return y; }).ToList());
                 List<string> jobRevList = db.QualityClauseRevRefToJobRevRefs[oldRev];
                 db.QualityClauseRevRefToJobRevRefs.Remove(oldRev);
                 db.QualityClauseRevRefToJobRevRefs[newRev] = jobRevList;
@@ -412,38 +371,25 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
+                throw new Exception("The target revision doesn't exist in the database");
             }
         }
 
         public void DeleteQualityClauseRev(Guid qualityClauseRev)
         {
-            if (db.QualityClauseRevs.Contains(qualityClauseRev))
-            {
-                db.QualityClauseRevs.Remove(qualityClauseRev);
-                for (int i = db.JobRevRefToQualityClauseRevRefs.Count; i >= 0; i--)
-                {
-                    db.JobRevRefToQualityClauseRevRefs.Values.ToList()[i].RemoveAll(y => y == qualityClauseRev);
-                }
-                for (int i = db.QualityClauseRefToQualityClauseRevRefs.Count; i >= 0; i--)
-                {
-                    db.QualityClauseRefToQualityClauseRevRefs.Values.ToList()[i].RemoveAll(y => y == qualityClauseRev);
-                }
-                db.QualityClauseRevRefToJobRevRefs.Remove(qualityClauseRev);
+            db.QualityClauseRevs.Remove(qualityClauseRev);
+            db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
+            db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
+            db.QualityClauseRevRefToJobRevRefs.Remove(qualityClauseRev);
 
-                var args = new Dictionary<string, string>();
-                args["QualityClauseRev"] = qualityClauseRev.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "DeleteQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
+            var args = new Dictionary<string, string>();
+            args["QualityClauseRev"] = qualityClauseRev.ToString();
+            db.AuditLog.Add(new Event
             {
-                throw new Exception("Quality clause revision doesn't exist in the database.");
-            }
+                Action = "DeleteQualityClauseRev",
+                Args = args,
+                When = DateTime.Now
+            });
         }
 
         public void LinkJobRevToQualityClauseRev(Guid qualityClauseRev, string jobRev)
@@ -641,11 +587,11 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneJobRevsFromQualityClauseRev(Guid sourceQualityClauseRev, Guid targetQualityClauseRev, bool overwrite)
+        public void CloneJobRevsFromQualityClauseRev(Guid sourceQualityClauseRev, Guid targetQualityClauseRev, bool additive)
         {
             if (db.QualityClauseRevRefToJobRevRefs.ContainsKey(sourceQualityClauseRev) && db.QualityClauseRevRefToJobRevRefs.ContainsKey(targetQualityClauseRev))
             {
-                if(overwrite)
+                if(!additive)
                 {
                     db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev];
                 }
@@ -657,7 +603,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceQualityClauseRev"] = sourceQualityClauseRev.ToString();
                 args["TargetQualityClauseRev"] = targetQualityClauseRev.ToString();
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CloneJobRevsFromQualityClauseRev",
@@ -671,11 +617,11 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneQualityClauseRevsFromJobRev(string sourceJobRev, string targetJobRev, bool overwrite)
+        public void CloneQualityClauseRevsFromJobRev(string sourceJobRev, string targetJobRev, bool additive)
         {
             if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(sourceJobRev) && db.JobRevRefToQualityClauseRevRefs.ContainsKey(targetJobRev))
             {
-                if (overwrite)
+                if (!additive)
                 {
                     db.JobRevRefToQualityClauseRevRefs[targetJobRev] = db.JobRevRefToQualityClauseRevRefs[sourceJobRev];
                 }
@@ -687,7 +633,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceJobRev"] = sourceJobRev;
                 args["TargetJobRev"] = targetJobRev;
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CloneQualityClauseRevsFromJobRev",
@@ -727,8 +673,9 @@ namespace LibWorkInstructions
         {
             if (db.QualityClauses.ContainsKey(qualityClause.Id))
             {
-                if(db.QualityClauses[qualityClause.Id].FindIndex(y => y.Rev == qualityClause.Rev) == -1)
+                if(!db.QualityClauses[qualityClause.Id].Any(y => y.Rev == qualityClause.Rev))
                 {
+                    qualityClause.RevSeq = db.QualityClauses[qualityClause.Id].Count;
                     db.QualityClauses[qualityClause.Id].Add(qualityClause);
 
                     var args = new Dictionary<string, string>();
@@ -834,9 +781,10 @@ namespace LibWorkInstructions
         {
             if (db.QualityClauses.ContainsKey(clauseId1) && db.QualityClauses.ContainsKey(clauseId2))
             {
-                List<Guid> mergedList = db.QualityClauseRefToQualityClauseRevRefs[clauseId1].Union(db.QualityClauseRefToQualityClauseRevRefs[clauseId2]).ToList();
+                List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[clauseId1].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[clauseId2].Contains(y)).ToList();
                 db.QualityClauseRefToQualityClauseRevRefs[clauseId1] = mergedList;
                 db.QualityClauseRefToQualityClauseRevRefs[clauseId2] = mergedList;
+                db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
 
                 var args = new Dictionary<string, string>();
                 args["ClauseId1"] = clauseId1.ToString();
@@ -850,24 +798,49 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("One or both of the quality clauses don't exist in the database");
+                throw new Exception("One or both of the quality clauses doesn't exist in the database");
             }
         }
 
-        public void SplitQualityClauseRevsInQualityClause(Guid clauseId, Guid clauseRev)
+        public void MergeQualityClauseRevsBasedOnJobRev(string jobRev1, string jobRev2)
         {
-            if (db.QualityClauses.ContainsKey(clauseId))
+            if(db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2))
             {
-                if (db.QualityClauseRefToQualityClauseRevRefs[clauseId].Contains(clauseRev))
+                List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.JobRevRefToQualityClauseRevRefs[jobRev1].Contains(y) || db.JobRevRefToQualityClauseRevRefs[jobRev1].Contains(y)).ToList();
+                db.JobRevRefToQualityClauseRevRefs[jobRev1] = mergedList;
+                db.JobRevRefToQualityClauseRevRefs[jobRev2] = mergedList;
+                db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
+
+                var args = new Dictionary<string, string>();
+                args["JobRev1"] = jobRev1;
+                args["JobRev2"] = jobRev2;
+                db.AuditLog.Add(new Event
                 {
-                    db.QualityClauseRefToQualityClauseRevRefs[clauseId].Add(clauseRev);
+                    Action = "MergeQualityClauseRevsBasedOnJobRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the job revisions doesn't exist in the database");
+            }
+        }
+
+        public void SplitQualityClauseRevInQualityClause(Guid clause, Guid clauseRev)
+        {
+            if (db.QualityClauses.ContainsKey(clause))
+            {
+                if (db.QualityClauseRefToQualityClauseRevRefs[clause].Contains(clauseRev))
+                {
+                    db.QualityClauseRefToQualityClauseRevRefs[clause].Add(clauseRev);
 
                     var args = new Dictionary<string, string>();
-                    args["ClauseId"] = clauseId.ToString();
+                    args["Clause"] = clause.ToString();
                     args["ClauseRev"] = clauseRev.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "SplitQualityClauseRevsInQualityClause",
+                        Action = "SplitQualityClauseRevInQualityClause",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -883,11 +856,40 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneQualityClauseRevsFromQualityClause(Guid sourceClause, Guid targetClause, bool overwrite)
+        public void SplitQualityClauseRevInJobRev(Guid qualityClauseRev, string jobRev)
+        {
+            if (db.JobRevs.Contains(jobRev))
+            {
+                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
+                {
+                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitQualityClauseRevInJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The job revision doesn't have a connection to the quality clause revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The job revision doesn't exist in the database");
+            }
+        }
+
+        public void CloneQualityClauseRevsFromQualityClause(Guid sourceClause, Guid targetClause, bool additive)
         {
             if (db.QualityClauses.ContainsKey(sourceClause) && db.QualityClauses.ContainsKey(targetClause))
             {
-                if (overwrite)
+                if (!additive)
                 {
                     db.QualityClauseRefToQualityClauseRevRefs[targetClause] = db.QualityClauseRefToQualityClauseRevRefs[sourceClause];
                 }
@@ -899,7 +901,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceClause"] = sourceClause.ToString();
                 args["TargetClause"] = targetClause.ToString();
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
             }
             else
             {
@@ -933,8 +935,9 @@ namespace LibWorkInstructions
         {
             if (db.Ops.ContainsKey(op.Id))
             {
-                if (db.Ops[op.Id].FindIndex(y => y.Rev == op.Rev) == -1)
+                if (!db.Ops[op.Id].Any(y => y.Rev == op.Rev))
                 {
+                    op.RevSeq = db.Ops[op.Id].Count;
                     db.Ops[op.Id].Add(op);
 
                     var args = new Dictionary<string, string>();
@@ -972,11 +975,10 @@ namespace LibWorkInstructions
             }
 
         }
-
         public void CreateWorkInstruction(WorkInstruction workInstruction)
         {
             WorkInstruction newWorkInstruction = workInstruction;
-            if(!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup))
+            if (!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup))
             {
                 db.WorkInstructions[newWorkInstruction.IdRevGroup] = new List<WorkInstruction>();
             }
@@ -1061,8 +1063,7 @@ namespace LibWorkInstructions
         {
             if (db.WorkInstructions.ContainsKey(groupId1) && db.WorkInstructions.ContainsKey(groupId2))
             {
-                if (db.WorkInstructions[groupId1].FindIndex(y => y.Id == workId1) >= 0 && 
-                    db.WorkInstructions[groupId2].FindIndex(y => y.Id == workId2) >= 0)
+                if (db.WorkInstructions[groupId1].Any(y => y.Id == workId1) && db.WorkInstructions[groupId2].Any(y => y.Id == workId2))
                 {
                     List<Guid> mergedList = db.WorkInstructionRefToWorkInstructionRevRefs[workId1].Union(db.WorkInstructionRefToWorkInstructionRevRefs[workId2]).ToList();
                     db.WorkInstructionRefToWorkInstructionRevRefs[workId1] = mergedList;
@@ -1263,7 +1264,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneSpecs(int sourceOpId, int targetOpId, bool overwrite)
+        public void CloneSpecs(int sourceOpId, int targetOpId, bool additive)
         {
             /*
             int sourceOpIndex = db.Jobs.Values.ToList().FindIndex(y => y.Ops.FindIndex(y => y.Id == sourceOpId) >= 0);
@@ -1275,7 +1276,7 @@ namespace LibWorkInstructions
                 List<OpSpec> sourceList = db.Jobs.Values.ToList()[sourceOpIndex].Ops.First(y => y.Id == sourceOpIndex).OpSpecs;
                 List<OpSpec> targetList = db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs;
                 List<OpSpec> mergedList = sourceList.Union(targetList).ToList();
-                if (overwrite) 
+                if (!additive) 
                 {
                     db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs = sourceList;
                 }
@@ -1287,7 +1288,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceOpId"] = sourceOpId.ToString();
                 args["TargetOpId"] = targetOpId.ToString();
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CloneSpecs",
@@ -1369,11 +1370,11 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CloneQualityClauses(string sourceJobId, string targetJobId, bool overwrite)
+        public void CloneQualityClauses(string sourceJobId, string targetJobId, bool additive)
         {
             if (db.Jobs.ContainsKey(sourceJobId) && db.Jobs.ContainsKey(targetJobId))
             {
-                if(overwrite)
+                if(!additive)
                 {
                     db.JobRefToQualityClauseRefs[targetJobId] = db.JobRefToQualityClauseRefs[sourceJobId];
                 }
@@ -1387,7 +1388,7 @@ namespace LibWorkInstructions
                 var args = new Dictionary<string, string>();
                 args["SourceJobId"] = sourceJobId;
                 args["TargetJobId"] = targetJobId;
-                args["Overwrite"] = overwrite.ToString();
+                args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CloneQualityClauses",
