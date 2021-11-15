@@ -29,6 +29,7 @@ namespace LibWorkInstructions
             public Dictionary<string, List<int>> JobRevRefToOpRefs = new Dictionary<string, List<int>>();
             public Dictionary<Guid, List<int>> OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>();
             public Dictionary<int, List<Guid>> OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>();
+            public Dictionary<Guid, List<Guid>> OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>();
             public Dictionary<Guid, List<string>> QualityClauseRevRefToJobRevRefs = new Dictionary<Guid, List<string>>();
             public Dictionary<Guid, List<Guid>> QualityClauseRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>();
             public Dictionary<int, Guid> OpRefToWorkInstructionRef = new Dictionary<int, Guid>();
@@ -80,6 +81,7 @@ namespace LibWorkInstructions
                 if (!db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Any(y => y.RevPlan == newJob.RevPlan))
                 {
                     newJob.RevSeq = db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Count;
+                    db.JobRefToJobRevRefs.Keys.Where(y => y == db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Last().Id).Select(y => y = newJob.Id);
                     db.Jobs[newJob.Id + "-" + newJob.RevCustomer].Add(newJob);
 
                     var args = new Dictionary<string, string>();
@@ -146,178 +148,58 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UpdateJobRev(string oldRev, string newRev)
+        public void UpdateJobRev(string targetRev, string sourceRev)
         {
-            int objIndex = db.JobRevs.FindIndex(y => y == oldRev);
-            if (objIndex != -1)
+            if (db.JobRevs.Contains(targetRev))
             {
-                db.JobRevs[objIndex] = newRev;
-            }
-            db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
-            db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
-            List<int> jobOpList = db.JobRevRefToOpRefs[oldRev];
-            db.JobRevRefToOpRefs.Remove(oldRev);
-            db.JobRevRefToOpRefs[newRev] = jobOpList;
-            List<Guid> qualityClauseRevList = db.JobRevRefToQualityClauseRevRefs[oldRev];
-            db.JobRevRefToQualityClauseRevRefs.Remove(oldRev);
-            db.JobRevRefToQualityClauseRevRefs[newRev] = qualityClauseRevList;
+                int objIndex = db.JobRevs.FindIndex(y => y == targetRev);
+                if (objIndex != -1)
+                {
+                    db.JobRevs[objIndex] = sourceRev;
+                }
+                db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == targetRev).Select(y => y = sourceRev).ToList());
+                db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y == targetRev).Select(y => y = sourceRev).ToList());
+                db.JobRevRefToOpRefs.Keys.Where(y => y == targetRev).Select(y => y = sourceRev);
+                db.JobRevRefToQualityClauseRevRefs.Keys.Where(y => y == targetRev).Select(y => y = sourceRev);
 
-            var args = new Dictionary<string, string>();
-            args["OldRev"] = oldRev;
-            args["NewRev"] = newRev;
-            db.AuditLog.Add(new Event
+                var args = new Dictionary<string, string>();
+                args["TargetRev"] = targetRev;
+                args["SourceRev"] = sourceRev;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "UpdateJobRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
             {
-                Action = "UpdateJobRev",
-                Args = args,
-                When = DateTime.Now
-            });
+                throw new Exception("The target job revision doesn't exist in the database");
+            }
         }
 
         public void DeleteJobRev(string jobRev)
         {
-            db.JobRevs.Remove(jobRev);
-            db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
-            db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
-            db.JobRevRefToQualityClauseRevRefs.Remove(jobRev);
-            db.JobRevRefToOpRefs.Remove(jobRev);
-
-            var args = new Dictionary<string, string>();
-            args["JobRev"] = jobRev;
-            db.AuditLog.Add(new Event
+            if (db.JobRevs.Contains(jobRev))
             {
-                Action = "DeleteJobRev",
-                Args = args,
-                When = DateTime.Now
-            });
-        }
-
-        public void LinkJobRevToJob(string jobId, string jobRev)
-        {
-            if(db.JobRefToJobRevRefs.ContainsKey(jobId))
-            {
-                if(!db.JobRefToJobRevRefs[jobId].Contains(jobRev))
-                {
-                    db.JobRefToJobRevRefs[jobId].Add(jobRev);
-                }
+                db.JobRevs.Remove(jobRev);
+                db.JobRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
+                db.QualityClauseRevRefToJobRevRefs.Values.Select(y => y = y.Where(y => y != jobRev).ToList());
+                db.JobRevRefToQualityClauseRevRefs.Remove(jobRev);
+                db.JobRevRefToOpRefs.Remove(jobRev);
 
                 var args = new Dictionary<string, string>();
-                args["JobId"] = jobId;
                 args["JobRev"] = jobRev;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "LinkJobRevToJob",
+                    Action = "DeleteJobRev",
                     Args = args,
-                    When = DateTime.Now,
+                    When = DateTime.Now
                 });
             }
             else
             {
-                throw new Exception("Job doesn't exist in the database");
-            }
-        }
-
-        public void UnlinkJobRevFromJob(string jobId, string jobRev)
-        {
-            if(db.JobRefToJobRevRefs.ContainsKey(jobId))
-            {
-                db.JobRefToJobRevRefs[jobId].Remove(jobRev);
-
-                var args = new Dictionary<string, string>();
-                args["JobId"] = jobId;
-                args["JobRev"] = jobRev;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "UnlinkJobRevFromJob",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("Job doesn't exist in the database");
-            }
-        }
-
-        public void MergeJobRevsBasedOnJob(string jobId1, string jobId2)
-        {
-            if(db.JobRefToJobRevRefs.ContainsKey(jobId1) && db.JobRefToJobRevRefs.ContainsKey(jobId2))
-            {
-                List<string> mergedList = db.JobRefToJobRevRefs[jobId1].Union(db.JobRefToJobRevRefs[jobId2]).ToList();
-                db.JobRefToJobRevRefs[jobId1] = mergedList;
-                db.JobRefToJobRevRefs[jobId2] = mergedList;
-
-                var args = new Dictionary<string, string>();
-                args["JobId1"] = jobId1;
-                args["JobId2"] = jobId2;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeJobRevsBasedOnJob",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the jobs doesn't exist in the database");
-            }
-        }
-
-        public void SplitJobRevInJob(string jobId, string jobRev)
-        {
-            if(db.JobRefToJobRevRefs.ContainsKey(jobId))
-            {
-                if (db.JobRefToJobRevRefs[jobId].Contains(jobRev))
-                {
-                    db.JobRefToJobRevRefs[jobId].Add(jobRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["JobId"] = jobId;
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "SplitJobRevInJob",
-                        Args = args,
-                        When = DateTime.Now,
-                    });
-                }
-                else
-                {
-                    throw new Exception("The job doesn't have a reference to the job revision");
-                }
-            }
-            else
-            {
-                throw new Exception("The job doesn't exist in the database");
-            }
-        }
-
-        public void CloneJobRevsToJob(string sourceJob, string targetJob, bool additive)
-        {
-            if(db.JobRefToJobRevRefs.ContainsKey(sourceJob) && db.JobRefToJobRevRefs.ContainsKey(targetJob))
-            {
-                if(!additive)
-                {
-                    db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[sourceJob];
-                }
-                else
-                {
-                    db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[targetJob].Union(db.JobRefToJobRevRefs[sourceJob]).ToList();
-                }
-
-                var args = new Dictionary<string, string>();
-                args["SourceJob"] = sourceJob;
-                args["TargetJob"] = targetJob;
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneJobRevsToJob",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the jobs doesn't exist in the database");
+                throw new Exception("The job revision doesn't exist in the database");
             }
         }
 
@@ -343,25 +225,23 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UpdateQualityClauseRev(Guid oldRev, Guid newRev)
+        public void UpdateQualityClauseRev(Guid targetRev, Guid sourceRev)
         {
-            if (db.QualityClauseRevs.Contains(oldRev))
+            if (db.QualityClauseRevs.Contains(targetRev))
             {
-                int objIndex = db.QualityClauseRevs.FindIndex(y => y == oldRev);
+                int objIndex = db.QualityClauseRevs.FindIndex(y => y == targetRev);
                 if (objIndex != -1)
                 {
-                    db.QualityClauseRevs[objIndex] = newRev;
+                    db.QualityClauseRevs[objIndex] = sourceRev;
                 }
-                db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
-                db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == oldRev).Select(y => y = newRev).ToList());
-                db.QualityClauses.Values.Select(y => y = y.Where(y => y.Rev == oldRev).Select(y => { y.Rev = newRev; return y; }).ToList());
-                List<string> jobRevList = db.QualityClauseRevRefToJobRevRefs[oldRev];
-                db.QualityClauseRevRefToJobRevRefs.Remove(oldRev);
-                db.QualityClauseRevRefToJobRevRefs[newRev] = jobRevList;
+                db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == targetRev).Select(y => y = sourceRev).ToList());
+                db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y == targetRev).Select(y => y = sourceRev).ToList());
+                db.QualityClauses.Values.Select(y => y = y.Where(y => y.Rev == targetRev).Select(y => { y.Rev = sourceRev; return y; }).ToList());
+                db.QualityClauseRevRefToJobRevRefs.Keys.Where(y => y == targetRev).Select(y => y = sourceRev);
 
                 var args = new Dictionary<string, string>();
-                args["OldRev"] = oldRev.ToString();
-                args["NewRev"] = newRev.ToString();
+                args["TargetRev"] = targetRev.ToString();
+                args["SourceRev"] = sourceRev.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "UpdateQualityClauseRev",
@@ -377,180 +257,22 @@ namespace LibWorkInstructions
 
         public void DeleteQualityClauseRev(Guid qualityClauseRev)
         {
-            db.QualityClauseRevs.Remove(qualityClauseRev);
-            db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
-            db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
-            db.QualityClauseRevRefToJobRevRefs.Remove(qualityClauseRev);
-
-            var args = new Dictionary<string, string>();
-            args["QualityClauseRev"] = qualityClauseRev.ToString();
-            db.AuditLog.Add(new Event
+            if (db.QualityClauseRevs.Contains(qualityClauseRev))
             {
-                Action = "DeleteQualityClauseRev",
-                Args = args,
-                When = DateTime.Now
-            });
-        }
-
-        public void LinkJobRevToQualityClauseRev(Guid qualityClauseRev, string jobRev)
-        {
-            if(db.QualityClauseRevRefToJobRevRefs.ContainsKey(qualityClauseRev))
-            {
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
+                db.QualityClauseRevs.Remove(qualityClauseRev);
+                db.JobRevRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
+                db.QualityClauseRefToQualityClauseRevRefs.Values.Select(y => y = y.Where(y => y != qualityClauseRev).ToList());
+                db.QualityClauseRevRefToJobRevRefs.Remove(qualityClauseRev);
+                db.QualityClauses.Values.Select(y => y = y.Where(y => y.Rev != qualityClauseRev).ToList());
 
                 var args = new Dictionary<string, string>();
                 args["QualityClauseRev"] = qualityClauseRev.ToString();
-                args["JobRev"] = jobRev;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "LinkJobRevToQualityClauseRev",
+                    Action = "DeleteQualityClauseRev",
                     Args = args,
                     When = DateTime.Now
                 });
-            }
-            else
-            {
-                throw new Exception("The quality clause doesn't have that revision");
-            }
-        }
-
-        public void LinkQualityClauseRevToJobRev(string jobRev, Guid qualityClauseRev)
-        {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev))
-            {
-                db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
-
-                var args = new Dictionary<string, string>();
-                args["JobRev"] = jobRev;
-                args["QualityClauseRev"] = qualityClauseRev.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "LinkQualityClauseRevToJobRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("The job doesn't have that revision");
-            }
-        }
-
-        public void UnlinkJobRevFromQualityClauseRev(Guid qualityClauseRev, string jobRev)
-        {
-            if (db.QualityClauseRevRefToJobRevRefs.ContainsKey(qualityClauseRev))
-            {
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev);
-
-                var args = new Dictionary<string, string>();
-                args["JobRev"] = jobRev;
-                args["QualityClauseRev"] = qualityClauseRev.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "UnlinkJobRevFromQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("The quality clause revision doesn't exist for that job revision");
-            }
-        }
-
-        public void UnlinkQualityClauseRevFromJobRev(string jobRev, Guid qualityClauseRev)
-        {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev))
-            {
-                db.JobRevRefToQualityClauseRevRefs[jobRev].Remove(qualityClauseRev);
-
-                var args = new Dictionary<string, string>();
-                args["JobRev"] = jobRev;
-                args["QualityClauseRev"] = qualityClauseRev.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "UnlinkQualityClauseRevToJobRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("This job revision doesn't exist in the database");
-            }
-        }
-
-        public void MergeJobRevsFromQualityClauseRev(Guid qualityClauseRev1, Guid qualityClauseRev2)
-        {
-            if (db.QualityClauseRevRefToJobRevRefs.ContainsKey(qualityClauseRev1) && db.QualityClauseRevRefToJobRevRefs.ContainsKey(qualityClauseRev2))
-            {
-                List<string> mergedList = db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1].Union(db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2]).ToList();
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1] = mergedList;
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2] = mergedList;
-
-                var args = new Dictionary<string, string>();
-                args["QualityClauseRev1"] = qualityClauseRev1.ToString();
-                args["QualityClauseRev2"] = qualityClauseRev2.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeJobRevsFromQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the job revisions doesn't exist for that quality clause revision");
-            }
-        }
-
-        public void MergeQualityClauseRevsFromJobRev(string jobRev1, string jobRev2)
-        {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev1) && db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev2))
-            {
-                List<Guid> mergedList = db.JobRevRefToQualityClauseRevRefs[jobRev1].Union(db.JobRevRefToQualityClauseRevRefs[jobRev2]).ToList();
-                db.JobRevRefToQualityClauseRevRefs[jobRev1] = mergedList;
-                db.JobRevRefToQualityClauseRevRefs[jobRev2] = mergedList;
-
-                var args = new Dictionary<string, string>();
-                args["JobRev1"] = jobRev1;
-                args["JobRev2"] = jobRev2;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeQualityClauseRevsFromJobRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-
-            }
-            else
-            {
-                throw new Exception("One or both of the job revisions doesn't exist in the database");
-            }
-        }
-
-        public void SplitJobRevInQualityClauseRev(Guid qualityClauseRev, string jobRev)
-        {
-            if (db.QualityClauseRevRefToJobRevRefs.ContainsKey(qualityClauseRev))
-            {
-                if (db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
-                {
-                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "SplitJobRevToQualityClauseRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("The job revision doesn't have a connection to the quality clause revision");
-                }
             }
             else
             {
@@ -558,101 +280,13 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitQualityClauseRevInJobRev(string jobRev, Guid qualityClauseRev)
-        {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev))
-            {
-                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
-                {
-                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["JobRev"] = jobRev;
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "SplitQualityClauseRevToJobRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("The quality clause revision doesn't have a reference to the job revision.");
-                }
-            }
-            else
-            {
-                throw new Exception("The job revision doesn't exist in the database");
-            }
-        }
-
-        public void CloneJobRevsFromQualityClauseRev(Guid sourceQualityClauseRev, Guid targetQualityClauseRev, bool additive)
-        {
-            if (db.QualityClauseRevRefToJobRevRefs.ContainsKey(sourceQualityClauseRev) && db.QualityClauseRevRefToJobRevRefs.ContainsKey(targetQualityClauseRev))
-            {
-                if(!additive)
-                {
-                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev];
-                }
-                else
-                {
-                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev].Union(db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev]).ToList();
-                }
-
-                var args = new Dictionary<string, string>();
-                args["SourceQualityClauseRev"] = sourceQualityClauseRev.ToString();
-                args["TargetQualityClauseRev"] = targetQualityClauseRev.ToString();
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneJobRevsFromQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
-            }
-        }
-
-        public void CloneQualityClauseRevsFromJobRev(string sourceJobRev, string targetJobRev, bool additive)
-        {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(sourceJobRev) && db.JobRevRefToQualityClauseRevRefs.ContainsKey(targetJobRev))
-            {
-                if (!additive)
-                {
-                    db.JobRevRefToQualityClauseRevRefs[targetJobRev] = db.JobRevRefToQualityClauseRevRefs[sourceJobRev];
-                }
-                else
-                {
-                    db.JobRevRefToQualityClauseRevRefs[targetJobRev] = db.JobRevRefToQualityClauseRevRefs[targetJobRev].Union(db.JobRevRefToQualityClauseRevRefs[sourceJobRev]).ToList();
-                }
-
-                var args = new Dictionary<string, string>();
-                args["SourceJobRev"] = sourceJobRev;
-                args["TargetJobRev"] = targetJobRev;
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneQualityClauseRevsFromJobRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the job revisions doesn't exist in the database");
-            }
-        }
-
         public void CreateQualityClause(QualityClause newQualityClause)
         {
             if (!db.QualityClauses.ContainsKey(newQualityClause.Id))
             {
+                newQualityClause.RevSeq = 0;
                 db.QualityClauses.Add(newQualityClause.Id, new List<QualityClause> { newQualityClause });
-                db.QualityClauseRefToQualityClauseRevRefs.Add(newQualityClause.Id, new List<Guid> { newQualityClause.Rev });
+                db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.Id] = new List<Guid> { newQualityClause.Rev };
 
                 var args = new Dictionary<string, string>();
                 args["NewQualityClause"] = JsonSerializer.Serialize(newQualityClause);
@@ -673,10 +307,11 @@ namespace LibWorkInstructions
         {
             if (db.QualityClauses.ContainsKey(qualityClause.Id))
             {
-                if(!db.QualityClauses[qualityClause.Id].Any(y => y.Rev == qualityClause.Rev))
+                if (!db.QualityClauses[qualityClause.Id].Any(y => y.Rev == qualityClause.Rev))
                 {
                     qualityClause.RevSeq = db.QualityClauses[qualityClause.Id].Count;
                     db.QualityClauses[qualityClause.Id].Add(qualityClause);
+                    db.QualityClauseRefToQualityClauseRevRefs[qualityClause.Id].Add(qualityClause.Rev);
 
                     var args = new Dictionary<string, string>();
                     args["QualityClause"] = JsonSerializer.Serialize(qualityClause);
@@ -719,6 +354,792 @@ namespace LibWorkInstructions
                 throw new Exception("The quality clause doesn't exist in the database");
             }
         }
+
+        public void CreateJobOp(Op op)
+        {
+            if (!db.Ops.ContainsKey(op.Id))
+            {
+                db.Ops.Add(op.Id, new List<Op> { op });
+                db.OpRefToOpSpecRevRefs[op.Id] = new List<Guid> { op.Rev };
+
+                var args = new Dictionary<string, string>();
+                args["Op"] = JsonSerializer.Serialize(op);
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreateJobOp",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The operation already exists in the database");
+            }
+        }
+
+        public void UpdateJobOp(Op op)
+        {
+            if (db.Ops.ContainsKey(op.Id))
+            {
+                if (!db.Ops[op.Id].Any(y => y.Rev == op.Rev))
+                {
+                    op.RevSeq = db.Ops[op.Id].Count;
+                    db.Ops[op.Id].Add(op);
+
+                    var args = new Dictionary<string, string>();
+                    args["Op"] = JsonSerializer.Serialize(op);
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UpdateJobOp",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("An operation with the same revision identifier already exists");
+                }
+            }
+            else
+            {
+                throw new Exception("The operation being changed doesn't exist in the database");
+            }
+        }
+
+        public void DeleteJobOp(int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                db.Ops.Remove(opId);
+                db.OpRefToOpSpecRevRefs.Remove(opId);
+                db.OpRefToWorkInstructionRef.Remove(opId);
+                db.JobRevRefToOpRefs.Values.Select(y => y = y.Where(y => y != opId).ToList());
+                db.OpSpecRevRefToOpRefs.Values.Select(y => y = y.Where(y => y != opId).ToList());
+
+                var args = new Dictionary<string, string>();
+                args["OpId"] = opId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteJobOp",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("Job op doesn't exist in the database");
+            }
+        }
+
+        public void CreateOpSpec(OpSpec newSpec)
+        {
+            db.OpSpecs[newSpec.IdRevGroup] = new List<OpSpec> { newSpec };
+            db.OpSpecRefToOpSpecRevRefs[newSpec.Id] = new List<Guid>();
+
+            var args = new Dictionary<string, string>();
+            args["newSpec"] = JsonSerializer.Serialize(newSpec);
+            db.AuditLog.Add(new Event
+            {
+                Action = "CreateOpSpec",
+                Args = args,
+                When = DateTime.Now,
+            });
+        }
+
+        public void UpdateOpSpec(OpSpec newSpec)
+        {
+            if (db.OpSpecs.ContainsKey(newSpec.IdRevGroup))
+            {
+                newSpec.RevSeq = db.OpSpecs[newSpec.IdRevGroup].Count;
+                db.OpSpecRefToOpSpecRevRefs.Keys.Where(y => y == db.OpSpecs[newSpec.IdRevGroup].Last().Id).Select(y => y = newSpec.Id);
+                db.OpSpecs[newSpec.IdRevGroup].Add(newSpec);
+
+                var args = new Dictionary<string, string>();
+                args["newSpec"] = JsonSerializer.Serialize(newSpec);
+                db.AuditLog.Add(new Event
+                {
+                    Action = "UpdateOpSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The spec being updated doesn't exist in the database");
+            }
+        }
+
+        public void DeleteOpSpec(Guid targetGroupId, Guid targetSpecId)
+        {
+            if (db.OpSpecs.ContainsKey(targetGroupId))
+            {
+                db.OpSpecs[targetGroupId].Remove(db.OpSpecs[targetGroupId].First(y => y.Id == targetSpecId));
+                db.OpSpecRefToOpSpecRevRefs.Remove(targetSpecId);
+
+                var args = new Dictionary<string, string>();
+                args["TargetGroupId"] = targetGroupId.ToString();
+                args["TargetSpecId"] = targetSpecId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteOpSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The spec doesn't exist in the database");
+            }
+        }
+
+        public void CreateOpSpecRev(Guid specRev)
+        {
+            if (!db.OpSpecRevs.Contains(specRev))
+            {
+                db.OpSpecRevs.Add(specRev);
+                db.OpSpecRevRefToOpRefs[specRev] = new List<int>();
+
+                var args = new Dictionary<string, string>();
+                args["specRev"] = specRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreateOpSpecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("OpSpec Revision already exists in the database");
+            }
+        }
+
+        public void UpdateOpSpecRev(Guid targetSpecRev, Guid sourceSpecRev)
+        {
+            if (db.OpSpecRevs.Contains(targetSpecRev))
+            {
+                db.OpSpecRevs[db.OpSpecRevs.FindIndex(y => y == targetSpecRev)] = sourceSpecRev;
+                db.OpSpecRevRefToOpRefs.Keys.ToList()[db.OpSpecRevRefToOpRefs.Keys.ToList().FindIndex(y => y == targetSpecRev)] = sourceSpecRev;
+                db.OpRefToOpSpecRevRefs.Values.Where(y => y.Contains(targetSpecRev)).Select(y => y.Where(y => y == targetSpecRev).Select(y => y = sourceSpecRev));
+                db.OpSpecRefToOpSpecRevRefs.Values.Where(y => y.Contains(targetSpecRev)).Select(y => y.Where(y => y == targetSpecRev).Select(y => y = sourceSpecRev));
+
+                var args = new Dictionary<string, string>();
+                args["TargetSpecRev"] = targetSpecRev.ToString();
+                args["SourceSpecRev"] = sourceSpecRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "UpdateOpSpecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("OpSpec Revision already exists in the datbase");
+            }
+        }
+
+        public void DeleteOpSpecRev(Guid specRev)
+        {
+            if (db.OpSpecRevs.Contains(specRev))
+            {
+                db.OpSpecRevs.Remove(specRev);
+                db.OpSpecRevRefToOpRefs.Remove(specRev);
+                db.OpRefToOpSpecRevRefs.Values.Select(y => y = y.Where(y => y != specRev).ToList());
+                db.OpSpecRefToOpSpecRevRefs.Values.Select(y => y = y.Where(y => y != specRev).ToList());
+
+                var args = new Dictionary<string, string>();
+                args["SpecRev"] = specRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteOpSpecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The op spec revision doesn't exist in the database");
+            }
+        }
+
+        public void CreateWorkInstruction(WorkInstruction workInstruction)
+        {
+            if (!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup))
+            {
+                workInstruction.RevSeq = 0;
+                db.WorkInstructions[workInstruction.IdRevGroup] = new List<WorkInstruction> { workInstruction };
+                db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.Id;
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.Id] =  new List<Guid> { workInstruction.Id };
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction"] = JsonSerializer.Serialize(workInstruction);
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreateWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("Work instruction already exists in the database.");
+            }
+        }
+
+        public void UpdateWorkInstruction(WorkInstruction newWorkInstruction)
+        {
+            if (db.WorkInstructions.ContainsKey(newWorkInstruction.IdRevGroup))
+            {
+                if (!db.WorkInstructions[newWorkInstruction.IdRevGroup].Any(y => y.Equals(newWorkInstruction)))
+                {
+                    newWorkInstruction.RevSeq = db.WorkInstructions[newWorkInstruction.IdRevGroup].Count;
+                    db.WorkInstructionRefToWorkInstructionRevRefs.Keys.Where(y => y == db.WorkInstructions[newWorkInstruction.IdRevGroup].Last().Id).Select(y => y = newWorkInstruction.Id);
+                    db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
+                    db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id;
+
+                    var args = new Dictionary<string, string>();
+                    args["newWorkInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UpdateWorkInstruction",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
+                }
+                else
+                    throw new Exception("The new work instruction already exists in the database");
+            }
+            else
+            {
+                throw new Exception("This old work instruction doesn't exist in the database");
+            }
+        }
+
+        public void DeleteWorkInstruction(Guid targetGroupId, Guid targetWorkId)
+        {
+            if (db.WorkInstructions.ContainsKey(targetGroupId))
+            {
+                WorkInstruction targetWorkInstruction = db.WorkInstructions[targetGroupId].First(y => y.Id == targetWorkId);
+                db.WorkInstructions[targetGroupId].Remove(targetWorkInstruction);
+                db.OpRefToWorkInstructionRef.Remove(targetWorkInstruction.OpId);
+                db.WorkInstructionRefToWorkInstructionRevRefs.Values.Where(y => y.Contains(targetWorkInstruction.Id)).Select(y => y = y.Where(y => y != targetWorkInstruction.Id).ToList());
+
+                var args = new Dictionary<string, string>();
+                args["TargetGroupId"] = targetGroupId.ToString();
+                args["TargetWorkId"] = targetWorkId.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("This work instruction group doesn't exist in the database");
+            }
+        }
+
+        public void CreateWorkInstructionRev(Guid workInstructionRev)
+        {
+            if (!db.WorkInstructionRevs.Contains(workInstructionRev))
+            {
+                db.WorkInstructionRevs.Add(workInstructionRev);
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstructionRev"] = workInstructionRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CreateWorkInstructionRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The work instruction revision already exists in the database.");
+            }
+        }
+
+        public void UpdateWorkInstructionRev(Guid targetWorkInstructionRev, Guid sourceWorkInstructionRev)
+        {
+            if (db.WorkInstructionRevs.Contains(targetWorkInstructionRev))
+            {
+                db.WorkInstructionRevs[db.WorkInstructionRevs.FindIndex(y => y == targetWorkInstructionRev)] = sourceWorkInstructionRev;
+                db.WorkInstructionRefToWorkInstructionRevRefs.Values.Where(y => y.Contains(targetWorkInstructionRev)).Select(y => y.Where(y => y == targetWorkInstructionRev).Select(y => y = sourceWorkInstructionRev));
+
+                var args = new Dictionary<string, string>();
+                args["TargetWorkInstructionRev"] = targetWorkInstructionRev.ToString();
+                args["SourceWorkInstructionRev"] = sourceWorkInstructionRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "UpdateWorkInstructionRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The work instruction revision doesn't exist in the database.");
+            }
+        }
+
+        public void DeleteWorkInstructionRev(Guid targetWorkInstructionRev)
+        {
+            if (db.WorkInstructionRevs.Contains(targetWorkInstructionRev))
+            {
+                db.WorkInstructionRevs.Remove(targetWorkInstructionRev);
+                db.WorkInstructionRefToWorkInstructionRevRefs.Values.Select(y => y = y.Where(y => y != targetWorkInstructionRev).ToList());
+
+                var args = new Dictionary<string, string>();
+                args["TargetWorkInstructionRev"] = targetWorkInstructionRev.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteWorkInstructionRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The work instruction revision doesn't exist in the database");
+            }
+        }
+
+        public void LinkJobRevToJob(string jobId, string jobRev)
+        {
+            if (db.Jobs.ContainsKey(jobId))
+            {
+                if (!db.JobRefToJobRevRefs[jobId].Contains(jobRev))
+                {
+                    db.JobRefToJobRevRefs[jobId].Add(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobId"] = jobId;
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "LinkJobRevToJob",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revision already has an association to the given job");
+                }
+            }
+            else
+            {
+                throw new Exception("Job doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkJobRevFromJob(string jobId, string jobRev)
+        {
+            if (db.Jobs.ContainsKey(jobId))
+            {
+                if (db.JobRefToJobRevRefs[jobId].Contains(jobRev))
+                {
+                    db.JobRefToJobRevRefs[jobId].Remove(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobId"] = jobId;
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkJobRevFromJob",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revision doesn't have an association with the given job");
+                }
+            }
+            else
+            {
+                throw new Exception("Job doesn't exist in the database");
+            }
+        }
+
+        public void MergeJobRevsBasedOnJob(string jobId1, string jobId2)
+        {
+            if(db.Jobs.ContainsKey(jobId1) && db.Jobs.ContainsKey(jobId2))
+            {
+                List<string> mergedList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[jobId1].Contains(y) || db.JobRefToJobRevRefs[jobId2].Contains(y)).ToList();
+                db.JobRefToJobRevRefs[jobId1] = mergedList;
+                db.JobRefToJobRevRefs[jobId2] = mergedList;
+                db.Jobs.Values.Select(y => y.Where(y => mergedList.Contains(y.RevPlan)).Select(y => y.RevSeq = mergedList.IndexOf(y.RevPlan)));
+
+                var args = new Dictionary<string, string>();
+                args["JobId1"] = jobId1;
+                args["JobId2"] = jobId2;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeJobRevsBasedOnJob",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the jobs doesn't exist in the database");
+            }
+        }
+
+        public void SplitJobRevInJob(string jobId, string jobRev)
+        {
+            if(db.Jobs.ContainsKey(jobId))
+            {
+                if (db.JobRefToJobRevRefs[jobId].Contains(jobRev))
+                {
+                    db.JobRefToJobRevRefs[jobId].Add(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobId"] = jobId;
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitJobRevInJob",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revision doesn't have an association with the given job");
+                }
+            }
+            else
+            {
+                throw new Exception("The job doesn't exist in the database");
+            }
+        }
+
+        public void CloneJobRevsBasedOnJob(string sourceJob, string targetJob, bool additive)
+        {
+            if(db.Jobs.ContainsKey(sourceJob) && db.Jobs.ContainsKey(targetJob))
+            {
+                if(!additive)
+                {
+                    db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[sourceJob];
+                }
+                else
+                {
+                    List<string> mergedList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[sourceJob].Contains(y) || db.JobRefToJobRevRefs[targetJob].Contains(y)).ToList();
+                    db.JobRefToJobRevRefs[targetJob] = mergedList;
+                    db.Jobs.Values.Select(y => y.Where(y => mergedList.Contains(y.RevPlan)).Select(y => y.RevSeq = mergedList.IndexOf(y.RevPlan)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceJob"] = sourceJob;
+                args["TargetJob"] = targetJob;
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneJobRevsBasedOnJob",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the jobs doesn't exist in the database");
+            }
+        }
+
+        public void LinkJobRevToQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        {
+            if (db.QualityClauseRevs.Contains(qualityClauseRev))
+            {
+                if (!db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
+                {
+                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "LinkJobRevToQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revsion already has an association with the given quality clause revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The quality clause revision doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkJobRevFromQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        {
+            if (db.QualityClauseRevs.Contains(qualityClauseRev))
+            {
+                if (db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
+                {
+                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobRev"] = jobRev;
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkJobRevFromQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revision doesn't have an association with the given quality clause revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The quality clause revision doesn't exist for that job revision");
+            }
+        }
+
+        public void MergeJobRevsBasedOnQualityClauseRev(Guid qualityClauseRev1, Guid qualityClauseRev2)
+        {
+            if (db.QualityClauseRevs.Contains(qualityClauseRev1) && db.QualityClauseRevs.Contains(qualityClauseRev2))
+            {
+                List<string> mergedList = db.JobRevs.Where(y => db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1].Contains(y) || db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2].Contains(y)).ToList();
+                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1] = mergedList;
+                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2] = mergedList;
+                db.Jobs.Values.Select(y => y.Where(y => mergedList.Contains(y.RevPlan)).Select(y => y.RevSeq = mergedList.IndexOf(y.RevPlan)));
+
+                var args = new Dictionary<string, string>();
+                args["QualityClauseRev1"] = qualityClauseRev1.ToString();
+                args["QualityClauseRev2"] = qualityClauseRev2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeJobRevsBasedOnQualityClauseRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
+            }
+        }
+
+        public void SplitJobRevInQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        {
+            if (db.QualityClauseRevs.Contains(qualityClauseRev))
+            {
+                if (db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
+                {
+                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitJobRevToQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Job revision doesn't have an association with the given quality clause revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The quality clause revision doesn't exist in the database");
+            }
+        }
+
+        public void CloneJobRevsBasedOnQualityClauseRev(Guid sourceQualityClauseRev, Guid targetQualityClauseRev, bool additive)
+        {
+            if (db.QualityClauseRevs.Contains(sourceQualityClauseRev) && db.QualityClauseRevs.Contains(targetQualityClauseRev))
+            {
+                if (!additive)
+                {
+                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev];
+                }
+                else
+                {
+                    List<string> mergedList = db.JobRevs.Where(y => db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev].Contains(y) || db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev].Contains(y)).ToList();
+                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = mergedList;
+                    db.Jobs.Values.Select(y => y.Where(y => mergedList.Contains(y.RevPlan)).Select(y => y.RevSeq = mergedList.IndexOf(y.RevPlan)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceQualityClauseRev"] = sourceQualityClauseRev.ToString();
+                args["TargetQualityClauseRev"] = targetQualityClauseRev.ToString();
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneJobRevsBasedOnQualityClauseRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
+            }
+        }
+
+        public void LinkQualityClauseRevToJobRev(string jobRev, Guid qualityClauseRev)
+        {
+            if (db.JobRevs.Contains(jobRev))
+            {
+                if (!db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
+                {
+                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobRev"] = jobRev;
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "LinkQualityClauseRevToJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Quality clause revision already has an association with the given job revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The job doesn't have that revision");
+            }
+        }
+
+        public void UnlinkQualityClauseRevFromJobRev(string jobRev, Guid qualityClauseRev)
+        {
+            if (db.JobRevs.Contains(jobRev))
+            {
+                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
+                {
+                    db.JobRevRefToQualityClauseRevRefs[jobRev].Remove(qualityClauseRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobRev"] = jobRev;
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkQualityClauseRevToJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Quality clause revision doesn't have an association with the given job revision");
+                }
+            }
+            else
+            {
+                throw new Exception("This job revision doesn't exist in the database");
+            }
+        }
+
+
+        public void MergeQualityClauseRevsBasedOnJobRev(string jobRev1, string jobRev2)
+        {
+            if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2))
+            {
+                List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.JobRevRefToQualityClauseRevRefs[jobRev1].Contains(y) || db.JobRevRefToQualityClauseRevRefs[jobRev2].Contains(y)).ToList();
+                db.JobRevRefToQualityClauseRevRefs[jobRev1] = mergedList;
+                db.JobRevRefToQualityClauseRevRefs[jobRev2] = mergedList;
+                db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
+
+                var args = new Dictionary<string, string>();
+                args["JobRev1"] = jobRev1;
+                args["JobRev2"] = jobRev2;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeQualityClauseRevsBasedOnJobRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the job revisions doesn't exist in the database");
+            }
+        }
+
+        public void SplitQualityClauseRevInJobRev(string jobRev, Guid qualityClauseRev)
+        {
+            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev))
+            {
+                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
+                {
+                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["JobRev"] = jobRev;
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitQualityClauseRevInJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Quality clause revision doesn't have an association with the given job revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The job revision doesn't exist in the database");
+            }
+        }
+
+        public void CloneQualityClauseRevsBasedOnJobRev(string sourceJobRev, string targetJobRev, bool additive)
+        {
+            if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev))
+            {
+                if (!additive)
+                {
+                    db.JobRevRefToQualityClauseRevRefs[targetJobRev] = db.JobRevRefToQualityClauseRevRefs[sourceJobRev];
+                }
+                else
+                {
+                    List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.JobRevRefToQualityClauseRevRefs[targetJobRev].Contains(y) || db.JobRevRefToQualityClauseRevRefs[sourceJobRev].Contains(y)).ToList();
+                    db.JobRevRefToQualityClauseRevRefs[targetJobRev] = mergedList;
+                    db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceJobRev"] = sourceJobRev;
+                args["TargetJobRev"] = targetJobRev;
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneQualityClauseRevsBasedOnJobRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the job revisions doesn't exist in the database");
+            }
+        }
+
         public void LinkQualityClauseRevToQualityClause(Guid clauseRev, Guid clauseId)
         {
             if (db.QualityClauses.ContainsKey(clauseId))
@@ -739,7 +1160,7 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    throw new Exception("The revision is already linked to the clause");
+                    throw new Exception("Quality clause revision already has an association with the given quality clause");
                 }
             }
             else
@@ -748,7 +1169,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UnlinkQualityClauseRevToQualityClause(Guid clauseRev, Guid clauseId)
+        public void UnlinkQualityClauseRevFromQualityClause(Guid clauseRev, Guid clauseId)
         {
             if (db.QualityClauses.ContainsKey(clauseId))
             {
@@ -761,14 +1182,14 @@ namespace LibWorkInstructions
                     args["ClauseId"] = clauseId.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UnlinkQualityClauseRevToQualityClause",
+                        Action = "UnlinkQualityClauseRevFromQualityClause",
                         Args = args,
                         When = DateTime.Now
                     });
                 }
                 else
                 {
-                    throw new Exception("The revision wasn't linked to the clause");
+                    throw new Exception("Quality clause revision doesn't have an association with the given quality clause");
                 }
             }
             else
@@ -802,31 +1223,6 @@ namespace LibWorkInstructions
             }
         }
 
-        public void MergeQualityClauseRevsBasedOnJobRev(string jobRev1, string jobRev2)
-        {
-            if(db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2))
-            {
-                List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.JobRevRefToQualityClauseRevRefs[jobRev1].Contains(y) || db.JobRevRefToQualityClauseRevRefs[jobRev1].Contains(y)).ToList();
-                db.JobRevRefToQualityClauseRevRefs[jobRev1] = mergedList;
-                db.JobRevRefToQualityClauseRevRefs[jobRev2] = mergedList;
-                db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
-
-                var args = new Dictionary<string, string>();
-                args["JobRev1"] = jobRev1;
-                args["JobRev2"] = jobRev2;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeQualityClauseRevsBasedOnJobRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the job revisions doesn't exist in the database");
-            }
-        }
-
         public void SplitQualityClauseRevInQualityClause(Guid clause, Guid clauseRev)
         {
             if (db.QualityClauses.ContainsKey(clause))
@@ -847,7 +1243,7 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    throw new Exception("The quality clause doesn't have a connection to that revision");
+                    throw new Exception("Quality clause revision doesn't have an association with the given quality clause");
                 }
             }
             else
@@ -856,36 +1252,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitQualityClauseRevInJobRev(Guid qualityClauseRev, string jobRev)
-        {
-            if (db.JobRevs.Contains(jobRev))
-            {
-                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
-                {
-                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "SplitQualityClauseRevInJobRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("The job revision doesn't have a connection to the quality clause revision");
-                }
-            }
-            else
-            {
-                throw new Exception("The job revision doesn't exist in the database");
-            }
-        }
-
-        public void CloneQualityClauseRevsFromQualityClause(Guid sourceClause, Guid targetClause, bool additive)
+        public void CloneQualityClauseRevsBasedOnQualityClause(Guid sourceClause, Guid targetClause, bool additive)
         {
             if (db.QualityClauses.ContainsKey(sourceClause) && db.QualityClauses.ContainsKey(targetClause))
             {
@@ -895,13 +1262,21 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    db.QualityClauseRefToQualityClauseRevRefs[targetClause] = db.QualityClauseRefToQualityClauseRevRefs[targetClause].Union(db.QualityClauseRefToQualityClauseRevRefs[sourceClause]).ToList();
+                    List<Guid> mergedList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[sourceClause].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[targetClause].Contains(y)).ToList();
+                    db.QualityClauseRefToQualityClauseRevRefs[targetClause] = mergedList;
+                    db.QualityClauses.Values.Select(y => y.Where(y => mergedList.Contains(y.Rev)).Select(y => y.RevSeq = mergedList.IndexOf(y.Rev)));
                 }
 
                 var args = new Dictionary<string, string>();
                 args["SourceClause"] = sourceClause.ToString();
                 args["TargetClause"] = targetClause.ToString();
                 args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneQualityClauseRevsBasedOnQualityClause",
+                    Args = args,
+                    When = DateTime.Now
+                });
             }
             else
             {
@@ -909,593 +1284,77 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CreateOp(Op op)
+        public void LinkJobOpToJobRev(string jobRev, int opId)
         {
-            if(!db.Ops.ContainsKey(op.Id))
+            if(db.JobRevs.Contains(jobRev))
             {
-                db.Ops.Add(op.Id, new List<Op> { op });
-                db.OpRefToOpSpecRevRefs.Add(op.Id, new List<Guid>());
-
-                var args = new Dictionary<string, string>();
-                args["Op"] = JsonSerializer.Serialize(op);
-                db.AuditLog.Add(new Event
+                if (!db.JobRevRefToOpRefs[jobRev].Contains(opId))
                 {
-                    Action = "CreateOp",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("The operation already exists in the database");
-            }
-        }
-
-        public void UpdateOp(Op op)
-        {
-            if (db.Ops.ContainsKey(op.Id))
-            {
-                if (!db.Ops[op.Id].Any(y => y.Rev == op.Rev))
-                {
-                    op.RevSeq = db.Ops[op.Id].Count;
-                    db.Ops[op.Id].Add(op);
+                    db.JobRevRefToOpRefs[jobRev].Add(opId);
 
                     var args = new Dictionary<string, string>();
-                    args["Op"] = JsonSerializer.Serialize(op);
+                    args["JobRev"] = jobRev;
+                    args["OpId"] = opId.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UpdateOp",
+                        Action = "LinkJobOpToJobRev",
                         Args = args,
                         When = DateTime.Now
                     });
                 }
                 else
                 {
-                    throw new Exception("An operation with the same revision identifier already exists");
+                    throw new Exception("Job op already has an association with the given job revision");
                 }
             }
             else
             {
-                throw new Exception("The operation being changed doesn't exist in the database");
+                throw new Exception("The job revision doesn't exist in the database");
             }
         }
 
-        public void DeleteOp(int opId)
+        public void UnlinkJobOpFromJobRev(string jobRev, int opId)
         {
-            db.Ops.Remove(opId);
-            db.OpRefToOpSpecRevRefs.Remove(opId);
-            db.OpRefToWorkInstructionRef.Remove(opId);
-            for (int i = db.JobRevRefToOpRefs.Count - 1; i >= 0; i--)
+            if (db.JobRevs.Contains(jobRev))
             {
-                db.JobRevRefToOpRefs.Values.ToList()[i].RemoveAll(y => y == opId);
-            }
-            for (int i = db.OpSpecRevRefToOpRefs.Count - 1; i >= 0; i--)
-            {
-                db.OpSpecRevRefToOpRefs.Values.ToList()[i].RemoveAll(y => y == opId);
-            }
-
-        }
-        public void CreateWorkInstruction(WorkInstruction workInstruction)
-        {
-            WorkInstruction newWorkInstruction = workInstruction;
-            if (!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup))
-            {
-                db.WorkInstructions[newWorkInstruction.IdRevGroup] = new List<WorkInstruction>();
-            }
-            if (db.WorkInstructions[newWorkInstruction.IdRevGroup].FindIndex(y => y.Equals(newWorkInstruction)) < 0)
-            {
-                db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
-                db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id;
-                db.WorkInstructionRefToWorkInstructionRevRefs.Add(newWorkInstruction.Id, new List<Guid> { newWorkInstruction.Id });
-
-                var args = new Dictionary<string, string>();
-                args["workInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
-                db.AuditLog.Add(new Event
+                if (db.JobRevRefToOpRefs[jobRev].Contains(opId))
                 {
-                    Action = "CreateWorkInstruction",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("Work instruction already exists in the database.");
-            }
-         }
-
-        public void UpdateWorkInstruction(WorkInstruction newWorkInstruction)
-        {
-            if (db.WorkInstructions.ContainsKey(newWorkInstruction.IdRevGroup))
-            {
-                if (db.WorkInstructions[newWorkInstruction.IdRevGroup].FindIndex(y => y.Equals(newWorkInstruction)) < 0)
-                {
-                    db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction);
-                    List<Guid> revisions = db.WorkInstructions[newWorkInstruction.IdRevGroup].Select(y => y.Id).ToList();
-                    foreach (Guid id in revisions)
-                    {
-                        db.WorkInstructionRefToWorkInstructionRevRefs[id] = revisions;
-                    }
-                    db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id;
+                    db.JobRevRefToOpRefs[jobRev].Remove(opId);
 
                     var args = new Dictionary<string, string>();
-                    args["newWorkInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
+                    args["JobRev"] = jobRev;
+                    args["OpId"] = opId.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UpdateWorkInstruction",
+                        Action = "UnlinkJobOpFromJobRev",
                         Args = args,
-                        When = DateTime.Now,
-                    });
-                }
-                else
-                    throw new Exception("The new work instruction already exists in the database");
-            }
-            else
-            {
-                throw new Exception("This old work instruction doesn't exist in the database");
-            }
-        }
-
-        public void RemoveWorkInstruction(Guid targetGroupId, Guid targetWorkId)
-        {
-            if (db.WorkInstructions.ContainsKey(targetGroupId)) 
-            {
-                WorkInstruction targetWorkInstruction = db.WorkInstructions[targetGroupId].First(y => y.Id == targetWorkId);
-                db.WorkInstructions[targetGroupId].Remove(targetWorkInstruction);
-                db.OpRefToWorkInstructionRef.Remove(targetWorkInstruction.OpId);
-                db.WorkInstructionRefToWorkInstructionRevRefs.Values.First(y => y.Contains(targetWorkInstruction.Id)).Remove(targetWorkInstruction.Id);
-
-                var args = new Dictionary<string, string>();
-                args["TargetGroupId"] = targetGroupId.ToString();
-                args["TargetWorkId"] = targetWorkId.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "RemoveWorkInstruction",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("This work instruction group doesn't exist in the database");
-            }
-        }
-        public void MergeWorkInstructions(Guid groupId1, Guid workId1, Guid groupId2, Guid workId2)
-        {
-            if (db.WorkInstructions.ContainsKey(groupId1) && db.WorkInstructions.ContainsKey(groupId2))
-            {
-                if (db.WorkInstructions[groupId1].Any(y => y.Id == workId1) && db.WorkInstructions[groupId2].Any(y => y.Id == workId2))
-                {
-                    List<Guid> mergedList = db.WorkInstructionRefToWorkInstructionRevRefs[workId1].Union(db.WorkInstructionRefToWorkInstructionRevRefs[workId2]).ToList();
-                    db.WorkInstructionRefToWorkInstructionRevRefs[workId1] = mergedList;
-                    db.WorkInstructionRefToWorkInstructionRevRefs[workId2] = mergedList;
-
-                    var args = new Dictionary<string, string>();
-                    args["GroupId1"] = groupId1.ToString();
-                    args["GroupId2"] = groupId2.ToString();
-                    args["WorkId1"] = workId1.ToString();
-                    args["WorkId2"] = workId2.ToString();
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "MergeWorkInstructions",
-                        Args = args,
-                        When = DateTime.Now,
+                        When = DateTime.Now
                     });
                 }
                 else
                 {
-                    throw new Exception("One or both of the work instructions doesn't exist within the group ids");
+                    throw new Exception("Job op doesn't have an association with the given job revision");
                 }
             }
             else
             {
-                throw new Exception("One or both of the group ids doesn't exist in the database");
+                throw new Exception("The job revision doesn't exist in the database");
             }
         }
 
-        public void SplitWorkInstruction(Guid groupId, Guid workId)
+        public void MergeJobOpBasedOnJobRev(string jobRev1, string jobRev2)
         {
-            if (db.WorkInstructions.ContainsKey(groupId))
+            if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2))
             {
-                WorkInstruction duplicate = new WorkInstruction();
 
-                foreach (List<WorkInstruction> workInstructionGroup in db.WorkInstructions.Values)
-                {
-                    foreach (WorkInstruction workInstruction in workInstructionGroup)
-                    {
-                        if (workInstruction.Id == workId)
-                        {
-                            duplicate = workInstruction;
-                        }
-                    }
-                }
-
-                var args = new Dictionary<string, string>();
-                args["GroupId"] = groupId.ToString();
-                args["WorkId"] = workId.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "SplitWorkInstruction",
-                    Args = args,
-                    When = DateTime.Now,
-                });
             }
-            else
-            {
-                throw new Exception("The work instruction doesn't exist in the database");
-            }
-        }
-
-        public void CloneWorkInstruction(Guid sourceWorkId, string targetJobId)
-        {
-            if (db.Jobs.ContainsKey(targetJobId))
-            {
-
-                var args = new Dictionary<string, string>();
-                args["SourceWorkId"] = sourceWorkId.ToString();
-                args["TargetJobId"] = targetJobId;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneWorkInstruction",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("The job doesn't exist in the database");
-            }
-        }
-
-        public void AddSpec(OpSpec newSpec)
-        {
-            OpSpec opSpec = newSpec;
-            db.OpSpecs.Add(opSpec.IdRevGroup, new List<OpSpec> { opSpec });
-
-
-            var args = new Dictionary<string, string>();
-            args["newSpec"] = JsonSerializer.Serialize(opSpec);
-            db.AuditLog.Add(new Event
-            {
-                Action = "AddSpec",
-                Args = args,
-                When = DateTime.Now,
-            });
-        }
-
-        public void UpdateSpec(OpSpec newSpec)
-        {
-            if (db.OpSpecs.ContainsKey(newSpec.IdRevGroup))
-            {
-                db.OpSpecs[newSpec.IdRevGroup].Add(newSpec);
-
-                var args = new Dictionary<string, string>();
-                args["newSpec"] = JsonSerializer.Serialize(newSpec);
-                db.AuditLog.Add(new Event
-                {
-                    Action = "UpdateSpec",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("The spec being updated doesn't exist in the database");
-            }
-        }
-
-        public void DeleteSpec(Guid targetGroupId, Guid targetSpecId)
-        {
-            if (db.OpSpecs.ContainsKey(targetGroupId))
-            {
-                OpSpec targetOpSpec = db.OpSpecs[targetGroupId].First(y => y.Id == targetSpecId);
-                db.OpSpecs[targetGroupId].Remove(targetOpSpec);
-
-                var args = new Dictionary<string, string>();
-                args["TargetGroupId"] = targetGroupId.ToString();
-                args["TargetSpecId"] = targetSpecId.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "DeleteSpec",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("The spec doesn't exist in the database");
-            }
-        }
-
-        public void MergeSpecs(int opId1, int opId2)
-        {
-            /*
-            int opIndex1 = db.Jobs.Values.ToList().FindIndex(y => y.Ops.FindIndex(y => y.Id == opId1) >= 0);
-            int opIndex2 = db.Jobs.Values.ToList().FindIndex(y => y.Ops.FindIndex(y => y.Id == opId2) >= 0);
-            
-            if (opIndex1 >= 0 && opIndex2 >= 0)
-            */
-            {
-                /*
-                List<OpSpec> list1 = db.Jobs.Values.ToList()[opIndex1].Ops.First(y => y.Id == opId1).OpSpecs;
-                List<OpSpec> list2 = db.Jobs.Values.ToList()[opIndex2].Ops.First(y => y.Id == opId2).OpSpecs;
-                List<OpSpec> mergedList = list1.Union(list2).ToList();
-
-                db.Jobs.Values.ToList()[opIndex1].Ops.First(y => y.Id == opId1).OpSpecs = mergedList;
-                db.Jobs.Values.ToList()[opIndex2].Ops.First(y => y.Id == opId2).OpSpecs = mergedList;
-                */
-                var args = new Dictionary<string, string>();
-                args["opId1"] = opId1.ToString();
-                args["opId2"] = opId2.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeSpecs",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            /*
-            else
-            {
-                throw new Exception("One or both of the operations doesn't exist in the database");
-            }
-            */
-        }
-
-        public void SplitSpec(Guid sourceGroupId, Guid sourceSpecId)
-        {
-            if (db.OpSpecs.ContainsKey(sourceGroupId))
-            {
-                OpSpec duplicate = db.OpSpecs[sourceGroupId].First(y => y.Id == sourceSpecId);
-                db.OpSpecs[sourceGroupId].Add(duplicate);
-
-                var args = new Dictionary<string, string>();
-                args["SourceGroupId"] = sourceGroupId.ToString();
-                args["SourceSpecId"] = sourceSpecId.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "SplitSpecs",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("The spec doesn't exist in the database");
-            }
-        }
-
-        public void CloneSpecs(int sourceOpId, int targetOpId, bool additive)
-        {
-            /*
-            int sourceOpIndex = db.Jobs.Values.ToList().FindIndex(y => y.Ops.FindIndex(y => y.Id == sourceOpId) >= 0);
-            int targetOpIndex = db.Jobs.Values.ToList().FindIndex(y => y.Ops.FindIndex(y => y.Id == targetOpId) >= 0);
-            if (sourceOpIndex >= 0 && targetOpIndex >= 0)
-            */
-            {
-                /*
-                List<OpSpec> sourceList = db.Jobs.Values.ToList()[sourceOpIndex].Ops.First(y => y.Id == sourceOpIndex).OpSpecs;
-                List<OpSpec> targetList = db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs;
-                List<OpSpec> mergedList = sourceList.Union(targetList).ToList();
-                if (!additive) 
-                {
-                    db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs = sourceList;
-                }
-                else
-                {
-                    db.Jobs.Values.ToList()[targetOpIndex].Ops.First(y => y.Id == targetOpIndex).OpSpecs = mergedList;
-                }
-
-                var args = new Dictionary<string, string>();
-                args["SourceOpId"] = sourceOpId.ToString();
-                args["TargetOpId"] = targetOpId.ToString();
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneSpecs",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-                */
-            }
-            /*
-            else
-            {
-                throw new Exception("One or both of the operations doesn't exist in the database");
-            }
-            */
-        }
-
-        public void MergeQualityClauses(string job1, string job2)
-        {
-            if (db.Jobs.ContainsKey(job1) && db.Jobs.ContainsKey(job2))
-            {
-                db.JobRefToQualityClauseRefs[job1] =
-                    db.JobRefToQualityClauseRefs[job1].Union(db.JobRefToQualityClauseRefs[job2]).ToList();
-                db.JobRefToQualityClauseRefs[job2] = db.JobRefToQualityClauseRefs[job1];
-
-                var args = new Dictionary<string, string>();
-                args["Job1"] = job1;
-                args["Job2"] = job2;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeQualityClauses",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the jobs doesn't exist in the database");
-            }
-        }
-
-        public void DeleteQualityClauseFromJob(Guid ClauseId, string Job)
-        {
-            if (db.JobRefToQualityClauseRefs[Job].Contains(ClauseId)) {
-                db.JobRefToQualityClauseRefs[Job].Remove(ClauseId);
-                var args = new Dictionary<string, string>();
-                args["QualityClause"] = ClauseId.ToString();
-                args["Job"] = Job;
-                db.AuditLog.Add(new Event
-                {
-                    Action = "DeleteQualityClauseFromJob",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            } else
-            {
-                throw new Exception("This quality clause doesn't exist within this Job");
-            }
-        }
-
-        public void SplitQualityClause(Guid sourceGroupId, Guid sourceClauseId)
-        {
-            if (db.QualityClauses.ContainsKey(sourceGroupId))
-            {
-                db.QualityClauses[sourceGroupId].Add(db.QualityClauses[sourceGroupId].First(y => y.Id == sourceClauseId));
-
-                var args = new Dictionary<string, string>();
-                args["SourceGroupId"] = sourceGroupId.ToString();
-                args["SourceClauseId"] = sourceClauseId.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "SplitQualityClauses",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("This group id doesn't exist in the database");
-            }
-        }
-
-        public void CloneQualityClauses(string sourceJobId, string targetJobId, bool additive)
-        {
-            if (db.Jobs.ContainsKey(sourceJobId) && db.Jobs.ContainsKey(targetJobId))
-            {
-                if(!additive)
-                {
-                    db.JobRefToQualityClauseRefs[targetJobId] = db.JobRefToQualityClauseRefs[sourceJobId];
-                }
-                else
-                {
-                    db.JobRefToQualityClauseRefs[targetJobId] =
-                        db.JobRefToQualityClauseRefs[sourceJobId].Union(db.JobRefToQualityClauseRefs[targetJobId]).ToList();
-
-                }
-
-                var args = new Dictionary<string, string>();
-                args["SourceJobId"] = sourceJobId;
-                args["TargetJobId"] = targetJobId;
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneQualityClauses",
-                    Args = args,
-                    When = DateTime.Now,
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the jobs doesn't exist in the database");
-            }
-        }
-
-        public void CreateOpSpecRev(Guid specRev)
-        {
-            if (!db.OpSpecRevs.Contains(specRev))
-            {
-                db.OpSpecRevs.Add(specRev);
-                db.OpSpecRevRefToOpRefs[specRev] = new List<int>();
-
-                var args = new Dictionary<string, string>();
-                args["specRev"] = specRev.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CreateSpecRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("OpSpec Revision already exists in the database");
-            }
-        }
-
-        public void UpdateOpSpecRev(Guid oldSpecRev, Guid newSpecRev)
-        {
-            if (!db.OpSpecRevs.Contains(oldSpecRev) && !db.OpSpecRevs.Contains(newSpecRev))
-            {
-                if(!db.OpSpecRevs.Contains(newSpecRev))
-                {
-                    db.OpSpecRevs.Add(newSpecRev);
-                    db.OpSpecRevRefToOpRefs[newSpecRev] = new List<int>();
-                }
-                else
-                {
-                    throw new Exception("OpSpec Revision already exists in the datbase");
-                }
-
-            } 
-            else
-            {
-                throw new Exception("OpSpec Revision does not exist in the database");
-            }
-        }
-
-        public void DeleteOpSpecRev(Guid specRev)
-        {
-            db.OpSpecRevs.Remove(specRev);
-            db.OpSpecRevRefToOpRefs.Remove(specRev);
-
-            var args = new Dictionary<string, string>();
-            args["SpecRev"] = specRev.ToString();
-            db.AuditLog.Add(new Event
-            {
-                Action = "DeleteSpecRev",
-                Args = args,
-                When = DateTime.Now
-            });
-        }
-
-        public void CreateWorkInstructionRev()
-        {
-
-        }
-
-        public void UpdateWorkInstructionRev()
-        {
-
-        }
-
-        public void DeleteWorkInstructionRev()
-        {
-
-        }
-
-
-        public void LinkJobOpToJobRev()
-        {
-
-        }
-        
-        public void UnlinkJobOpToJobRev()
-        {
-
-        }
-        
-        public void MergeJobOpToJobRev()
-        {
-
         }
 
         public void SplitJobOpToJobRev()
         {
 
         }
-        
+
         public void CloneJobOpToJobRev()
         {
 
@@ -1505,7 +1364,7 @@ namespace LibWorkInstructions
         {
 
         }
-        
+
         public void UnlinkJobOpToOpSpecRev()
         {
 
@@ -1584,6 +1443,26 @@ namespace LibWorkInstructions
         public void UnlinkWorkInstructionToJobOp()
         {
 
+        }
+
+        public void DeleteQualityClauseFromJob(Guid clauseId, string job)
+        {
+            if (db.JobRefToQualityClauseRefs[job].Contains(clauseId)) {
+                db.JobRefToQualityClauseRefs[job].Remove(clauseId);
+
+                var args = new Dictionary<string, string>();
+                args["QualityClause"] = clauseId.ToString();
+                args["Job"] = job;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteQualityClauseFromJob",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            } else
+            {
+                throw new Exception("This quality clause doesn't exist within this Job");
+            }
         }
 
         public void LinkWorkInstructionRevToWorkInstruction()
