@@ -125,6 +125,29 @@ namespace LibWorkInstructions
                 throw new Exception("Job doesn't exist in the database");
             }
         }
+
+        public void DeleteQualityClauseFromJob(Guid clauseId, string job)
+        {
+            if (db.JobRefToQualityClauseRefs[job].Contains(clauseId))
+            {
+                db.JobRefToQualityClauseRefs[job].Remove(clauseId);
+
+                var args = new Dictionary<string, string>();
+                args["QualityClause"] = clauseId.ToString();
+                args["Job"] = job;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteQualityClauseFromJob",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("This quality clause doesn't exist within this Job");
+            }
+        }
+
         public void CreateJobRev(string jobRev)
         {
             if (!db.JobRevs.Contains(jobRev))
@@ -360,7 +383,7 @@ namespace LibWorkInstructions
             if (!db.Ops.ContainsKey(op.Id))
             {
                 db.Ops.Add(op.Id, new List<Op> { op });
-                db.OpRefToOpSpecRevRefs[op.Id] = new List<Guid> { op.Rev };
+                db.OpRefToOpSpecRevRefs[op.Id] = new List<Guid>();
 
                 var args = new Dictionary<string, string>();
                 args["Op"] = JsonSerializer.Serialize(op);
@@ -570,7 +593,7 @@ namespace LibWorkInstructions
                 workInstruction.RevSeq = 0;
                 db.WorkInstructions[workInstruction.IdRevGroup] = new List<WorkInstruction> { workInstruction };
                 db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.Id;
-                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.Id] =  new List<Guid> { workInstruction.Id };
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.Id] =  new List<Guid>();
 
                 var args = new Dictionary<string, string>();
                 args["WorkInstruction"] = JsonSerializer.Serialize(workInstruction);
@@ -612,7 +635,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("This old work instruction doesn't exist in the database");
+                throw new Exception("The old work instruction doesn't exist in the database");
             }
         }
 
@@ -707,36 +730,43 @@ namespace LibWorkInstructions
             }
         }
 
-        public void LinkJobRevToJob(string jobId, string jobRev)
+        public void LinkJobRevToJob(string jobRev, string jobId)
         {
             if (db.Jobs.ContainsKey(jobId))
             {
-                if (!db.JobRefToJobRevRefs[jobId].Contains(jobRev))
+                if (db.JobRevs.Contains(jobRev))
                 {
-                    db.JobRefToJobRevRefs[jobId].Add(jobRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["JobId"] = jobId;
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
+                    if (!db.JobRefToJobRevRefs[jobId].Contains(jobRev))
                     {
-                        Action = "LinkJobRevToJob",
-                        Args = args,
-                        When = DateTime.Now,
-                    });
+                        db.JobRefToJobRevRefs[jobId].Add(jobRev);
+
+                        var args = new Dictionary<string, string>();
+                        args["JobId"] = jobId;
+                        args["JobRev"] = jobRev;
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "LinkJobRevToJob",
+                            Args = args,
+                            When = DateTime.Now,
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Job revision already has an association to the given job");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Job revision already has an association to the given job");
+                    throw new Exception("The job revision doesn't exist in the database");
                 }
             }
             else
             {
-                throw new Exception("Job doesn't exist in the database");
+                throw new Exception("The job doesn't exist in the database");
             }
         }
 
-        public void UnlinkJobRevFromJob(string jobId, string jobRev)
+        public void UnlinkJobRevFromJob(string jobRev, string jobId)
         {
             if (db.Jobs.ContainsKey(jobId))
             {
@@ -761,7 +791,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("Job doesn't exist in the database");
+                throw new Exception("The job doesn't exist in the database");
             }
         }
 
@@ -790,7 +820,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitJobRevInJob(string jobId, string jobRev)
+        public void SplitJobRevInJob(string jobRev, string jobId)
         {
             if(db.Jobs.ContainsKey(jobId))
             {
@@ -851,27 +881,34 @@ namespace LibWorkInstructions
             }
         }
 
-        public void LinkJobRevToQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        public void LinkJobRevToQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev))
             {
-                if (!db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
+                if (db.JobRevs.Contains(jobRev))
                 {
-                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
-
-                    var args = new Dictionary<string, string>();
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
+                    if (!db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev))
                     {
-                        Action = "LinkJobRevToQualityClauseRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
+                        db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev);
+
+                        var args = new Dictionary<string, string>();
+                        args["QualityClauseRev"] = qualityClauseRev.ToString();
+                        args["JobRev"] = jobRev;
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "LinkJobRevToQualityClauseRev",
+                            Args = args,
+                            When = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Job revsion already has an association with the given quality clause revision");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Job revsion already has an association with the given quality clause revision");
+                    throw new Exception("The job revision doesn't exist in the database");
                 }
             }
             else
@@ -880,7 +917,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UnlinkJobRevFromQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        public void UnlinkJobRevFromQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev))
             {
@@ -934,7 +971,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitJobRevInQualityClauseRev(Guid qualityClauseRev, string jobRev)
+        public void SplitJobRevInQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev))
             {
@@ -995,7 +1032,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void LinkQualityClauseRevToJobRev(string jobRev, Guid qualityClauseRev)
+        public void LinkQualityClauseRevToJobRev(Guid qualityClauseRev, string jobRev)
         {
             if (db.JobRevs.Contains(jobRev))
             {
@@ -1024,7 +1061,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UnlinkQualityClauseRevFromJobRev(string jobRev, Guid qualityClauseRev)
+        public void UnlinkQualityClauseRevFromJobRev(Guid qualityClauseRev, string jobRev)
         {
             if (db.JobRevs.Contains(jobRev))
             {
@@ -1079,9 +1116,9 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitQualityClauseRevInJobRev(string jobRev, Guid qualityClauseRev)
+        public void SplitQualityClauseRevInJobRev(Guid qualityClauseRev, string jobRev)
         {
-            if (db.JobRevRefToQualityClauseRevRefs.ContainsKey(jobRev))
+            if (db.JobRevs.Contains(jobRev))
             {
                 if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev))
                 {
@@ -1223,7 +1260,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitQualityClauseRevInQualityClause(Guid clause, Guid clauseRev)
+        public void SplitQualityClauseRevInQualityClause(Guid clauseRev, Guid clause)
         {
             if (db.QualityClauses.ContainsKey(clause))
             {
@@ -1284,7 +1321,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void LinkJobOpToJobRev(string jobRev, int opId)
+        public void LinkJobOpToJobRev(int opId, string jobRev)
         {
             if(db.JobRevs.Contains(jobRev))
             {
@@ -1313,7 +1350,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UnlinkJobOpFromJobRev(string jobRev, int opId)
+        public void UnlinkJobOpFromJobRev(int opId, string jobRev)
         {
             if (db.JobRevs.Contains(jobRev))
             {
@@ -1342,152 +1379,746 @@ namespace LibWorkInstructions
             }
         }
 
-        public void MergeJobOpBasedOnJobRev(string jobRev1, string jobRev2)
+        public void MergeJobOpsBasedOnJobRev(string jobRev1, string jobRev2)
         {
             if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2))
             {
-
-            }
-        }
-
-        public void SplitJobOpToJobRev()
-        {
-
-        }
-
-        public void CloneJobOpToJobRev()
-        {
-
-        }
-
-        public void LinkJobOpToOpSpecRev()
-        {
-
-        }
-
-        public void UnlinkJobOpToOpSpecRev()
-        {
-
-        }
-
-        public void MergeJobOpToOpSpecRev()
-        {
-
-        }
-
-        public void SplitJobOpToOpSpecRev()
-        {
-
-        }
-
-        public void CloneJobOpToOpSpecRev()
-        {
-
-        }
-
-        public void LinkOpSpecRevToJobOp()
-        {
-
-        }
-
-        public void UnlinkOpSpecRevToJobOp()
-        {
-
-        }
-
-        public void MergeOpSpecRevToJobOp()
-        {
-
-        }
-
-        public void SplitOpSpecRevToJobOp()
-        {
-
-        }
-
-        public void CloneOpSpecRevToJobOp()
-        {
-
-        }
-
-        public void LinkOpSpecRevToOpSpec()
-        {
-
-        }
-
-        public void UnlinkOpSpecRevToOpSpec()
-        {
-
-        }
-
-        public void MergeOpSpecRevToOpSpec()
-        {
-
-        }
-
-        public void SplitOpSpecRevToOpSpec()
-        {
-
-        }
-
-        public void CloneOpSpecRevToOpSpec()
-        {
-
-        }
-
-        public void LinkWorkInstructionToJobOp()
-        {
-
-        }
-
-        public void UnlinkWorkInstructionToJobOp()
-        {
-
-        }
-
-        public void DeleteQualityClauseFromJob(Guid clauseId, string job)
-        {
-            if (db.JobRefToQualityClauseRefs[job].Contains(clauseId)) {
-                db.JobRefToQualityClauseRefs[job].Remove(clauseId);
+                List<int> mergedList = db.Ops.Keys.Where(y => db.JobRevRefToOpRefs[jobRev1].Contains(y) || db.JobRevRefToOpRefs[jobRev2].Contains(y)).ToList();
+                db.JobRevRefToOpRefs[jobRev1] = mergedList;
+                db.JobRevRefToOpRefs[jobRev2] = mergedList;
 
                 var args = new Dictionary<string, string>();
-                args["QualityClause"] = clauseId.ToString();
-                args["Job"] = job;
+                args["JobRev1"] = jobRev1;
+                args["JobRev2"] = jobRev2;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteQualityClauseFromJob",
+                    Action = "MergeJobOpsBasedOnJobRev",
                     Args = args,
-                    When = DateTime.Now,
+                    When = DateTime.Now
                 });
-            } else
+            }
+            else
             {
-                throw new Exception("This quality clause doesn't exist within this Job");
+                throw new Exception("One or both of the job revisions doesn't exist in the database");
             }
         }
 
-        public void LinkWorkInstructionRevToWorkInstruction()
+        public void SplitJobOpInJobRev(int opId, string jobRev)
         {
+            if (db.JobRevs.Contains(jobRev))
+            {
+                if (db.JobRevRefToOpRefs[jobRev].Contains(opId))
+                {
+                    db.JobRevRefToOpRefs[jobRev].Add(opId);
 
+                    var args = new Dictionary<string, string>();
+                    args["OpId"] = opId.ToString();
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitJobOpInJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op doesn't have an association with the given job revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The job revision doesn't exist in the database");
+            }
         }
 
-        public void UnlinkWorkInstructionRevToWorkInstruction()
+        public void CloneJobOpsBasedOnJobRev(string sourceJobRev, string targetJobRev, bool additive)
         {
+            if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev))
+            {
+                if(!additive)
+                {
+                    db.JobRevRefToOpRefs[targetJobRev] = db.JobRevRefToOpRefs[sourceJobRev];
+                }
+                else
+                {
+                    db.JobRevRefToOpRefs[targetJobRev] = db.Ops.Keys.Where(y => db.JobRevRefToOpRefs[targetJobRev].Contains(y) || db.JobRevRefToOpRefs[sourceJobRev].Contains(y)).ToList();
+                }
 
+                var args = new Dictionary<string, string>();
+                args["SourceJobRev"] = sourceJobRev;
+                args["TargetJobRev"] = targetJobRev;
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneJobOpBasedOnJobRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the job revisions doesn't exist in the database");
+            }
         }
 
-        public void MergeWorkInstructionRevToWorkInstruction()
+        public void LinkJobOpToOpSpecRev(int opId, Guid opSpecRev)
         {
+            if (db.OpSpecRevs.Contains(opSpecRev))
+            {
+                if (!db.OpSpecRevRefToOpRefs[opSpecRev].Contains(opId))
+                {
+                    db.OpSpecRevRefToOpRefs[opSpecRev].Add(opId);
 
+                    var args = new Dictionary<string, string>();
+                    args["OpId"] = opId.ToString();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "LinkJobOpToOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op already has an association with the given op spec revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec revision doesn't exist in the database");
+            }
         }
 
-        public void SplitWorkInstructionRevToWorkInstruction()
+        public void UnlinkJobOpFromOpSpecRev(int opId, Guid opSpecRev)
         {
+            if (db.OpSpecRevs.Contains(opSpecRev))
+            {
+                if (db.OpSpecRevRefToOpRefs[opSpecRev].Contains(opId))
+                {
+                    db.OpSpecRevRefToOpRefs[opSpecRev].Remove(opId);
 
+                    var args = new Dictionary<string, string>();
+                    args["OpId"] = opId.ToString();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkJobOpFromOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op doesn't have an association with the given op spec revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec revision doesn't exist in the database");
+            }
         }
 
-        public void CloneWorkInstructionRevToWorkInstruction()
+        public void MergeJobOpsBasedOnOpSpecRev(Guid opSpecRev1, Guid opSpecRev2)
         {
+            if (db.OpSpecRevs.Contains(opSpecRev1) && db.OpSpecRevs.Contains(opSpecRev2))
+            {
+                List<int> mergedList = db.Ops.Keys.Where(y => db.OpSpecRevRefToOpRefs[opSpecRev1].Contains(y) || db.OpSpecRevRefToOpRefs[opSpecRev2].Contains(y)).ToList();
+                db.OpSpecRevRefToOpRefs[opSpecRev1] = mergedList;
+                db.OpSpecRevRefToOpRefs[opSpecRev2] = mergedList;
 
+                var args = new Dictionary<string, string>();
+                args["OpSpecRev1"] = opSpecRev1.ToString();
+                args["OpSpecRev2"] = opSpecRev2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeJobOpsBasedOnOpSpecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the op spec revisions doesn't exist in the database");
+            }
+        }
+
+        public void SplitJobOpInOpSpecRev(int opId, Guid opSpecRev)
+        {
+            if (db.OpSpecRevs.Contains(opSpecRev))
+            {
+                if (db.OpSpecRevRefToOpRefs[opSpecRev].Contains(opId))
+                {
+                    db.OpSpecRevRefToOpRefs[opSpecRev].Add(opId);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpId"] = opId.ToString();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitJobOpInOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op doesn't have an association with the given op spec revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec revision doesn't exist in the database");
+            }
+        }
+
+        public void CloneJobOpsBasedOnOpSpecRev(Guid sourceOpSpecRev, Guid targetOpSpecRev, bool additive)
+        {
+            if (db.OpSpecRevs.Contains(sourceOpSpecRev) && db.OpSpecRevs.Contains(targetOpSpecRev))
+            {
+                if (!additive)
+                {
+                    db.OpSpecRevRefToOpRefs[targetOpSpecRev] = db.OpSpecRevRefToOpRefs[sourceOpSpecRev];
+                }
+                else
+                {
+                    List<int> mergedList = db.Ops.Keys.Where(y => db.OpSpecRevRefToOpRefs[targetOpSpecRev].Contains(y) || db.OpSpecRevRefToOpRefs[sourceOpSpecRev].Contains(y)).ToList();
+                    db.OpSpecRevRefToOpRefs[targetOpSpecRev] = mergedList;
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceOpSpecRev"] = sourceOpSpecRev.ToString();
+                args["TargetOpSpecRev"] = targetOpSpecRev.ToString();
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneJobOpsBasedOnOpSpecRev",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the op spec revisions doesn't exist in the database");
+            }
+        }
+
+        public void LinkOpSpecRevToJobOp(Guid opSpecRev, int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                if (!db.OpRefToOpSpecRevRefs[opId].Contains(opSpecRev))
+                {
+                    db.OpRefToOpSpecRevRefs[opId].Add(opSpecRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    args["OpId"] = opId.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "LinkOpSpecRevToJobOp",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op spec revision already has an association to the given op");
+                }
+            }
+            else
+            {
+                throw new Exception("The op doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkOpSpecRevFromJobOp(Guid opSpecRev, int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                if (db.OpRefToOpSpecRevRefs[opId].Contains(opSpecRev))
+                {
+                    db.OpRefToOpSpecRevRefs[opId].Remove(opSpecRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    args["OpId"] = opId.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkOpSpecRevFromJobOp",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op spec revision doesn't have an association to the given op");
+                }
+            }
+            else
+            {
+                throw new Exception("The op doesn't exist in the database");
+            }
+        }
+
+        public void MergeOpSpecRevsBasedOnJobOp(int opId1, int opId2)
+        {
+            if (db.Ops.ContainsKey(opId1) && db.Ops.ContainsKey(opId2))
+            {
+                List<Guid> mergedList = db.OpSpecRevs.Where(y => db.OpRefToOpSpecRevRefs[opId1].Contains(y) || db.OpRefToOpSpecRevRefs[opId2].Contains(y)).ToList();
+                db.OpRefToOpSpecRevRefs[opId1] = mergedList;
+                db.OpRefToOpSpecRevRefs[opId2] = mergedList;
+                db.OpSpecs.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+
+                var args = new Dictionary<string, string>();
+                args["OpId1"] = opId1.ToString();
+                args["OpId2"] = opId2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeOpSpecRevsBasedOnJobOp",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the ops doesn't exist in the database");
+            }
+        }
+
+        public void SplitOpSpecRevInJobOp(Guid opSpecRev, int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                if (db.OpRefToOpSpecRevRefs[opId].Contains(opSpecRev))
+                {
+                    db.OpRefToOpSpecRevRefs[opId].Add(opSpecRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    args["OpId"] = opId.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitOpSpecRevInJobOp",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op spec revision doesn't have an association to the given op");
+                }
+            }
+            else
+            {
+                throw new Exception("The op doesn't exist in the database");
+            }
+        }
+
+        public void CloneOpSpecRevsBasedOnJobOp(int sourceOp, int targetOp, bool additive)
+        {
+            if (db.Ops.ContainsKey(sourceOp) && db.Ops.ContainsKey(targetOp))
+            {
+                if (!additive)
+                {
+                    db.OpRefToOpSpecRevRefs[targetOp] = db.OpRefToOpSpecRevRefs[sourceOp];
+                }
+                else
+                {
+                    List<Guid> mergedList = db.OpSpecRevs.Where(y => db.OpRefToOpSpecRevRefs[targetOp].Contains(y) || db.OpRefToOpSpecRevRefs[sourceOp].Contains(y)).ToList();
+                    db.OpRefToOpSpecRevRefs[targetOp] = mergedList;
+                    db.OpSpecs.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceOp"] = sourceOp.ToString();
+                args["TargetOp"] = targetOp.ToString();
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneOpSpecRevsBasedOnJobOp",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the ops doesn't exist in the database");
+            }
+        }
+
+        public void LinkOpSpecRevToOpSpec(Guid opSpecRev, Guid opSpec)
+        {
+            if (db.OpSpecs.Values.Any(y => y.Any(y => y.Id == opSpec))) 
+            {
+                if (db.OpSpecRevs.Contains(opSpecRev))
+                {
+                    if (!db.OpSpecRefToOpSpecRevRefs[opSpec].Contains(opSpecRev))
+                    {
+                        db.OpSpecRefToOpSpecRevRefs[opSpec].Add(opSpecRev);
+
+                        var args = new Dictionary<string, string>();
+                        args["OpSpecRev"] = opSpecRev.ToString();
+                        args["OpSpec"] = opSpec.ToString();
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "LinkOpSpecRevToOpSpec",
+                            Args = args,
+                            When = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Op spec revision already has an association with the given op spec");
+                    }
+                }
+                else
+                {
+                    throw new Exception("The op spec revision doesn't exist in the database");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkOpSpecRevToOpSpec(Guid opSpecRev, Guid opSpec)
+        {
+            if (db.OpSpecs.Values.Any(y => y.Any(y => y.Id == opSpec)))
+            {
+                if (db.OpSpecRefToOpSpecRevRefs[opSpec].Contains(opSpecRev))
+                {
+                    db.OpSpecRefToOpSpecRevRefs[opSpec].Remove(opSpecRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    args["OpSpec"] = opSpec.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkOpSpecRevToOpSpec",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op spec revision doesn't have an association with the given op spec");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec doesn't exist in the database");
+            }
+        }
+
+        public void MergeOpSpecRevsBasedOnOpSpec(Guid opSpec1, Guid opSpec2)
+        {
+            if (db.OpSpecs.Values.Any(y => y.Any(y => y.Id == opSpec1)) && db.OpSpecs.Values.Any(y => y.Any(y => y.Id == opSpec2)))
+            {
+                List<Guid> mergedList = db.OpSpecRevs.Where(y => db.OpSpecRefToOpSpecRevRefs[opSpec1].Contains(y) || db.OpSpecRefToOpSpecRevRefs[opSpec2].Contains(y)).ToList();
+                db.OpSpecRefToOpSpecRevRefs[opSpec1] = mergedList;
+                db.OpSpecRefToOpSpecRevRefs[opSpec2] = mergedList;
+                db.OpSpecs.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+
+                var args = new Dictionary<string, string>();
+                args["OpSpec1"] = opSpec1.ToString();
+                args["OpSpec2"] = opSpec2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeOpSpecRevsBasedOnOpSpec",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the op specs doesn't exist in the database");
+            }
+        }
+
+        public void SplitOpSpecRevInOpSpec(Guid opSpecRev, Guid opSpec)
+        {
+            if (db.OpSpecs.Values.Any(y => y.Any(y => y.Id == opSpec)))
+            {
+                if (db.OpSpecRefToOpSpecRevRefs[opSpec].Contains(opSpecRev))
+                {
+                    db.OpSpecRefToOpSpecRevRefs[opSpec].Add(opSpecRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["OpSpecRev"] = opSpecRev.ToString();
+                    args["OpSpec"] = opSpec.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitOpSpecRevInOpSpec",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Op spec revision doesn't have an association with the given op spec");
+                }
+            }
+            else
+            {
+                throw new Exception("The op spec doesn't exist in the database");
+            }
+        }
+
+        public void CloneOpSpecRevsBasedOnOpSpec(Guid sourceOpSpec, Guid targetOpSpec, bool additive)
+        {
+            if (db.OpSpecs.Values.Any(y => y.Any(y => y.Id == sourceOpSpec)) && db.OpSpecs.Values.Any(y => y.Any(y => y.Id == targetOpSpec)))
+            {
+                if (!additive)
+                {
+                    db.OpSpecRefToOpSpecRevRefs[targetOpSpec] = db.OpSpecRefToOpSpecRevRefs[sourceOpSpec];
+                }
+                else
+                {
+                    List<Guid> mergedList = db.OpSpecRevs.Where(y => db.OpSpecRefToOpSpecRevRefs[targetOpSpec].Contains(y) || db.OpSpecRefToOpSpecRevRefs[sourceOpSpec].Contains(y)).ToList();
+                    db.OpSpecRefToOpSpecRevRefs[targetOpSpec] = mergedList;
+                    db.OpSpecs.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceOpSpec"] = sourceOpSpec.ToString();
+                args["TargetOpSpec"] = targetOpSpec.ToString();
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneOpSpecRevsBasedOnOpSpec",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the op specs doesn't exist in the database");
+            }
+        }
+
+        public void LinkWorkInstructionToJobOp(Guid workInstruction, int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction))) 
+                {
+                    if (!db.OpRefToWorkInstructionRef.ContainsKey(opId))
+                    {
+                        db.OpRefToWorkInstructionRef[opId] = workInstruction;
+
+                        var args = new Dictionary<string, string>();
+                        args["WorkInstruction"] = workInstruction.ToString();
+                        args["OpId"] = opId.ToString();
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "LinkWorkInstructionToJobOp",
+                            Args = args,
+                            When = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Op already has an association with a work instruction");
+                    }
+                }
+                else
+                {
+                    throw new Exception("The work instruction doesn't exist in the database");
+                }
+            }
+            else
+            {
+                throw new Exception("The op doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkWorkInstructionToJobOp(Guid workInstruction, int opId)
+        {
+            if (db.Ops.ContainsKey(opId))
+            {
+                if (db.OpRefToWorkInstructionRef.ContainsKey(opId))
+                {
+                    if (db.OpRefToWorkInstructionRef[opId] == workInstruction)
+                    {
+                        db.OpRefToWorkInstructionRef.Remove(opId);
+
+                        var args = new Dictionary<string, string>();
+                        args["WorkInstruction"] = workInstruction.ToString();
+                        args["OpId"] = opId.ToString();
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "UnlinkWorkInstructionToJobOp",
+                            Args = args,
+                            When = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Work instruction doesn't have an association with the given op");
+                    }
+                }
+                else
+                {
+                    throw new Exception("Op doesn't have an association with a work instruction");
+                }
+            }
+            else
+            {
+                throw new Exception("The op doesn't exist in the database");
+            }
+        }
+
+        public void LinkWorkInstructionRevToWorkInstruction(Guid workInstructionRev, Guid workInstruction)
+        {
+            if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction)))
+            {
+                if (db.WorkInstructionRevs.Contains(workInstructionRev))
+                {
+                    if (!db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Contains(workInstructionRev))
+                    {
+                        db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Add(workInstructionRev);
+
+                        var args = new Dictionary<string, string>();
+                        args["WorkInstructionRev"] = workInstructionRev.ToString();
+                        args["WorkInstruction"] = workInstruction.ToString();
+                        db.AuditLog.Add(new Event
+                        {
+                            Action = "LinkWorkInstructionRevToWorkInstruction",
+                            Args = args,
+                            When = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Work instruction revision already has an association with the given work instruction");
+                    }
+                }
+                else
+                {
+                    throw new Exception("The work instruction revision doesn't exist in the database");
+                }
+            }
+            else
+            {
+                throw new Exception("The work instruction doesn't exist in the database");
+            }
+        }
+
+        public void UnlinkWorkInstructionRevToWorkInstruction(Guid workInstructionRev, Guid workInstruction)
+        {
+            if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction)))
+            {
+                if (db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Contains(workInstructionRev))
+                {
+                    db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Remove(workInstructionRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["WorkInstructionRev"] = workInstructionRev.ToString();
+                    args["WorkInstruction"] = workInstruction.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "UnlinkWorkInstructionRevToWorkInstruction",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Work instruction revision doesn't have an association with the given work instruction");
+                }
+            }
+            else
+            {
+                throw new Exception("The work instruction doesn't exist in the database");
+            }
+        }
+
+        public void MergeWorkInstructionRevs(Guid workInstruction1, Guid workInstruction2)
+        {
+            if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction1)) && db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction2)))
+            {
+                List<Guid> mergedList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction1].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction2].Contains(y)).ToList();
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction1] = mergedList;
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction2] = mergedList;
+                db.WorkInstructions.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+
+                var args = new Dictionary<string, string>();
+                args["WorkInstruction1"] = workInstruction1.ToString();
+                args["WorkInstruction2"] = workInstruction2.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "MergeWorkInstructionRevs",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the work instructions doesn't exist in the database");
+            }
+        }
+
+        public void SplitWorkInstructionRev(Guid workInstructionRev, Guid workInstruction)
+        {
+            if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == workInstruction)))
+            {
+                if (db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Contains(workInstructionRev))
+                {
+                    db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Add(workInstructionRev);
+
+                    var args = new Dictionary<string, string>();
+                    args["WorkInstructionRev"] = workInstructionRev.ToString();
+                    args["WorkInstruction"] = workInstruction.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "SplitWorkInstructionRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("Work instruction revision doesn't have an association with the given work instruction");
+                }
+            }
+            else
+            {
+                throw new Exception("The work instruction doesn't exist in the database");
+            }
+        }
+
+        public void CloneWorkInstructionRevs(Guid sourceWorkInstruction, Guid targetWorkInstruction, bool additive)
+        {
+            if (db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == sourceWorkInstruction)) && db.WorkInstructions.Values.Any(y => y.Any(y => y.Id == targetWorkInstruction)))
+            {
+                if (!additive)
+                {
+                    db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction];
+                }
+                else
+                {
+                    List<Guid> mergedList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction].Contains(y)).ToList();
+                    db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = mergedList;
+                    db.WorkInstructions.Values.Select(y => y.Where(y => mergedList.Contains(y.Id)).Select(y => y.RevSeq = mergedList.IndexOf(y.Id)));
+                }
+
+                var args = new Dictionary<string, string>();
+                args["SourceWorkInstruction"] = sourceWorkInstruction.ToString();
+                args["TargetWorkInstruction"] = targetWorkInstruction.ToString();
+                args["Additive"] = additive.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "CloneWorkInstructionRevs",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("One or both of the work instructions doesn't exist in the database");
+            }
         }
 
         public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(WorkInstruction workInstruction)
@@ -1504,33 +2135,31 @@ namespace LibWorkInstructions
         {
             return db.OpSpecs[opSpec.IdRevGroup];
         }
-
-        /*
         public WorkInstruction DisplayLatestRevisionOfWorkInstruction(string jobId, string jobRev, int opId)
         {
             if (db.Jobs.ContainsKey(jobId))
             {
-                Job job = db.Jobs[jobId];
-                WorkInstruction latestRevision = new WorkInstruction();
-                foreach (List<WorkInstruction> list in db.WorkInstructions.Values)
+                if (db.JobRefToJobRevRefs[jobId].Contains(jobRev))
                 {
-                    foreach (WorkInstruction workInstruction in list)
+                    if (db.JobRevRefToOpRefs[jobRev].Contains(opId))
                     {
-                        if (workInstruction.Approved && job.RevCustomer == jobRev 
-                            && workInstruction.OpId == opId && job.Ops.FindIndex(y => y.JobId == jobId) >= 0)
-                        {
-                            latestRevision = workInstruction;
-                        }
+                        return db.WorkInstructions.Values.First(y => y.Any(y => y.Id == db.WorkInstructionRefToWorkInstructionRevRefs[db.OpRefToWorkInstructionRef[opId]].Last())).Last();
+                    }
+                    else
+                    {
+                        throw new Exception("Op doesn't have an association with the given job revision");
                     }
                 }
-                return latestRevision;
+                else
+                {
+                    throw new Exception("Job revision doesn't have an association with the given job");
+                }
             }
             else
             {
                 throw new Exception("The job doesn't exist in the database");
             }
         }
-        */
 
     }
 }
