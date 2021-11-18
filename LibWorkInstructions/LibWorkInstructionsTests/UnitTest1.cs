@@ -128,7 +128,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestAddJob()
+        public void TestCreateJob()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -230,7 +230,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestAddWorkInstruction()
+        public void TestCreateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var workInstructionTest = new LibWorkInstructions.Structs.WorkInstruction
@@ -257,10 +257,13 @@ namespace LibWorkInstructionsTests
             n.CreateWorkInstruction(workInstructionTest);
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions.Count == 1);
+            Assert.True(dbVar.WorkInstructions.ContainsKey(workInstructionTest.Id));
+            Assert.True(dbVar.OpRefToWorkInstructionRef.ContainsKey(workInstructionTest.OpId));
+            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
         }
 
         [Test]
-        public void TestChangeWorkInstruction()
+        public void TestUpdateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid workId = Guid.NewGuid();
