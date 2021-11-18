@@ -257,7 +257,7 @@ namespace LibWorkInstructionsTests
             n.CreateWorkInstruction(workInstructionTest);
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions.Count == 1);
-            Assert.True(dbVar.WorkInstructions.ContainsKey(workInstructionTest.Id));
+            Assert.True(dbVar.WorkInstructions.ContainsKey(workInstructionTest.IdRevGroup));
             Assert.True(dbVar.OpRefToWorkInstructionRef.ContainsKey(workInstructionTest.OpId));
             Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
         }
@@ -289,10 +289,13 @@ namespace LibWorkInstructionsTests
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions[groupId].Count == 1);
             Assert.True(dbVar.WorkInstructions[groupId][1].IdRevGroup == groupId);
+            Assert.True(dbVar.WorkInstructions[groupId][1].OpId == workInstructionTest.OpId);
+            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
+            Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(workInstructionTest.OpId));
         }
 
         [Test]
-        public void TestRemoveWorkInstruction()
+        public void TestDeleteWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid workId1 = Guid.NewGuid();
@@ -325,7 +328,7 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             Assert.True(n.GetWorkInstruction(groupId1, workId1).Id.Equals(workId1));
             Assert.True(n.GetWorkInstruction(groupId2, workId2).Id.Equals(workId2));
-            n.RemoveWorkInstruction(groupId1, workId1);
+            n.DeleteWorkInstruction(groupId1, workId1);
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions[groupId1].Count == 0);
             Assert.True(dbVar.WorkInstructions[groupId2].Count == 1);
@@ -440,7 +443,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.SplitWorkInstruction(groupId2, workId2);
+            n.SplitWorkInstructionRev(groupId2, workId2);
             var dbPostSplit = n.DataExport();
 
             //Assert.True(dbPostSplit.JobRefToWorkInstructionRefs["job1"].Count == 3);
@@ -448,7 +451,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestCloneWorkInstruction()
+        public void TestCloneWorkInstructionRevsNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -489,25 +492,14 @@ namespace LibWorkInstructionsTests
                             Id = workId4, IdRevGroup = groupId4, } } }
                 },
 
-                //JobRefToWorkInstructionRefs = new Dictionary<string, List<List<Guid>>> {
-                //    {"job1" , new List<List<Guid>>()
-                //    {new List<Guid> {job1Work1Op1, job1Work1Op2, job1Work1Op3}, new List<Guid> {job1Work2Op1, job1Work2Op2, job1Work2Op3} }},
-                //    {"job2", new List<List<Guid>>()
-                //    {new List<Guid> {job2Work1Op1, job2Work1Op2, job2Work1Op3}, new List<Guid> {job2Work2Op1, job2Work2Op2, job1Work2Op3} } },
-                //},
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
-                {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>() },
-                    {"job2", new List<LibWorkInstructions.Structs.Job>() },
-                },
             };
 
             n.DataImport(sampleData);
-            n.CloneWorkInstruction(workId1, "job2");
+            n.CloneWorkInstructionRevs(workId1, workId2, false);
             var dbPostClone = n.DataExport();
 
-            //Assert.True(dbPostClone.JobRefToWorkInstructionRefs["job2"].Count == 3);
-            //Assert.True(dbPostClone.JobRefToWorkInstructionRefs["job2"].Last().SequenceEqual(new List<Guid> { job1Work1Op1, job1Work1Op2, job1Work1Op3 }));
+            Assert.True(dbPostClone.WorkInstructions.ContainsKey(workId1));
+            Assert.True(dbPostClone.WorkInstructions.ContainsKey(workId2));
         }
 
         [Test]
@@ -538,10 +530,11 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.AddSpec(testAddSpec);
+            n.CreateOpSpec(testAddSpec);
             var dbPostAdd = n.DataExport();
 
             Assert.True(dbPostAdd.OpSpecs.Count == 1);
+            Assert.True(dbPostAdd.OpSpecs.ContainsKey(testAddSpec.Id));
         }
 
         //[Test]
@@ -612,7 +605,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.DeleteSpec(groupId3, specId4);
+            n.DeleteOpSpec(groupId3, specId4);
             var dbPostDelete = n.DataExport();
             Assert.True(dbPostDelete.OpSpecs[groupId3].Count == 1);
             Assert.True(dbPostDelete.OpSpecs[groupId3].FindAll(y => y.Id == specId4).Count == 0);
@@ -734,7 +727,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.MergeSpecs(op1.Id, op2.Id);
+            n.MergeOpSpecRevsBasedOnJobOp(op1.Id, op2.Id);
             var dbPostMerge = n.DataExport();
             //Assert.True(dbPostMerge.Jobs["job1"].Ops[0].OpSpecs.SequenceEqual(dbPostMerge.Jobs["job2"][0].Ops[0].OpSpecs));
         }
@@ -778,7 +771,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.SplitSpec(groupId1, specId1);
+            n.SplitOpSpecRevInOpSpec(groupId1, specId1);
             var dbPostSplit = n.DataExport();
             Assert.True(dbPostSplit.OpSpecs[groupId1].Count == 4);
             Assert.True(dbPostSplit.OpSpecs[groupId1].Last().Id == specId1);
@@ -900,7 +893,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneSpecs(0, 1, true);
+            n.CloneOpSpecRevsBasedOnJobOp(0, 1, true);
             var dbPostClone = n.DataExport();
             //Assert.True(dbPostClone.Jobs["job2"][0].Ops[0].OpSpecs.Count == 2);
             //Assert.True(dbPostClone.Jobs["job2"][0].Ops[0].OpSpecs.SequenceEqual(dbPostClone.Jobs["job1"][0].Ops[0].OpSpecs));
@@ -1022,7 +1015,7 @@ namespace LibWorkInstructionsTests
             };
             var mergedOpSpecsList = new List<LibWorkInstructions.Structs.OpSpec> { opSpec1, opSpec2, opSpec3, opSpec4 };
             n.DataImport(sampleData);
-            n.CloneSpecs(0, 1, false);
+            n.CloneOpSpecRevsBasedOnJobOp(0, 1, false);
             var dbPostClone = n.DataExport();
             //Assert.True(dbPostClone.Jobs["job2"].Ops[0].OpSpecs.Count == 4);
             //Assert.True(dbPostClone.Jobs["job2"].Ops[0].OpSpecs.SequenceEqual(mergedOpSpecsList));
@@ -1083,7 +1076,7 @@ namespace LibWorkInstructionsTests
                 },
             };
             n.DataImport(sampleData);
-            n.MergeQualityClauses("job1", "job2");
+            n.MergeJobRevsBasedOnJob("job1", "job2");
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.JobRefToQualityClauseRefs["job1"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
             Assert.True(dbPostMerge.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
@@ -1108,7 +1101,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.SplitQualityClause(groupId1, clauseId1);
+            n.SplitQualityClauseRevInQualityClause(groupId1, clauseId1);
             var dbPostSplit = n.DataExport();
             Assert.True(dbPostSplit.QualityClauses[groupId1].Count == 2);
             Assert.True(dbPostSplit.QualityClauses[groupId1].Last().Id == clauseId1);
@@ -1138,7 +1131,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneQualityClauses("job1", "job2", true);
+            n.CloneQualityClauseRevsBasedOnJobRev("job1", "job2", true);
             var dbPostClone1 = n.DataExport();
             Assert.True(dbPostClone1.JobRefToQualityClauseRefs["job2"].Count == 3);
             Assert.True(dbPostClone1.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3}));
@@ -1156,7 +1149,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneQualityClauses("job1", "job2", false);
+            n.CloneQualityClauseRevsBasedOnJobRev("job1", "job2", false);
             var dbPostClone2 = n.DataExport();
             Assert.True(dbPostClone2.JobRefToQualityClauseRefs["job2"].Count == 6);
             Assert.True(dbPostClone2.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
