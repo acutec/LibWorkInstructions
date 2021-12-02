@@ -585,24 +585,15 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group is already in the database");
             }
         }
-        /// <summary>
-        /// Remove OpSpec from database if it exists.
-        /// </summary>
-        /// <param name="specId"></param>
+
         public void DeleteOpSpec(Guid specId)
         {
-            if (db.OpSpecs.Values.Any(y => y[0].Id == specId)) // if there's any original spec in the database that has the given spec id
+            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                OpSpec spec = db.OpSpecs.Values.First(y => y[0].Id == specId)[0]; // remove the spec and the revisions of it from the database
-                List<Guid> idRevList = db.OpSpecs[spec.IdRevGroup].Select(y => y.Id).ToList();
-                db.OpSpecs.Remove(db.OpSpecs.Values.First(y => y[0].Id == specId)[0].IdRevGroup);
-                db.OpSpecRevs = db.OpSpecRevs.Where(y => !idRevList.Contains(y)).ToList();
-                db.OpSpecRevRefToOpRefs = db.OpSpecRevRefToOpRefs.Where(y => !idRevList.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value); // manage references
-                db.OpRefToOpSpecRevRefs = db.OpRefToOpSpecRevRefs.Select(y => y = new KeyValuePair<int, List<Guid>>(y.Key, y.Value.Where(y => !idRevList.Contains(y)).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                db.OpSpecRefToOpSpecRevRefs.Remove(specId);
+                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = true; return y; }).ToList();
 
                 var args = new Dictionary<string, string>(); // add the events
-                args["SpecId"] = specId.ToString();
+                args["RevGroup"] = revGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "DeleteOpSpec",
@@ -612,7 +603,28 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The id doesn't exist with regard to original specs (e.g. it could be an id of a rev)");
+                throw new Exception("The rev group doesn't exist in the database");
+            }
+        }
+
+        public void DeactivateOpSpec(Guid revGroup)
+        {
+            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
+            {
+                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = false; return y; }).ToList();
+
+                var args = new Dictionary<string, string>(); // add the events
+                args["RevGroup"] = revGroup.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteOpSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
         /// <summary>
@@ -1931,12 +1943,8 @@ namespace LibWorkInstructions
                 throw new Exception("The op doesn't exist in the database");
             }
         }
-        /// <summary>
-        /// Merge OpSpecRevs within given JopOps if they exist.
-        /// </summary>
-        /// <param name="opId1"></param>
-        /// <param name="opId2"></param>
-        public void MergeOpSpecRevsBasedOnJobOp(int opId1, int opId2)
+
+        public void MergeOpSpecRevs(int opId1, int opId2)
         {
             if (db.Ops.ContainsKey(opId1) && db.Ops.ContainsKey(opId2)) // if both of the ops exist in the database
             {
@@ -1995,49 +2003,8 @@ namespace LibWorkInstructions
                 throw new Exception("One or both of the ops doesn't exist in the database");
             }
         }
-        /// <summary>
-        /// Merge OpSpecRevs within given OpSpecs if they exist.
-        /// </summary>
-        /// <param name="opSpec1"></param>
-        /// <param name="opSpec2"></param>
-        public void MergeOpSpecRevsBasedOnOpSpec(Guid opSpec1, Guid opSpec2)
-        {
-            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec1) && db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec2)) // if both of the op specs exist in the database
-            {
-                List<Guid> mergedIdList = db.OpSpecRevs.Where(y => db.OpSpecRefToOpSpecRevRefs[opSpec1].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[opSpec2].Contains(y)).ToList(); // create a merged id list and object list
-                List<OpSpec> mergedOpSpecRevList = mergedIdList.Select(y => db.OpSpecs.First(x => x.Value.Any(z => mergedIdList.Contains(y))).Value.First(x => mergedIdList.Contains(y))).ToList();
-                Guid groupId1 = db.OpSpecs.First(y => y.Value[0].Id == opSpec1).Key;
-                Guid groupId2 = db.OpSpecs.First(y => y.Value[0].Id == opSpec2).Key;
-                db.OpSpecs[groupId1] = new List<OpSpec> { db.OpSpecs[groupId1][0] }; // add merged revisions to database
-                db.OpSpecs[groupId1].AddRange(mergedOpSpecRevList);
-                db.OpSpecs[groupId2] = new List<OpSpec> { db.OpSpecs[groupId2][0] };
-                db.OpSpecs[groupId2].AddRange(mergedOpSpecRevList);
-                db.OpSpecs[groupId1] = db.OpSpecs[groupId1].Select(y => { y.IdRevGroup = groupId1; y.RevSeq = db.OpSpecs[groupId1].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                db.OpSpecs[groupId2] = db.OpSpecs[groupId2].Select(y => { y.IdRevGroup = groupId2; y.RevSeq = db.OpSpecs[groupId2].IndexOf(y); return y; }).ToList();
-                db.OpSpecRefToOpSpecRevRefs[opSpec1] = mergedIdList; // manage references
-                db.OpSpecRefToOpSpecRevRefs[opSpec2] = mergedIdList;
 
-                var args = new Dictionary<string, string>(); // add the event
-                args["OpSpec1"] = opSpec1.ToString();
-                args["OpSpec2"] = opSpec2.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeOpSpecRevsBasedOnOpSpec",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the op specs doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Split OpSpecRev within given OpSpec if they exist.
-        /// </summary>
-        /// <param name="opSpecRev"></param>
-        /// <param name="opSpec"></param>
-        public void SplitOpSpecRevInOpSpec(Guid opSpecRev, Guid opSpec)
+        public void SplitOpSpecRev(Guid opSpecRev, Guid opSpec)
         {
             if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec)) // if the op spec exists in the database
             {
