@@ -299,7 +299,7 @@ namespace LibWorkInstructionsTests
                 },
             };
             n.DataImport(sampleData);
-            n.DeactivateJobRev("job1", "job1-B");
+            n.ActivateJobRev("job1", "job1-B");
             var dbPostDeactivate = n.DataExport();
             Assert.True(dbPostDeactivate.Jobs["job1"][1].Active);
         }
