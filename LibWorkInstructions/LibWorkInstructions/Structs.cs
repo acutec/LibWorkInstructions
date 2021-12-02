@@ -85,6 +85,7 @@ namespace LibWorkInstructions {
       public string Servicecond { get; set; }
       public string Status { get; set; }
       public string Comment { get; set; }
+      public bool Active { get; set; }
     }
     
     public class QualityClause {

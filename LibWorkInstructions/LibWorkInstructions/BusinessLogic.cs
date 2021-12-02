@@ -529,20 +529,14 @@ namespace LibWorkInstructions
             }
         }
 
-        public void DeleteOpSpec(Guid specId)
+        public void ActivateOpSpec(Guid revGroup)
         {
-            if (db.OpSpecs.Values.Any(y => y[0].Id == specId)) // if there's any original spec in the database that has the given spec id
+            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                OpSpec spec = db.OpSpecs.Values.First(y => y[0].Id == specId)[0]; // remove the spec and the revisions of it from the database
-                List<Guid> idRevList = db.OpSpecs[spec.IdRevGroup].Select(y => y.Id).ToList();
-                db.OpSpecs.Remove(db.OpSpecs.Values.First(y => y[0].Id == specId)[0].IdRevGroup);
-                db.OpSpecRevs = db.OpSpecRevs.Where(y => !idRevList.Contains(y)).ToList();
-                db.OpSpecRevRefToOpRefs = db.OpSpecRevRefToOpRefs.Where(y => !idRevList.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value); // manage references
-                db.OpRefToOpSpecRevRefs = db.OpRefToOpSpecRevRefs.Select(y => y = new KeyValuePair<int, List<Guid>>(y.Key, y.Value.Where(y => !idRevList.Contains(y)).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                db.OpSpecRefToOpSpecRevRefs.Remove(specId);
+                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = true; return y; }).ToList();
 
                 var args = new Dictionary<string, string>(); // add the events
-                args["SpecId"] = specId.ToString();
+                args["RevGroup"] = revGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "DeleteOpSpec",
@@ -552,7 +546,28 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The id doesn't exist with regard to original specs (e.g. it could be an id of a rev)");
+                throw new Exception("The rev group doesn't exist in the database");
+            }
+        }
+
+        public void DeactivateOpSpec(Guid revGroup)
+        {
+            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
+            {
+                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = false; return y; }).ToList();
+
+                var args = new Dictionary<string, string>(); // add the events
+                args["RevGroup"] = revGroup.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeleteOpSpec",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
 

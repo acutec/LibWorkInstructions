@@ -292,35 +292,49 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestDeleteSpec()
+        public void TestActivateOpSpec()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
-            Guid groupId3 = Guid.NewGuid();
             Guid specId1 = Guid.NewGuid();
             Guid specId2 = Guid.NewGuid();
-            Guid specId3 = Guid.NewGuid();
-            Guid specId4 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
                 {
                     { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1"} } },
-                    { groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2"} } },
-                    { groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId3, Name = "spec3"},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId4, Name = "spec4"} } },
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1", Active = false},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2", Active = false} } }
                 }
             };
 
             n.DataImport(sampleData);
-            //n.DeleteOpSpec(groupId3, specId4);
+            n.ActivateOpSpec(groupId1);
             var dbPostDelete = n.DataExport();
-            Assert.True(dbPostDelete.OpSpecs[groupId3].Count == 1);
-            Assert.True(dbPostDelete.OpSpecs[groupId3].FindAll(y => y.Id == specId4).Count == 0);
+            Assert.True(dbPostDelete.OpSpecs[groupId1].All(y => y.Active));
+        }
+
+        [Test]
+        public void TestDeactivateOpSpec()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1", Active = true},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2", Active = true} } }
+                }
+            };
+
+            n.DataImport(sampleData);
+            n.DeactivateOpSpec(groupId1);
+            var dbPostDelete = n.DataExport();
+            Assert.True(dbPostDelete.OpSpecs[groupId1].All(y => !y.Active));
         }
 
         [Test]
