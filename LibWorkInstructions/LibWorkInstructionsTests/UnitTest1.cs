@@ -477,26 +477,10 @@ namespace LibWorkInstructionsTests
         public void TestCreateQualityClause()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
-            Guid groupId3 = Guid.NewGuid();
-            Guid clauseId1 = Guid.NewGuid();
-            Guid clauseId2 = Guid.NewGuid();
-            Guid clauseId3 = Guid.NewGuid();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
-                {
-                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
-                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
-                }
-            };
-            n.DataImport(sampleData);
             n.CreateQualityClause("Quality clause 1");
             var dbPostAdd = n.DataExport();
-            Assert.True(dbPostAdd.QualityClauses.Count == 3);
+            Assert.True(dbPostAdd.QualityClauses.Count == 1);
+            Assert.True(dbPostAdd.QualityClauses.First().Value.First().Clause == "Quality clause 1");
         }
 
         [Test]

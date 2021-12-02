@@ -307,7 +307,7 @@ namespace LibWorkInstructions
             }
             QualityClause newQualityClause = new QualityClause { Id = Guid.NewGuid(), IdRevGroup = Guid.NewGuid(), RevSeq = 0, Clause = clause }; // create and configure the quality clause
             db.QualityClauses[newQualityClause.IdRevGroup] =  new List<QualityClause> { newQualityClause }; // add quality clause to database
-            db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.Id] = new List<Guid>(); // manage references
+            db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.IdRevGroup] = new List<Guid> { newQualityClause.Id }; // manage references
 
             var args = new Dictionary<string, string>(); // add the event
             args["Clause"] = clause;
