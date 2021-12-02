@@ -112,7 +112,6 @@ namespace LibWorkInstructionsTests
             Guid workId1 = Guid.NewGuid();
             Guid workId2 = Guid.NewGuid();
             Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
@@ -126,7 +125,7 @@ namespace LibWorkInstructionsTests
                     },
                      new LibWorkInstructions.Structs.WorkInstruction {
                         Id = workId2,
-                        IdRevGroup = groupId2,
+                        IdRevGroup = groupId1,
                         Approved = false,
                         HtmlBlob = "<h2>do something</h2>",
                         Images = new List<string> { "jpeg" },
@@ -140,6 +139,7 @@ namespace LibWorkInstructionsTests
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions[groupId1].All(y => y.Active));
         }
+
         [Test]
         public void TestDeactivateWorkInstruction()
         {
@@ -147,7 +147,6 @@ namespace LibWorkInstructionsTests
             Guid workId1 = Guid.NewGuid();
             Guid workId2 = Guid.NewGuid();
             Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
@@ -161,7 +160,7 @@ namespace LibWorkInstructionsTests
                     },
                      new LibWorkInstructions.Structs.WorkInstruction {
                         Id = workId2,
-                        IdRevGroup = groupId2,
+                        IdRevGroup = groupId1,
                         Approved = false,
                         HtmlBlob = "<h2>do something</h2>",
                         Images = new List<string> { "jpeg" },
@@ -190,12 +189,12 @@ namespace LibWorkInstructionsTests
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
                 {
-                    {groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
-                        Id = workId1, IdRevGroup = groupId1 },
+                            Id = workId1, IdRevGroup = groupId1 },
                         new LibWorkInstructions.Structs.WorkInstruction {
-                        Id = workId2, IdRevGroup = groupId1} } },
-                    {groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                            Id = workId2, IdRevGroup = groupId1 } } },
+                    { groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
                             Id = workId3, IdRevGroup = groupId2 },
                         new LibWorkInstructions.Structs.WorkInstruction {
@@ -203,10 +202,10 @@ namespace LibWorkInstructionsTests
                 },
                 WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
                 {
-                    {groupId1, new List<Guid>{workId1, workId2}},
-                    {groupId2, new List<Guid>{workId3, workId4}}
-                }
-
+                    { groupId1, new List<Guid> { workId1, workId2 } },
+                    { groupId2, new List<Guid> { workId3, workId4 } }
+                },
+                WorkInstructionRevs = new List<Guid> { workId1, workId2, workId3, workId4 }
             };
 
             n.DataImport(sampleData);
@@ -246,8 +245,8 @@ namespace LibWorkInstructionsTests
                 {
                     {groupId1, new List<Guid>{workId1, workId2}},
                     {groupId2, new List<Guid>{workId3, workId4}}
-                }
-
+                },
+                WorkInstructionRevs = new List<Guid> { workId1, workId2, workId3, workId4 }
             };
 
             n.DataImport(sampleData);
@@ -359,6 +358,8 @@ namespace LibWorkInstructionsTests
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[1].Count == 4);
             Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[2].Count == 4);
+            Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[1].All(y => dbPostMerge.OpRefToOpSpecRevRefs[2].Contains(y)));
+            Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[2].All(y => dbPostMerge.OpRefToOpSpecRevRefs[1].Contains(y)));
         }
 
         [Test]
@@ -382,20 +383,26 @@ namespace LibWorkInstructionsTests
                 OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
                 {
                     {groupId1,  new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId1},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId2},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId3}
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, RevSeq = 0},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, RevSeq = 1},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId3, RevSeq = 2}
                     } },
                     {groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId4},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId5},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId6}
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId4, RevSeq = 0},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId5, RevSeq = 1},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId6, RevSeq = 2}
                     } },
                     {groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId7},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId8},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId9}
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId7, RevSeq = 0},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId8, RevSeq = 1},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId9, RevSeq = 2}
                     } },
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    { groupId1, new List<Guid>{ specId1, specId2, specId3 } },
+                    { groupId2, new List<Guid>{ specId4, specId5, specId6 } },
+                    { groupId3, new List<Guid>{ specId7, specId8, specId9 } }
                 }
             };
 
@@ -453,8 +460,9 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].Count == 2);
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].SequenceEqual(dbPostClone.OpRefToOpSpecRevRefs[1]));
         }
+
         [Test]
-        public void TestAddQualityClause()
+        public void TestCreateQualityClause()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();

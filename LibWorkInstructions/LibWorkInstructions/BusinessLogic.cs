@@ -540,7 +540,7 @@ namespace LibWorkInstructions
         /// <param name="newSpec"></param>
         public void CreateOpSpec(OpSpec newSpec)
         {
-            if (!db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group isn't already in the database
+            if (!db.OpSpecs.Values.Any(y => y.Any(x => x.Name == newSpec.Name))) // if the name of the opspec is not already in the database
             {
                 newSpec.RevSeq = 0; // configure the op spec
                 newSpec.Id = Guid.NewGuid();
@@ -559,7 +559,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The rev group is already in the database");
+                throw new Exception("An op spec with the same name is already in the database");
             }
         }
 
@@ -1828,7 +1828,7 @@ namespace LibWorkInstructions
 
         public void MergeOpSpecRevs(int opId1, int opId2)
         {
-            if (db.Ops.ContainsKey(opId1) && db.Ops.ContainsKey(opId2)) // if both of the ops exist in the database
+            if (db.OpRefToOpSpecRevRefs.ContainsKey(opId1) && db.OpRefToOpSpecRevRefs.ContainsKey(opId2)) // if both of the ops exist in the database
             {
                 List<Guid> mergedList = db.OpSpecRevs.Where(y => db.OpRefToOpSpecRevRefs[opId1].Contains(y) || db.OpRefToOpSpecRevRefs[opId2].Contains(y)).ToList(); // create a merged id list
                 db.OpRefToOpSpecRevRefs[opId1] = mergedList; // put the merged list in both op references
@@ -1839,7 +1839,7 @@ namespace LibWorkInstructions
                 args["OpId2"] = opId2.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeOpSpecRevsBasedOnJobOp",
+                    Action = "MergeOpSpecRevs",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1900,7 +1900,7 @@ namespace LibWorkInstructions
                     args["OpSpec"] = opSpec.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "SplitOpSpecRevInOpSpec",
+                        Action = "SplitOpSpecRev",
                         Args = args,
                         When = DateTime.Now
                     });
