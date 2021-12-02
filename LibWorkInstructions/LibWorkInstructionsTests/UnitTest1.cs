@@ -185,6 +185,48 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCreateJobRevFromScratch()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-A", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},
+                        } },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-B", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},
+                        } }
+                    }
+                    }
+                },
+                JobRevs = new List<string> { "job1-A", "job1-B" },
+            };
+            n.DataImport(sampleData);
+            n.CreateJobRev(new LibWorkInstructions.Structs.Job
+            {
+                Id = "job1",
+                Rev = "job1-C",
+                Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job1"}
+                }
+            });
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.Jobs["job1"].Count == 3);
+            Assert.True(dbPostCreate.Jobs["job1"].Last().Rev == "job1-C");
+            Assert.True(dbPostCreate.Jobs["job1"].Last().RevSeq == 2);
+        }
+
+        [Test]
         public void TestUpdateJobRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
