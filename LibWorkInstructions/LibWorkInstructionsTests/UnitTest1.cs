@@ -259,19 +259,15 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestAddSpec()
+        public void TestCreateOpSpec()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId = Guid.NewGuid();
-            Guid workId = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>(),
             };
             var testAddSpec = new LibWorkInstructions.Structs.OpSpec
             {
-                Id = workId,
-                IdRevGroup = groupId,
                 Class = "test",
                 Comment = "test",
                 Grade = "test",
@@ -290,7 +286,9 @@ namespace LibWorkInstructionsTests
             var dbPostAdd = n.DataExport();
 
             Assert.True(dbPostAdd.OpSpecs.Count == 1);
-            Assert.True(dbPostAdd.OpSpecs.ContainsKey(testAddSpec.Id));
+            Assert.True(dbPostAdd.OpSpecs.First().Value[0].Id != null);
+            Assert.True(dbPostAdd.OpSpecs.First().Value[0].IdRevGroup != null);
+            Assert.True(dbPostAdd.OpSpecs.First().Value[0].RevSeq == 0);
         }
 
         [Test]

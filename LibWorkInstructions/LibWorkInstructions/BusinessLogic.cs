@@ -509,8 +509,10 @@ namespace LibWorkInstructions
             if (!db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group isn't already in the database
             {
                 newSpec.RevSeq = 0; // configure the op spec
+                newSpec.Id = Guid.NewGuid();
+                newSpec.IdRevGroup = Guid.NewGuid();
                 db.OpSpecs[newSpec.IdRevGroup] = new List<OpSpec> { newSpec }; // add the op spec to the database
-                db.OpSpecRefToOpSpecRevRefs[newSpec.Id] = new List<Guid>(); // manage references
+                db.OpSpecRefToOpSpecRevRefs[newSpec.IdRevGroup] = new List<Guid> { newSpec.Id }; // manage references
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["newSpec"] = JsonSerializer.Serialize(newSpec);
