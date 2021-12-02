@@ -586,20 +586,20 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Remove OpSpec from database if it exists.
+        /// Change active status of OpSpec to True if it exists.
         /// </summary>
-        /// <param name="specId"></param>
-        public void DeleteOpSpec(Guid specId)
+        /// <param name="revGroup"></param>
+        public void ActivateOpSpec(Guid revGroup)
         {
-            if (db.OpSpecs.ContainsKey(specId)) // if the rev group exists in the database
+            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                db.OpSpecs[specId] = db.OpSpecs[specId].Select(y => { y.Active = true; return y; }).ToList();
+                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = true; return y; }).ToList();
 
                 var args = new Dictionary<string, string>(); // add the events
-                args["RevGroup"] = specId.ToString();
+                args["RevGroup"] = revGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteOpSpec",
+                    Action = "ActivateOpSpec",
                     Args = args,
                     When = DateTime.Now,
                 });
@@ -623,7 +623,7 @@ namespace LibWorkInstructions
                 args["RevGroup"] = revGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteOpSpec",
+                    Action = "DeactivateOpSpec",
                     Args = args,
                     When = DateTime.Now,
                 });
@@ -2018,24 +2018,23 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opSpecRev"></param>
         /// <param name="opSpec"></param>
-        public void SplitOpSpecRev(Guid opSpecRev, Guid opSpec)
+        public void SplitOpSpecRev(Guid opSpecRev, Guid revGroup)
         {
-            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec)) // if the op spec exists in the database
+            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(revGroup)) // if the op spec exists in the database
             {
-                if (db.OpSpecRefToOpSpecRevRefs[opSpec].Contains(opSpecRev)) // if the op spec has the revision
+                if (db.OpSpecRefToOpSpecRevRefs[revGroup].Contains(opSpecRev)) // if the op spec has the revision
                 {
-                    Guid revGroup = db.OpSpecs.First(y => y.Value[0].Id == opSpec).Key;
                     int newRevPosition = db.OpSpecs[revGroup].Count;
                     db.OpSpecs[revGroup].Add(db.OpSpecs[revGroup].First(y => y.Id == opSpecRev)); // split the revision in the database
                     db.OpSpecs[revGroup][newRevPosition].Id = Guid.NewGuid(); // configure the new revision
                     db.OpSpecs[revGroup][newRevPosition].RevSeq = newRevPosition;
                     db.OpSpecRevs.Add(db.OpSpecs[revGroup][newRevPosition].Id); // add the new revision to the database
-                    db.OpSpecRefToOpSpecRevRefs[opSpec].Add(opSpecRev); // manage references
+                    db.OpSpecRefToOpSpecRevRefs[revGroup].Add(opSpecRev); // manage references
                     db.OpSpecRevRefToOpRefs[db.OpSpecs[revGroup][newRevPosition].Id] = db.OpSpecRevRefToOpRefs[opSpecRev];
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["OpSpecRev"] = opSpecRev.ToString();
-                    args["OpSpec"] = opSpec.ToString();
+                    args["RevGroup"] = revGroup.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "SplitOpSpecRev",

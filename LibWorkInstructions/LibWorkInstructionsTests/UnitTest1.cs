@@ -382,35 +382,45 @@ namespace LibWorkInstructionsTests
             {
                 OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
                 {
-                    {groupId1,  new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, RevSeq = 0},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, RevSeq = 1},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId3, RevSeq = 2}
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId1, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId2, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId3, RevSeq = 2 }
                     } },
-                    {groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId4, RevSeq = 0},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId5, RevSeq = 1},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId6, RevSeq = 2}
+                    { groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId4, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId5, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId6, RevSeq = 2 }
                     } },
-                    {groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId7, RevSeq = 0},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId8, RevSeq = 1},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId9, RevSeq = 2}
+                    { groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId7, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId8, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId9, RevSeq = 2 }
                     } },
                 },
                 OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
                 {
-                    { groupId1, new List<Guid>{ specId1, specId2, specId3 } },
-                    { groupId2, new List<Guid>{ specId4, specId5, specId6 } },
-                    { groupId3, new List<Guid>{ specId7, specId8, specId9 } }
-                }
+                    { groupId1, new List<Guid> { specId1, specId2, specId3 } },
+                    { groupId2, new List<Guid> { specId4, specId5, specId6 } },
+                    { groupId3, new List<Guid> { specId7, specId8, specId9 } }
+                },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {specId1, new List<int>{ 3, 4, 5 } }
+                },
+                OpSpecRevs = new List<Guid> { specId1, specId2, specId3, specId4, specId5, specId6, specId7, specId8, specId9 }
             };
 
             n.DataImport(sampleData);
             n.SplitOpSpecRev(groupId1, specId1);
             var dbPostSplit = n.DataExport();
             Assert.True(dbPostSplit.OpSpecs[groupId1].Count == 4);
-            Assert.True(dbPostSplit.OpSpecs[groupId1].Last().Id == specId1);
+            Assert.True(dbPostSplit.OpSpecs[groupId1].Last().Id != specId1);
+            Assert.True(dbPostSplit.OpSpecs[groupId1].Last().IdRevGroup == groupId1);
+            Assert.True(dbPostSplit.OpSpecs[groupId1].Last().RevSeq == 3);
+            Assert.True(dbPostSplit.OpSpecRevs.Count == 10);
+            Assert.True(dbPostSplit.OpSpecRefToOpSpecRevRefs[groupId1].Count == 4);
+            Assert.True(dbPostSplit.OpSpecRevRefToOpRefs.Last().Value.SequenceEqual(dbPostSplit.OpSpecRevRefToOpRefs[specId1]));
         }
 
         [Test]
