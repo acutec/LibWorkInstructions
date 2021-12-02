@@ -41,7 +41,6 @@ namespace LibWorkInstructionsTests
                 QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>> {
           { Guid.NewGuid(), new List<LibWorkInstructions.Structs.QualityClause> { { new LibWorkInstructions.Structs.QualityClause{
             Id = Guid.NewGuid(),
-            Rev = Guid.NewGuid(),
             Clause = "Workmanship...",
               }
               }
@@ -67,9 +66,6 @@ namespace LibWorkInstructionsTests
             Images = new List<string>{ },
           }
           }},
-        },
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>> {
-          { "F110", new List<Guid> { Guid.NewGuid() } },
         },
             };
             n.DataImport(sampleData);

@@ -13,7 +13,10 @@ namespace LibWorkInstructions {
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
       public string Rev { get; set; }
+      // Position of an operation revision
       public int RevSeq { get; set; }
+      // Status of the job revision
+      public bool Active { get; set; }
       // Jobs have a sequence of operations.
       public List<Op> Ops { get; set; }
       // Jobs also have a collection of quality clauses.
