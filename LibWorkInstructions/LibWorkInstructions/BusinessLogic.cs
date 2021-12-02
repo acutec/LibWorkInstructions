@@ -543,8 +543,10 @@ namespace LibWorkInstructions
             if (!db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group isn't already in the database
             {
                 newSpec.RevSeq = 0; // configure the op spec
+                newSpec.Id = Guid.NewGuid();
+                newSpec.IdRevGroup = Guid.NewGuid();
                 db.OpSpecs[newSpec.IdRevGroup] = new List<OpSpec> { newSpec }; // add the op spec to the database
-                db.OpSpecRefToOpSpecRevRefs[newSpec.Id] = new List<Guid>(); // manage references
+                db.OpSpecRefToOpSpecRevRefs[newSpec.IdRevGroup] = new List<Guid> { newSpec.Id }; // manage references
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["newSpec"] = JsonSerializer.Serialize(newSpec);
@@ -2118,14 +2120,13 @@ namespace LibWorkInstructions
 
         public void CloneWorkInstructionRevs(Guid sourceWorkInstruction, Guid targetWorkInstruction, bool additive)
         {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(sourceWorkInstruction) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(targetWorkInstruction)) // if both work instructions exist in the database
+            Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetWorkInstruction).Key;
+            Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceWorkInstruction).Key;
+            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(targetRevGroup) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(sourceRevGroup)) // if both rev groups exist in the database
             {
-                Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetWorkInstruction).Key;
-                Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceWorkInstruction).Key;
                 if (!additive)
                 {
-                    db.WorkInstructions[targetRevGroup] = new List<WorkInstruction> { db.WorkInstructions[targetRevGroup][0] }; // replace the revisions in the target work instruction with the revisions in the source work instruction
-                    db.WorkInstructions[targetRevGroup].AddRange(db.WorkInstructions[sourceRevGroup].Where(y => db.WorkInstructions[sourceRevGroup].IndexOf(y) != 0));
+                    db.WorkInstructions[targetRevGroup] = db.WorkInstructions[sourceRevGroup]; // replace the revisions in the target work instruction with the revisions in the source work instruction
                     db.WorkInstructions[targetRevGroup] = db.WorkInstructions[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.WorkInstructions[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
                     db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction]; // manage references
                 }
