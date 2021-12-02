@@ -152,6 +152,129 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCreateJobRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-A", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},
+                        } },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-B", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},
+                        } }
+                    }
+                    }
+                },
+                JobRevs = new List<string> { "job1-A", "job1-B" },
+            };
+            n.DataImport(sampleData);
+            n.CreateJobRev("job1", "job1-A","job1-C");
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.Jobs["job1"].Count == 3);
+            Assert.True(dbPostCreate.Jobs["job1"].Last().Rev == "job1-C");
+            Assert.True(dbPostCreate.Jobs["job1"].Last().RevSeq == 2);
+        }
+
+        [Test]
+        public void TestUpdateJobRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clauseId1 = Guid.NewGuid();
+            Guid clauseId2 = Guid.NewGuid();
+            Guid clauseId3 = Guid.NewGuid();
+            Guid clauseId4 = Guid.NewGuid();
+            Guid clauseId5 = Guid.NewGuid();
+            Guid clauseId6 = Guid.NewGuid();
+            Guid clauseId7 = Guid.NewGuid();
+            Guid clauseId8 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job {RevSeq = 0, Id = "job1", Rev = "job1-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},}},
+                        new LibWorkInstructions.Structs.Job {RevSeq = 1, Id = "job1", Rev = "job1-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId3},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId4}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},} } } },
+                    {"job2", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job {RevSeq = 0, Id = "job2", Rev = "job2-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId5},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId6}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"},}},
+                        new LibWorkInstructions.Structs.Job {RevSeq = 1, Id = "job2", Rev = "job2-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId7},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId8}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"},}} } },
+                },
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"}},
+                    {2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"}},
+                    {3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"}},
+                    {4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"}},
+                    {5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"}},
+                    {6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"}},
+                    {7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"}},
+                    {8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"}},
+                    {9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"}},
+                    {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"}},
+                    {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"}},
+                    {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"}}
+                },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
+                },
+            };
+            n.DataImport(sampleData);
+            n.UpdateJobRev(new LibWorkInstructions.Structs.Job
+            {
+                Id = "job1",
+                RevSeq = 1,
+                Rev = "job1-B",
+                QualityClauses = new List<LibWorkInstructions.Structs.QualityClause>
+                {
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}
+                },
+                Ops = new List<LibWorkInstructions.Structs.Op>
+                {
+                    new LibWorkInstructions.Structs.Op {Id = 3, JobId = "job1"},
+                    new LibWorkInstructions.Structs.Op {Id = 6, JobId = "job1"},
+                    new LibWorkInstructions.Structs.Op {Id = 7, JobId = "job1"},
+                }
+            });
+            var dbPostUpdate = n.DataExport();
+            Assert.True(dbPostUpdate.Jobs["job1"][1].Ops.Count == 3);
+        }
+
+        [Test]
         public void TestCreateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
