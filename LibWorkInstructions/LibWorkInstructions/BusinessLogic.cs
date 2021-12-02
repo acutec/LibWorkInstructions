@@ -102,7 +102,12 @@ namespace LibWorkInstructions
                 throw new Exception("Job doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Create JobRev if it doesn't already exist for the given parameters.
+        /// </summary>
+        /// <param name="jobId"></param>
+        /// <param name="sourceJobRev"></param>
+        /// <param name="newJobRev"></param>
         public void CreateJobRev(string jobId, string sourceJobRev, string newJobRev)
         {
             if (!db.JobRevs.Contains(newJobRev)) // if the job revision isn't already in the database
@@ -146,7 +151,10 @@ namespace LibWorkInstructions
                 throw new Exception("The new job revision already exists in the database");
             }
         }
-
+        /// <summary>
+        /// Create JobRev if it doesn't alreayd exist, given a Job object.
+        /// </summary>
+        /// <param name="newJobRev"></param>
         public void CreateJobRev(Job newJobRev)
         {
             if (!db.JobRevs.Contains(newJobRev.Rev)) // if the job revision isn't already in the database
@@ -179,7 +187,10 @@ namespace LibWorkInstructions
                 throw new Exception("The new job revision already exists in the database");
             }
         }
-
+        /// <summary>
+        /// Update JobRev in database to given JobRev from parameter if it exists, or is not already changed.
+        /// </summary>
+        /// <param name="newJobRev"></param>
         public void UpdateJobRev(Job newJobRev)
         {
             if (db.JobRevs.Contains(newJobRev.Rev)) // if the job revision exists in the database
@@ -314,7 +325,11 @@ namespace LibWorkInstructions
                 throw new Exception("The id doesn't exist with regard to original quality clauses (e.g. it could be an id of a rev)");
             }
         }
-
+        /// <summary>
+        /// Create QualityClauseRev in database from given parameters if it doesn't already exist.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="sourceClauseRev"></param>
         public void CreateQualityClauseRev(Guid groupId, Guid sourceClauseRev)
         {
             if (db.QualityClauses.ContainsKey(groupId)) // if the rev group exists with regard to quality clauses
@@ -348,7 +363,10 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to quality clauses");
             }
         }
-
+        /// <summary>
+        /// Create QualityClauseRev in database from QualityClause object, if it doesn't exist.
+        /// </summary>
+        /// <param name="newClauseRev"></param>
         public void CreateQualityClauseRev(QualityClause newClauseRev)
         {
             if (!db.QualityClauseRevs.Contains(newClauseRev.Id)) // if the quality clause revision isn't already in the database
@@ -379,7 +397,10 @@ namespace LibWorkInstructions
                 throw new Exception("The new quality clause revision is already in the database");
             }
         }
-
+        /// <summary>
+        /// Update QualityClauseRev in database, if it exists and is not already changed.
+        /// </summary>
+        /// <param name="newClauseRev"></param>
         public void UpdateQualityClauseRev(QualityClause newClauseRev)
         {
             if (db.QualityClauseRevs.Contains(newClauseRev.Id)) // if the quality clause revision exists in the database
@@ -414,7 +435,11 @@ namespace LibWorkInstructions
                 throw new Exception("The quality clause revision doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Remove QualityClauseRev from database, if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="qualityClauseRev"></param>
         public void DeleteQualityClauseRev(Guid groupId, Guid qualityClauseRev)
         {
             if (db.QualityClauses.ContainsKey(groupId)) // if the rev group exists with regard to quality clauses
@@ -455,7 +480,10 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to quality clauses");
             }
         }
-
+        /// <summary>
+        /// Create JobOp in database if it doesn't exist.
+        /// </summary>
+        /// <param name="op"></param>
         public void CreateJobOp(Op op)
         {
             if (!db.Ops.ContainsKey(op.Id)) // if the op isn't already in the database
@@ -477,7 +505,10 @@ namespace LibWorkInstructions
                 throw new Exception("The operation already exists in the database");
             }
         }
-
+        /// <summary>
+        /// Remove JobOp from database if it exists.
+        /// </summary>
+        /// <param name="opId"></param>
         public void DeleteJobOp(int opId)
         {
             if (db.Ops.ContainsKey(opId)) // if the op is in the database
@@ -503,7 +534,10 @@ namespace LibWorkInstructions
                 throw new Exception("The job op doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Create OpSpec in database if it doesn't exist.
+        /// </summary>
+        /// <param name="newSpec"></param>
         public void CreateOpSpec(OpSpec newSpec)
         {
             if (!db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group isn't already in the database
@@ -570,7 +604,11 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Create OpSpecRev in database from the given parameters if it doesn't already exist.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="sourceSpecRev"></param>
         public void CreateOpSpecRev(Guid groupId, Guid sourceSpecRev)
         {
             if (db.OpSpecs.ContainsKey(groupId)) // if the rev group exists with regard to op specs
@@ -606,7 +644,10 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to op specs");
             }
         }
-
+        /// <summary>
+        /// Create OpSpecRev in database if it doesn't aleady exist.
+        /// </summary>
+        /// <param name="newSpecRev"></param>
         public void CreateOpSpecRev(OpSpec newSpecRev)
         {
             if (!db.OpSpecRevs.Contains(newSpecRev.Id)) // if the op spec revision isn't already in the database
@@ -638,7 +679,10 @@ namespace LibWorkInstructions
                 throw new Exception("The new op spec revision already exists in the database");
             }
         }
-
+        /// <summary>
+        /// Update OpSpecRev in database if it exists, and if it is not already changed.
+        /// </summary>
+        /// <param name="newSpecRev"></param>
         public void UpdateOpSpecRev(OpSpec newSpecRev)
         {
             if (db.OpSpecs.ContainsKey(newSpecRev.IdRevGroup)) // if the rev group exists with regard to op specs
@@ -673,7 +717,11 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to specs");
             }
         }
-
+        /// <summary>
+        /// Remove OpSpecRev from database if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="specRev"></param>
         public void DeleteOpSpecRev(Guid groupId, Guid specRev)
         {
             if (db.OpSpecs.ContainsKey(groupId)) // if the rev group exists with regard to op specs
@@ -780,7 +828,11 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Create WorkInstructionRev from given parameters if it doesn't exist.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="sourceWorkInstructionRev"></param>
         public void CreateWorkInstructionRev(Guid groupId, Guid sourceWorkInstructionRev)
         {
             if (db.WorkInstructions.ContainsKey(groupId)) // if the rev group exists with regard to work instructions
@@ -815,7 +867,10 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to work instructions");
             }
         }
-
+        /// <summary>
+        /// Create WorkInstructionRev if it doesn't exist.
+        /// </summary>
+        /// <param name="newWorkInstructionRev"></param>
         public void CreateWorkInstructionRev(WorkInstruction newWorkInstructionRev)
         {
             if (!db.WorkInstructionRevs.Contains(newWorkInstructionRev.Id)) // if the work instruction revision isn't already in the database
@@ -846,7 +901,10 @@ namespace LibWorkInstructions
                 throw new Exception("The work instruction revision already exists in the database.");
             }
         }
-
+        /// <summary>
+        /// Update WorkInstructionRev if it exists, and isn't already changed.
+        /// </summary>
+        /// <param name="newWorkInstructionRev"></param>
         public void UpdateWorkInstructionRev(WorkInstruction newWorkInstructionRev)
         {
             if (db.WorkInstructions.ContainsKey(newWorkInstructionRev.IdRevGroup)) // if the rev group exists with regard to work instructions
@@ -881,7 +939,11 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to work instructions");
             }
         }
-
+        /// <summary>
+        /// Remove WorkInstructionRev from database if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="workInstructionRev"></param>
         public void DeleteWorkInstructionRev(Guid groupId, Guid workInstructionRev)
         {
             if (db.WorkInstructions.ContainsKey(groupId)) // if the rev group exists with regard to work instructions
@@ -920,7 +982,11 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to work instructions");
             }
         }
-
+        /// <summary>
+        /// Merge the given jobs into a combination of them if they exist and there are no duplicates.
+        /// </summary>
+        /// <param name="jobId1"></param>
+        /// <param name="jobId2"></param>
         public void MergeJobRevsBasedOnJob(string jobId1, string jobId2)
         {
             if(db.Jobs.ContainsKey(jobId1) && db.Jobs.ContainsKey(jobId2)) // if both jobs exist in the database
@@ -951,7 +1017,12 @@ namespace LibWorkInstructions
                 throw new Exception("One or both of the jobs doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Split JobRev within a Job into two objects if it exists.
+        /// </summary>
+        /// <param name="jobId"></param>
+        /// <param name="jobRev"></param>
+        /// <param name="newJobRev"></param>
         public void SplitJobRevInJob(string jobId, string jobRev, string newJobRev)
         {
             if(db.Jobs.ContainsKey(jobId)) // if the job exists in the database
@@ -988,7 +1059,13 @@ namespace LibWorkInstructions
                 throw new Exception("The job doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Clone JobRevs based on the given job if it exists.  
+        /// Behavior changes based on additive parameter
+        /// </summary>
+        /// <param name="sourceJob"></param>
+        /// <param name="targetJob"></param>
+        /// <param name="additive"></param>
         public void CloneJobRevsBasedOnJob(string sourceJob, string targetJob, bool additive)
         {
             if(db.Jobs.ContainsKey(sourceJob) && db.Jobs.ContainsKey(targetJob)) // if both of the jobs exist in the database
@@ -1026,7 +1103,11 @@ namespace LibWorkInstructions
                 throw new Exception("One or both of the jobs doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Link JobRev to given QualityClauseRev if they exist.
+        /// </summary>
+        /// <param name="jobRev"></param>
+        /// <param name="qualityClauseRev"></param>
         public void LinkJobRevToQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
@@ -1062,7 +1143,11 @@ namespace LibWorkInstructions
                 throw new Exception("The quality clause revision doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Unlink JobRev from given QualityClauseRev if they exist.
+        /// </summary>
+        /// <param name="jobRev"></param>
+        /// <param name="qualityClauseRev"></param>
         public void UnlinkJobRevFromQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
@@ -1091,7 +1176,11 @@ namespace LibWorkInstructions
                 throw new Exception("The quality clause revision doesn't exist for that job revision");
             }
         }
-
+        /// <summary>
+        /// Merge JobRevs in the given QualityClauseRev if they exist.
+        /// </summary>
+        /// <param name="qualityClauseRev1"></param>
+        /// <param name="qualityClauseRev2"></param>
         public void MergeJobRevsBasedOnQualityClauseRev(Guid qualityClauseRev1, Guid qualityClauseRev2)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev1) && db.QualityClauseRevs.Contains(qualityClauseRev2)) // if both of the quality clause revisions exist in the database
