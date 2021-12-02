@@ -562,11 +562,10 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 3);
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][3].QualityClauses));
             Assert.True(dbPostMerge.JobRevRefToQualityClauseRevRefs["job1-A"].SequenceEqual(dbPostMerge.JobRevRefToQualityClauseRevRefs["job2-C"]));
-
         }
 
         [Test]
-        public void TestSplitQualityClauses()
+        public void TestSplitQualityClauseRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -581,13 +580,21 @@ namespace LibWorkInstructionsTests
                         new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
                     {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
                         new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
+                },
+                QualityClauseRevs = new List<Guid> { clauseId1, clauseId2 },
+                QualityClauseRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid> { clauseId1 } },
+                    {groupId2, new List<Guid> { clauseId2 } }
                 }
             };
             n.DataImport(sampleData);
-            n.SplitQualityClauseRevInQualityClause(groupId1, clauseId1);
+            n.SplitQualityClauseRev(groupId1, clauseId1);
             var dbPostSplit = n.DataExport();
             Assert.True(dbPostSplit.QualityClauses[groupId1].Count == 2);
-            Assert.True(dbPostSplit.QualityClauses[groupId1].Last().Id == clauseId1);
+            Assert.True(dbPostSplit.QualityClauses[groupId1].Last().Id != null);
+            Assert.True(dbPostSplit.QualityClauses[groupId1].Last().IdRevGroup == groupId1);
+            Assert.True(dbPostSplit.QualityClauseRefToQualityClauseRevRefs[groupId1].Count == 2);
         }
 
         [Test]

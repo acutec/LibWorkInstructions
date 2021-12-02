@@ -1390,44 +1390,6 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Split QualityClause in given JobRev.
-        /// </summary>
-        /// <param name="jobRev"></param>
-        /// <param name="qualityClauseRev"></param>
-        public void SplitQualityClauseRevInJobRev(string jobRev, Guid qualityClauseRev)
-        {
-            if (db.JobRevs.Contains(jobRev)) // if the job revision exists in the database
-            {
-                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev)) // if the quality clause revision is linked to the job revision
-                {
-                    QualityClause clauseRev = db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev); // create new instance of quality clause revision
-                    clauseRev.Id = Guid.NewGuid(); // configure the new revision
-                    db.QualityClauseRevs.Add(clauseRev.Id); // add the quality clause revision to the database
-                    db.Jobs[db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key][db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(x => x.Rev == jobRev)].QualityClauses.Add(clauseRev);
-                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(clauseRev.Id); // manage references
-                    db.QualityClauseRevRefToJobRevRefs[clauseRev.Id] = db.QualityClauseRevRefToJobRevRefs[qualityClauseRev];
-
-                    var args = new Dictionary<string, string>(); // add the event
-                    args["JobRev"] = jobRev;
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "SplitQualityClauseRevInJobRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("Quality clause revision doesn't have an association with the given job revision");
-                }
-            }
-            else
-            {
-                throw new Exception("The job revision doesn't exist in the database");
-            }
-        }
-        /// <summary>
         /// Clone QualityClaseRevs in given JobRevs if they exist.
         /// Behavior changes depening on the additive parameter.
         /// </summary>
@@ -1510,27 +1472,26 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="qualityClause"></param>
         /// <param name="qualityClauseRev"></param>
-        public void SplitQualityClauseRevInQualityClause(Guid qualityClause, Guid qualityClauseRev)
+        public void SplitQualityClauseRev(Guid revGroup, Guid qualityClauseRev)
         {
-            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(qualityClause)) // if the clause exists in the database
+            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(revGroup)) // if the clause exists in the database
             {
-                if (db.QualityClauseRefToQualityClauseRevRefs[qualityClause].Contains(qualityClauseRev)) // if the quality clause has the revision
+                if (db.QualityClauseRefToQualityClauseRevRefs[revGroup].Contains(qualityClauseRev)) // if the quality clause has the revision
                 {
-                    Guid revGroup = db.QualityClauses.First(y => y.Value[0].Id == qualityClause).Key;
                     int newRevPosition = db.QualityClauses[revGroup].Count;
                     db.QualityClauses[revGroup].Add(db.QualityClauses[revGroup].First(y => y.Id == qualityClauseRev)); // split the revision in the database
                     db.QualityClauses[revGroup][newRevPosition].Id = Guid.NewGuid(); // reconfigure the revision
                     db.QualityClauses[revGroup][newRevPosition].RevSeq = newRevPosition;
                     db.QualityClauseRevs.Add(db.QualityClauses[revGroup][newRevPosition].Id); // add the new revision to the database
-                    db.QualityClauseRefToQualityClauseRevRefs[qualityClause].Add(qualityClauseRev); // manage references
+                    db.QualityClauseRefToQualityClauseRevRefs[revGroup].Add(qualityClauseRev); // manage references
                     db.QualityClauseRevRefToJobRevRefs[db.QualityClauses[revGroup][newRevPosition].Id] = db.QualityClauseRevRefToJobRevRefs[qualityClauseRev];
 
                     var args = new Dictionary<string, string>(); // add the event
-                    args["QualityClause"] = qualityClause.ToString();
+                    args["RevGroup"] = revGroup.ToString();
                     args["QualityClauseRev"] = qualityClauseRev.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "SplitQualityClauseRevInQualityClause",
+                        Action = "SplitQualityClauseRev",
                         Args = args,
                         When = DateTime.Now
                     });
