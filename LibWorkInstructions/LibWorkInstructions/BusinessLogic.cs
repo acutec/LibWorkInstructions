@@ -735,17 +735,17 @@ namespace LibWorkInstructions
             }
         }
 
-        public void CreateWorkInstruction(WorkInstruction workInstruction)
+        public void CreateWorkInstruction(int op)
         {
-            if (!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup)) // if the rev group exists with regard to work instructions
+            if (!db.WorkInstructions.Values.Any(y => y.Any(x => x.OpId == op))) // if there isn't already a work instruction for that op
             {
-                workInstruction.RevSeq = 0; // configure the work instruction
+                WorkInstruction workInstruction = new WorkInstruction { Id = Guid.NewGuid(), IdRevGroup = Guid.NewGuid(), OpId = op, RevSeq = 0 }; // create and configure the work instruction
                 db.WorkInstructions[workInstruction.IdRevGroup] = new List<WorkInstruction> { workInstruction }; // add the work instruction to the database
-                db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.Id; // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.Id] =  new List<Guid>();
+                db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.IdRevGroup; // manage references
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.IdRevGroup] =  new List<Guid> { workInstruction.Id };
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["WorkInstruction"] = JsonSerializer.Serialize(workInstruction);
+                args["Op"] = JsonSerializer.Serialize(workInstruction);
                 db.AuditLog.Add(new Event
                 {
                     Action = "CreateWorkInstruction",
