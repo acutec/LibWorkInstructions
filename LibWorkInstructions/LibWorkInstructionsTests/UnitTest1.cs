@@ -275,6 +275,66 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestActivateJobRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-A", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},
+                        }, Active = false },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-B", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},
+                        }, Active = false }
+                    }
+                    }
+                },
+            };
+            n.DataImport(sampleData);
+            n.DeactivateJobRev("job1", "job1-B");
+            var dbPostDeactivate = n.DataExport();
+            Assert.True(dbPostDeactivate.Jobs["job1"][1].Active);
+        }
+
+        [Test]
+        public void TestDeactivateJobRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-A", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},
+                        }, Active = true },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "job1-B", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},
+                        }, Active = true }
+                    }
+                    }
+                },
+            };
+            n.DataImport(sampleData);
+            n.DeactivateJobRev("job1", "job1-A");
+            var dbPostDeactivate = n.DataExport();
+            Assert.False(dbPostDeactivate.Jobs["job1"][0].Active);
+        }
+
+        [Test]
         public void TestCreateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
