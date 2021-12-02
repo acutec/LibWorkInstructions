@@ -484,26 +484,85 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeQualityClauses()
+        public void TestMergeQualityClauseRevsBasedOnJobRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
             Guid clause1 = Guid.NewGuid();
             Guid clause2 = Guid.NewGuid();
             Guid clause3 = Guid.NewGuid();
             Guid clause4 = Guid.NewGuid();
             Guid clause5 = Guid.NewGuid();
             Guid clause6 = Guid.NewGuid();
+            Guid clause7 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>() },
-                    {"job2", new List<LibWorkInstructions.Structs.Job>() },
+                    {"job1", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job1", Rev = "job1-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause1, IdRevGroup = groupId1}
+                        } },
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job1", Rev = "job1-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause2, IdRevGroup = groupId1}
+                        } },
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job1", Rev = "job1-C", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause3, IdRevGroup = groupId1}
+                        } },
+                    } },
+                    {"job2", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job2", Rev = "job2-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause4, IdRevGroup = groupId2}
+                        } },
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job2", Rev = "job2-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause5, IdRevGroup = groupId2}
+                        } },
+                        new LibWorkInstructions.Structs.Job{
+                        Id = "job2", Rev = "job2-C", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause6, IdRevGroup = groupId2},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clause7, IdRevGroup = groupId1}
+                        } },
+                    } },
                 },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause>
+                    {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause1, IdRevGroup = groupId1},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause2, IdRevGroup = groupId1},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause3, IdRevGroup = groupId1}
+                    } },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause>
+                    {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause4, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause5, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clause6, IdRevGroup = groupId2}
+                    } }
+                },
+                QualityClauseRevs = new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 },
+                JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>
+                {
+                    {"job1-A", new List<Guid> {clause1} },
+                    {"job1-B", new List<Guid> {clause2} },
+                    {"job1-C", new List<Guid> {clause3} },
+                    {"job2-A", new List<Guid> {clause4} },
+                    {"job2-B", new List<Guid> {clause5} },
+                    {"job2-C", new List<Guid> {clause6, clause7} }
+                }
             };
             n.DataImport(sampleData);
-            n.MergeJobRevsBasedOnJob("job1", "job2");
+            n.MergeQualityClauseRevsBasedOnJobRev("job1-A", "job2-C");
             var dbPostMerge = n.DataExport();
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 3);
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][3].QualityClauses));
+            Assert.True(dbPostMerge.JobRevRefToQualityClauseRevRefs["job1-A"].SequenceEqual(dbPostMerge.JobRevRefToQualityClauseRevRefs["job2-C"]));
+
         }
 
         [Test]
