@@ -1986,7 +1986,7 @@ namespace LibWorkInstructions
         /// <param name="additive"></param>
         public void CloneOpSpecRevsBasedOnJobOp(int sourceOp, int targetOp, bool additive)
         {
-            if (db.Ops.ContainsKey(sourceOp) && db.Ops.ContainsKey(targetOp)) // if both ops exist in the database
+            if (db.OpRefToOpSpecRevRefs.ContainsKey(sourceOp) && db.OpRefToOpSpecRevRefs.ContainsKey(targetOp)) // if both ops exist in the database
             {
                 if (!additive)
                 {

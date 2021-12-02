@@ -437,7 +437,8 @@ namespace LibWorkInstructionsTests
                 {
                     {1, new List<Guid> { specId1, specId2 } },
                     {2, new List<Guid> { specId3, specId4 } }
-                }
+                },
+                OpSpecRevs = new List<Guid> { specId1, specId2, specId3, specId4 }
             };
 
             n.DataImport(sampleData);
