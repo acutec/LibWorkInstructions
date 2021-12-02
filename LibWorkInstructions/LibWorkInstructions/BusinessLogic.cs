@@ -51,7 +51,7 @@ namespace LibWorkInstructions
 
         public void CreateJob(string jobId, string revCustomer, string revPlan, string rev)
         {
-            if (!db.Jobs.ContainsKey(jobId)) // if the jobs dictionary doesn't already have the job
+            if (!db.Jobs.ContainsKey(jobId)) // if the job doesn't already exist in the database
             {
                 Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev}; // create and configure it
                 db.Jobs[job.Id] = new List<Job> { job }; // add the job to the database
@@ -718,33 +718,49 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The rev group already exists with regard to work instructions");
+                throw new Exception("The op already has a work instruction");
             }
         }
 
-        public void DeleteWorkInstruction(Guid workId)
+        public void ActivateWorkInstruction(Guid idRevGroup)
         {
-            if (db.WorkInstructions.Values.Any(y => y[0].Id == workId)) // if any original work instruction has the given id
+            if (db.WorkInstructions.ContainsKey(idRevGroup)) // if the rev group exists in the database
             {
-                WorkInstruction targetWorkInstruction = db.WorkInstructions.Values.First(y => y[0].Id == workId)[0]; // remove the work instruction and the revisions of that work instruction from the database
-                List<Guid> idRevsList = db.WorkInstructions[targetWorkInstruction.IdRevGroup].Select(y => y.Id).ToList();
-                db.WorkInstructions.Remove(targetWorkInstruction.IdRevGroup);
-                db.WorkInstructionRevs = db.WorkInstructionRevs.Where(y => !idRevsList.Contains(y)).ToList();
-                db.OpRefToWorkInstructionRef.Remove(targetWorkInstruction.OpId); // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs.Remove(workId);
+                db.WorkInstructions[idRevGroup] = db.WorkInstructions[idRevGroup].Select(y => { y.Active = true; return y; }).ToList(); // activate the revisions of the work instruction
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["WorkId"] = workId.ToString();
+                args["IdRevGroup"] = idRevGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteWorkInstruction",
+                    Action = "ActivateWorkInstruction",
                     Args = args,
                     When = DateTime.Now,
                 });
             }
             else
             {
-                throw new Exception("The id doesn't exist with regard to original work instructions (e.g. it could be the id of a rev)");
+                throw new Exception("The rev group doesn't exist in the database");
+            }
+        }
+
+        public void DeactivateWorkInstruction(Guid idRevGroup)
+        {
+            if (db.WorkInstructions.ContainsKey(idRevGroup)) // if the rev group exists in the database
+            {
+                db.WorkInstructions[idRevGroup] = db.WorkInstructions[idRevGroup].Select(y => { y.Active = false; return y; }).ToList(); // deactivate the revisions of the work instruction
+
+                var args = new Dictionary<string, string>(); // add the event
+                args["IdRevGroup"] = idRevGroup.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeactivateWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
 

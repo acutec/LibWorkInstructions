@@ -51,6 +51,8 @@ namespace LibWorkInstructions {
         public string HtmlBlob { get; set; }
         // op the work instruction is linked to
         public int OpId { get; set; }
+        // Work instructions also have an active status
+        public bool Active { get; set; }
 
         public bool Equals(WorkInstruction obj)
         {
