@@ -362,7 +362,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestSplitSpec()
+        public void TestSplitOpSpecRevInOpSpec()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
