@@ -175,121 +175,46 @@ namespace LibWorkInstructionsTests
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions[groupId1].All(y => !y.Active));
         }
+
         [Test]
-        public void TestMergeWorkInstructions()
+        public void TestCloneWorkInstructionRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
             Guid groupId2 = Guid.NewGuid();
-            Guid workId2 = Guid.NewGuid();
-            Guid groupId3 = Guid.NewGuid();
-            Guid workId3 = Guid.NewGuid();
-            Guid groupId4 = Guid.NewGuid();
-            Guid workId4 = Guid.NewGuid();
-            Guid job1Work1Op1 = Guid.NewGuid();
-            Guid job1Work1Op2 = Guid.NewGuid();
-            Guid job1Work1Op3 = Guid.NewGuid();
-            Guid job1Work2Op1 = Guid.NewGuid();
-            Guid job1Work2Op2 = Guid.NewGuid();
-            Guid job1Work2Op3 = Guid.NewGuid();
-            Guid job2Work1Op1 = Guid.NewGuid();
-            Guid job2Work1Op2 = Guid.NewGuid();
-            Guid job2Work1Op3 = Guid.NewGuid();
-            Guid job2Work2Op1 = Guid.NewGuid();
-            Guid job2Work2Op2 = Guid.NewGuid();
-            Guid job2Work2Op3 = Guid.NewGuid();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
-                {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>()},
-                    {"job2", new List<LibWorkInstructions.Structs.Job>()},
-                },
-
-                //JobRefToWorkInstructionRefs = new Dictionary<string, List<List<Guid>>> {
-                //    {"job1" , new List<List<Guid>>()
-                //    {new List<Guid> {job1Work1Op1, job1Work1Op2, job1Work1Op3}, new List<Guid> {job1Work2Op1, job1Work2Op2, job1Work2Op3} }},
-                //    {"job2", new List<List<Guid>>()
-                //    {new List<Guid> {job2Work1Op1, job2Work1Op2, job2Work1Op3}, new List<Guid> {job2Work2Op1, job2Work2Op2, job1Work2Op3} } },
-                //},
-            };
-            n.DataImport(sampleData);
-            var dbPreMerge = n.DataExport();
-        //    var workInstruction1Ops = dbPreMerge.JobRefToWorkInstructionRefs["job1"][1];
-        //    var workInstruction2Ops = dbPreMerge.JobRefToWorkInstructionRefs["job2"][0];
-        //    n.MergeWorkInstructions("job1", "job2");
-        //    var dbPostMerge = n.DataExport();
-        //    Assert.True(dbPostMerge.JobRefToWorkInstructionRefs["job1"].FindIndex(f =>
-        //    f.SequenceEqual(new List<Guid> { job1Work2Op1, job1Work2Op2, job1Work2Op3, job2Work1Op1, job2Work1Op2, job2Work1Op3})) >= 0);
-        //    Assert.True(dbPostMerge.JobRefToWorkInstructionRefs["job2"].FindIndex(f =>
-        //    f.SequenceEqual(new List<Guid> { job1Work2Op1, job1Work2Op2, job1Work2Op3, job2Work1Op1, job2Work1Op2, job2Work1Op3 })) >= 0);
-        //    Assert.False(dbPostMerge.JobRefToWorkInstructionRefs["job1"].FindIndex(f =>
-        //    f.SequenceEqual(workInstruction1Ops)) >= 0);
-        //    Assert.False(dbPostMerge.JobRefToWorkInstructionRefs["job2"].FindIndex(f =>
-        //    f.SequenceEqual(workInstruction2Ops)) >= 0);
-        }
-
-        [Test]
-        public void TestSplitWorkInstruction()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
             Guid workId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
             Guid workId2 = Guid.NewGuid();
-            Guid groupId3 = Guid.NewGuid();
             Guid workId3 = Guid.NewGuid();
-            Guid groupId4 = Guid.NewGuid();
             Guid workId4 = Guid.NewGuid();
-            Guid job1Work1Op1 = Guid.NewGuid();
-            Guid job1Work1Op2 = Guid.NewGuid();
-            Guid job1Work1Op3 = Guid.NewGuid();
-            Guid job1Work2Op1 = Guid.NewGuid();
-            Guid job1Work2Op2 = Guid.NewGuid();
-            Guid job1Work2Op3 = Guid.NewGuid();
-            Guid job2Work1Op1 = Guid.NewGuid();
-            Guid job2Work1Op2 = Guid.NewGuid();
-            Guid job2Work1Op3 = Guid.NewGuid();
-            Guid job2Work2Op1 = Guid.NewGuid();
-            Guid job2Work2Op2 = Guid.NewGuid();
-            Guid job2Work2Op3 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
                 {
                     {groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
-                        Id = workId1, IdRevGroup = groupId1, } } },
+                        Id = workId1, IdRevGroup = groupId1 },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId2, IdRevGroup = groupId1} } },
                     {groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId2, IdRevGroup = groupId2, } } },
-                    {groupId3, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                            Id = workId3, IdRevGroup = groupId2 },
                         new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId3, IdRevGroup = groupId3, } } },
-                    {groupId4, new List<LibWorkInstructions.Structs.WorkInstruction> {
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId4, IdRevGroup = groupId4, } } }
+                            Id = workId4, IdRevGroup = groupId2 } } },
                 },
-
-                //JobRefToWorkInstructionRefs = new Dictionary<string, List<List<Guid>>> {
-                //    {"job1" , new List<List<Guid>>()
-                //    {new List<Guid> {job1Work1Op1, job1Work1Op2, job1Work1Op3}, new List<Guid> {job1Work2Op1, job1Work2Op2, job1Work2Op3} }},
-                //    {"job2", new List<List<Guid>>()
-                //    {new List<Guid> {job2Work1Op1, job2Work1Op2, job2Work1Op3}, new List<Guid> {job2Work2Op1, job2Work2Op2, job1Work2Op3} } },
-                //},
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>()},
-                    {"job2", new List<LibWorkInstructions.Structs.Job>()},
+                    {groupId1, new List<Guid>{workId1, workId2}},
+                    {groupId2, new List<Guid>{workId3, workId4}}
                 }
-            };
-            n.DataImport(sampleData);
-            n.SplitWorkInstructionRev(groupId2, workId2);
-            var dbPostSplit = n.DataExport();
 
-            //Assert.True(dbPostSplit.JobRefToWorkInstructionRefs["job1"].Count == 3);
-            //Assert.True(dbPostSplit.JobRefToWorkInstructionRefs["job1"].Last().SequenceEqual(new List<Guid> { job1Work2Op1, job1Work2Op2, job1Work2Op3 }));
+            };
+
+            n.DataImport(sampleData);
+            n.CloneWorkInstructionRevs(workId1, workId3, true);
+            var dbPostClone = n.DataExport();
+
+            Assert.True(dbPostClone.WorkInstructions[groupId2].Count == 4);
+            Assert.True(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId2].OrderBy(y => y).SequenceEqual(new List<Guid> { workId1, workId2, workId3, workId4}.OrderBy(y => y)));
         }
 
         [Test]
@@ -297,51 +222,40 @@ namespace LibWorkInstructionsTests
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
             Guid groupId2 = Guid.NewGuid();
+            Guid workId1 = Guid.NewGuid();
             Guid workId2 = Guid.NewGuid();
-            Guid groupId3 = Guid.NewGuid();
             Guid workId3 = Guid.NewGuid();
-            Guid groupId4 = Guid.NewGuid();
             Guid workId4 = Guid.NewGuid();
-            Guid job1Work1Op1 = Guid.NewGuid();
-            Guid job1Work1Op2 = Guid.NewGuid();
-            Guid job1Work1Op3 = Guid.NewGuid();
-            Guid job1Work2Op1 = Guid.NewGuid();
-            Guid job1Work2Op2 = Guid.NewGuid();
-            Guid job1Work2Op3 = Guid.NewGuid();
-            Guid job2Work1Op1 = Guid.NewGuid();
-            Guid job2Work1Op2 = Guid.NewGuid();
-            Guid job2Work1Op3 = Guid.NewGuid();
-            Guid job2Work2Op1 = Guid.NewGuid();
-            Guid job2Work2Op2 = Guid.NewGuid();
-            Guid job2Work2Op3 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
                 {
                     {groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
-                        Id = workId1, IdRevGroup = groupId1, } } },
+                        Id = workId1, IdRevGroup = groupId1 },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId2, IdRevGroup = groupId1} } },
                     {groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
                         new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId2, IdRevGroup = groupId2, } } },
-                    {groupId3, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                            Id = workId3, IdRevGroup = groupId2 },
                         new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId3, IdRevGroup = groupId3, } } },
-                    {groupId4, new List<LibWorkInstructions.Structs.WorkInstruction> {
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId4, IdRevGroup = groupId4, } } }
+                            Id = workId4, IdRevGroup = groupId2 } } },
                 },
+                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid>{workId1, workId2}},
+                    {groupId2, new List<Guid>{workId3, workId4}}
+                }
 
             };
 
             n.DataImport(sampleData);
-            n.CloneWorkInstructionRevs(workId1, workId2, false);
+            n.CloneWorkInstructionRevs(workId1, workId3, false);
             var dbPostClone = n.DataExport();
 
-            Assert.True(dbPostClone.WorkInstructions.ContainsKey(workId1));
-            Assert.True(dbPostClone.WorkInstructions.ContainsKey(workId2));
+            Assert.True(dbPostClone.WorkInstructions[groupId2].Count == 2);
+            Assert.True(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId2].SequenceEqual(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId1]));
         }
 
         [Test]
@@ -378,48 +292,6 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostAdd.OpSpecs.Count == 1);
             Assert.True(dbPostAdd.OpSpecs.ContainsKey(testAddSpec.Id));
         }
-
-        //[Test]
-        //public void TestChangeSpec()
-        //{
-        //    var n = new LibWorkInstructions.BusinessLogic();
-        //    Guid specId1 = Guid.NewGuid();
-        //    Guid specId2 = Guid.NewGuid();
-        //    Guid specId3 = Guid.NewGuid();
-        //    Guid groupWorkId1 = Guid.NewGuid();
-        //    Guid groupWorkId2 = Guid.NewGuid();
-        //    Guid groupWorkId3 = Guid.NewGuid();
-        //    Guid groupSpecId1 = Guid.NewGuid();
-        //    Guid groupSpecId2 = Guid.NewGuid();
-        //    Guid groupSpecId3 = Guid.NewGuid();
-        //    var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-        //    {
-        //        OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
-        //        {
-        //            { groupSpecId1, new List<LibWorkInstructions.Structs.OpSpec> {
-        //                new LibWorkInstructions.Structs.OpSpec {Id = specId1, Name = "spec1"} } },
-        //            { groupSpecId2, new List<LibWorkInstructions.Structs.OpSpec> {
-        //                new LibWorkInstructions.Structs.OpSpec {Id = specId2, Name = "spec2"} } },
-        //            { groupSpecId3, new List<LibWorkInstructions.Structs.OpSpec> {
-        //                new LibWorkInstructions.Structs.OpSpec {Id = specId3, Name = "spec3"} } },
-        //        },
-        //        WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
-        //        {
-        //            { groupWorkId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
-        //                 new LibWorkInstructions.Structs.WorkInstruction {OpSpecs = new List<Guid> { specId1, specId2 }, Approved = true} }},
-        //            { groupWorkId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
-        //                 new LibWorkInstructions.Structs.WorkInstruction {OpSpecs = new List<Guid> { specId2, specId3 }, Approved = true} }},
-        //            { groupWorkId3, new List<LibWorkInstructions.Structs.WorkInstruction> {
-        //                 new LibWorkInstructions.Structs.WorkInstruction {OpSpecs = new List<Guid> { specId1, specId3 }, Approved = true} }},
-        //        }
-        //    };
-        //    n.DataImport(sampleData);
-        //    n.ChangeSpec(groupSpecId1);
-        //    var dbPostChange = n.DataExport();
-
-        //    Assert.True(dbPostChange.OpSpecs.Count == 3);
-        //    Assert.True(dbPostChange.OpSpecs[groupSpecId1].Count == 2);
-        //}
 
         [Test]
         public void TestDeleteSpec()

@@ -2029,14 +2029,13 @@ namespace LibWorkInstructions
 
         public void CloneWorkInstructionRevs(Guid sourceWorkInstruction, Guid targetWorkInstruction, bool additive)
         {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(sourceWorkInstruction) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(targetWorkInstruction)) // if both work instructions exist in the database
+            Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetWorkInstruction).Key;
+            Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceWorkInstruction).Key;
+            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(targetRevGroup) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(sourceRevGroup)) // if both rev groups exist in the database
             {
-                Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetWorkInstruction).Key;
-                Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceWorkInstruction).Key;
                 if (!additive)
                 {
-                    db.WorkInstructions[targetRevGroup] = new List<WorkInstruction> { db.WorkInstructions[targetRevGroup][0] }; // replace the revisions in the target work instruction with the revisions in the source work instruction
-                    db.WorkInstructions[targetRevGroup].AddRange(db.WorkInstructions[sourceRevGroup].Where(y => db.WorkInstructions[sourceRevGroup].IndexOf(y) != 0));
+                    db.WorkInstructions[targetRevGroup] = db.WorkInstructions[sourceRevGroup]; // replace the revisions in the target work instruction with the revisions in the source work instruction
                     db.WorkInstructions[targetRevGroup] = db.WorkInstructions[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.WorkInstructions[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
                     db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction]; // manage references
                 }
