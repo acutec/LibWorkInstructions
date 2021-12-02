@@ -93,6 +93,7 @@ namespace LibWorkInstructions {
       public Guid IdRevGroup { get; set; }
       public int RevSeq { get; set; }
       public string Clause { get; set; }
+      public bool Active { get; set; }
     }
 
     public class Event

@@ -319,33 +319,51 @@ namespace LibWorkInstructions
             });
         }
         /// <summary>
-        /// Remove QualityClause from database if it exists.
+        /// Activate the quality clause if it exists.
         /// </summary>
         /// <param name="clauseId"></param>
-        public void DeleteQualityClause(Guid clauseId)
+        public void ActivateQualityClause(Guid revGroup)
         {
-            if (db.QualityClauses.Values.Any(y => y[0].Id == clauseId)) // if any original quality clause has the given id
+            if (db.QualityClauses.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                QualityClause targetClause = db.QualityClauses.Values.First(y => y[0].Id == clauseId)[0]; // remove the quality clause and its revisions from the database
-                List<Guid> revIdList = db.QualityClauses[targetClause.IdRevGroup].Select(y => y.Id).ToList();
-                db.QualityClauses.Remove(targetClause.IdRevGroup);
-                db.QualityClauseRevs = db.QualityClauseRevs.Where(y => !revIdList.Contains(y)).ToList();
-                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Where(y => !revIdList.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value); // manage references
-                db.JobRevRefToQualityClauseRevRefs = db.JobRevRefToQualityClauseRevRefs.Select(y => y = new KeyValuePair<string, List<Guid>>(y.Key, y.Value.Where(y => !revIdList.Contains(y)).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                db.QualityClauseRefToQualityClauseRevRefs.Remove(targetClause.IdRevGroup);
+                db.QualityClauses[revGroup] = db.QualityClauses[revGroup].Select(y => { y.Active = true; return y; }).ToList();
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["ClauseId"] = clauseId.ToString();
+                args["RevGroup"] = revGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteQualityClause",
+                    Action = "ActivateQualityClause",
                     Args = args,
                     When = DateTime.Now
                 });
             }
             else
             {
-                throw new Exception("The id doesn't exist with regard to original quality clauses (e.g. it could be an id of a rev)");
+                throw new Exception("The rev group doesn't exist in the database");
+            }
+        }
+        /// <summary>
+        /// Deactivate the quality clause if it exists.
+        /// </summary>
+        /// <param name="clauseId"></param>
+        public void DeactivateQualityClause(Guid revGroup)
+        {
+            if (db.QualityClauses.ContainsKey(revGroup)) // if the rev group exists in the database
+            {
+                db.QualityClauses[revGroup] = db.QualityClauses[revGroup].Select(y => { y.Active = false; return y; }).ToList();
+
+                var args = new Dictionary<string, string>(); // add the event
+                args["RevGroup"] = revGroup.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeactivateQualityClause",
+                    Args = args,
+                    When = DateTime.Now
+                });
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
         /// <summary>
