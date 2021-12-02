@@ -527,43 +527,6 @@ namespace LibWorkInstructions
             }
         }
 
-        public void UpdateOpSpec(OpSpec newSpec)
-        {
-            if (db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group exists in the database
-            {
-                if (db.OpSpecs[newSpec.IdRevGroup].Any(y => y.Id == newSpec.Id)) // if the op spec is in the rev group
-                {
-                    if (db.OpSpecs[newSpec.IdRevGroup][0].Id == newSpec.Id) // if the id indeed refers to the original spec, not the rev of one
-                    {
-                        db.OpSpecs[newSpec.IdRevGroup][0] = newSpec; // update the op spec
-                        List<int> ops = db.OpRefToWorkInstructionRef.Keys.Where(y => db.OpSpecRevRefToOpRefs.Any(x => x.Value.Contains(y) && db.OpSpecRefToOpSpecRevRefs[newSpec.Id].Contains(x.Key))).ToList();
-                        db.WorkInstructions = db.WorkInstructions.Select(y => y = new KeyValuePair<Guid, List<WorkInstruction>>(y.Key, y.Value.Select(x => { if (ops.Contains(x.OpId)) x.Approved = false; return x; }).ToList())).ToDictionary(y => y.Key, y => y.Value); // invalidate the approval status of the work instruction
-
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["newSpec"] = JsonSerializer.Serialize(newSpec);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateOpSpec",
-                            Args = args,
-                            When = DateTime.Now,
-                        });
-                    }
-                    else
-                    {
-                        throw new Exception("The id refers to a rev of a spec, not an original spec");
-                    }
-                }
-                else
-                {
-                    throw new Exception("The rev group doesn't have the op spec");
-                }
-            }
-            else
-            {
-                throw new Exception("The rev group doesn't exist in the database");
-            }
-        }
-
         public void DeleteOpSpec(Guid specId)
         {
             if (db.OpSpecs.Values.Any(y => y[0].Id == specId)) // if there's any original spec in the database that has the given spec id
@@ -756,42 +719,6 @@ namespace LibWorkInstructions
             else
             {
                 throw new Exception("The rev group already exists with regard to work instructions");
-            }
-        }
-
-        public void UpdateWorkInstruction(WorkInstruction newWorkInstruction)
-        {
-            if (db.WorkInstructions.ContainsKey(newWorkInstruction.IdRevGroup)) // if the rev group exists with regard to work instructions
-            {
-                if (db.WorkInstructions[newWorkInstruction.IdRevGroup].Any(y => y.Id == newWorkInstruction.Id)) // if the work instruction exists in the rev group
-                {
-                    if (db.WorkInstructions[newWorkInstruction.IdRevGroup][0].Id == newWorkInstruction.Id) // if the id refers to an original work instruction, not a rev of one
-                    {
-                        db.WorkInstructions[newWorkInstruction.IdRevGroup][0] = newWorkInstruction; // update the work instruction
-                        db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id; // manage references
-
-                        var args = new Dictionary<string, string>(); // add the evenet
-                        args["newWorkInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateWorkInstruction",
-                            Args = args,
-                            When = DateTime.Now,
-                        });
-                    }
-                    else
-                    {
-                        throw new Exception("The id refers to a rev of a work instruction, not an original one");
-                    }
-                }
-                else
-                {
-                    throw new Exception("The work instruction doesn't exist in the rev group");
-                }
-            }
-            else
-            {
-                throw new Exception("The group id doesn't exist with regard to original work instructions");
             }
         }
 

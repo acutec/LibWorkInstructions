@@ -106,38 +106,6 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestUpdateWorkInstruction()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            Guid workId = Guid.NewGuid();
-            Guid groupId = Guid.NewGuid();
-            Guid specId = Guid.NewGuid();
-            var workInstructionTest = new LibWorkInstructions.Structs.WorkInstruction { Id = workId, IdRevGroup = groupId, Images = new List<string> { "image" }, Approved = false, HtmlBlob = "html", OpId = 1 };
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
-                { groupId, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction
-                {
-                Id = workId,
-                IdRevGroup = groupId,
-                Approved = true,
-                HtmlBlob = "<h1>do something</h1>",
-                Images = new List<string>{ "image" },
-                }
-                }},
-                },
-            };
-            n.DataImport(sampleData);
-            n.UpdateWorkInstruction(workInstructionTest);
-            var dbVar = n.DataExport();
-            Assert.True(dbVar.WorkInstructions[groupId].Count == 1);
-            Assert.True(dbVar.WorkInstructions[groupId][1].IdRevGroup == groupId);
-            Assert.True(dbVar.WorkInstructions[groupId][1].OpId == workInstructionTest.OpId);
-            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
-            Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(workInstructionTest.OpId));
-        }
-
-        [Test]
         public void TestDeleteWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
