@@ -1122,5 +1122,159 @@ namespace LibWorkInstructionsTests
             var dbVar = n.DataExport();
             Assert.True(dbVar.QualityClauses[groupId1].All(y => !y.Active));
         }
+
+        [Test]
+        public void TestCreateQualityClauseRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clause1 = Guid.NewGuid();
+            Guid clause2 = Guid.NewGuid();
+            Guid clause3 = Guid.NewGuid();
+            Guid clause4 = Guid.NewGuid();
+            Guid clause5 = Guid.NewGuid();
+            Guid clause6 = Guid.NewGuid();
+            var sampleClause1 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause1,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause2 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause2,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause3 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause3,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause4 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause4,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause5 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause5,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause6 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause6,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>() },
+                    {"job2", new List<LibWorkInstructions.Structs.Job>() },
+                },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause1, sampleClause4, sampleClause3} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause2, sampleClause5, sampleClause6} },
+                }
+            };
+            n.DataImport(sampleData);
+            n.CreateQualityClauseRev(groupId1, clause2);
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.QualityClauses[groupId1].Count == 4);
+        }
+
+        [Test]
+        public void TestCreateQualityClauseRevFromScratch()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clause1 = Guid.NewGuid();
+            Guid clause2 = Guid.NewGuid();
+            Guid clause3 = Guid.NewGuid();
+            Guid clause4 = Guid.NewGuid();
+            Guid clause5 = Guid.NewGuid();
+            Guid clause6 = Guid.NewGuid();
+            Guid clause7 = Guid.NewGuid();
+            var sampleClause1 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause1,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause2 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause2,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause3 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause3,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause4 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause4,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause5 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause5,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause6 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause6,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause7 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause7,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>() },
+                    {"job2", new List<LibWorkInstructions.Structs.Job>() },
+                },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause1, sampleClause4, sampleClause3} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause2, sampleClause5, sampleClause6} },
+                }
+            };
+            n.DataImport(sampleData);
+            n.CreateQualityClauseRev(sampleClause7);
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.QualityClauses[groupId2].Count == 4);
+        }
     }
 }
