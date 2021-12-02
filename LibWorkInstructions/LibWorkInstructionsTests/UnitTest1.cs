@@ -41,7 +41,6 @@ namespace LibWorkInstructionsTests
                 QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>> {
           { Guid.NewGuid(), new List<LibWorkInstructions.Structs.QualityClause> { { new LibWorkInstructions.Structs.QualityClause{
             Id = Guid.NewGuid(),
-            Rev = Guid.NewGuid(),
             Clause = "Workmanship...",
               }
               }
@@ -68,9 +67,6 @@ namespace LibWorkInstructionsTests
           }
           }},
         },
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>> {
-          { "F110", new List<Guid> { Guid.NewGuid() } },
-        },
             };
             n.DataImport(sampleData);
             // FIXME: call some methods...
@@ -79,231 +75,44 @@ namespace LibWorkInstructionsTests
             // FIXME: assert some things on the exported data...
         }
 
-
-        [Test]
-        public void TestJobCalling()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>> {
-              { "F110", new List<LibWorkInstructions.Structs.Job> { new LibWorkInstructions.Structs.Job {
-                Id = "F110",
-                Rev = "A",
-                RevCustomer = "CUSTX",
-                RevPlan = "1.0.0",
-              }} },
-            }
-            };
-            n.DataImport(sampleData);
-            var dbVar = n.DataExport();
-            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
-            // Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
-            Assert.True(dbVar.Jobs["F110"][0].Id.Equals(testJob.Id));
-            Assert.True(dbVar.Jobs["F110"][0].Rev.Equals(testJob.Rev));
-            Assert.True(dbVar.Jobs["F110"][0].RevCustomer.Equals(testJob.RevCustomer));
-            Assert.True(dbVar.Jobs["F110"][0].RevPlan.Equals(testJob.RevPlan));
-        }
-
-        [Test]
-        public void TestGetJob()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>> {
-              { "F110", new List<LibWorkInstructions.Structs.Job> { new LibWorkInstructions.Structs.Job {
-                Id = "F110",
-                Rev = "A",
-                RevCustomer = "CUSTX",
-                RevPlan = "1.0.0",
-              }} },
-            }
-            };
-            n.DataImport(sampleData);
-            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job { Id = "F110", Rev = "A", RevCustomer = "CUSTX", RevPlan = "1.0.0", };
-            //Console.WriteLine($"DbVar: {dbVar.Jobs["F110"]}\nTestJob: {testJob}");
-            Assert.True(n.GetJob("F110", "CUSTX", "1.0.0").Id.Equals(testJob));
-
-        }
-
         [Test]
         public void TestCreateJob()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
-            Guid workId2 = Guid.NewGuid();
-            var opSpec1 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId1,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec2 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId2,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpecList = new List<LibWorkInstructions.Structs.OpSpec> { opSpec1, opSpec2 };
-            var op1 = new LibWorkInstructions.Structs.Op
-            {
-                Id = 0,
-                JobId = "job1",
-                OpService = "Op 20",
-                Seq = 2,
-                // OpSpecs = opSpecList,
-            };
-            LibWorkInstructions.Structs.Job testJob = new LibWorkInstructions.Structs.Job
-            {
-                Id = "F110",
-                Rev = "A",
-                RevCustomer = "CUSTX",
-                RevPlan = "1.0.0",
-                Ops = new List<LibWorkInstructions.Structs.Op> { op1 },
-            };
-            n.CreateJob(testJob);
+            n.CreateJob("F110", "CUSTX", "1.0.0", "A");
             var dbVar = n.DataExport();
-            // Check that List is empty
-            Assert.True(dbVar.Jobs["F110"][0].Id.Equals(testJob.Id));
-            Assert.True(dbVar.Jobs["F110"][0].Rev.Equals(testJob.Rev));
-            Assert.True(dbVar.Jobs["F110"][0].RevCustomer.Equals(testJob.RevCustomer));
-            Assert.True(dbVar.Jobs["F110"][0].RevPlan.Equals(testJob.RevPlan));
-        }
-
-        [Test]
-        public void TestGetWorkInstruction()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            Guid workId = Guid.NewGuid();
-            Guid groupId = Guid.NewGuid();
-            Guid specId = Guid.NewGuid();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
-                { groupId, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction
-                {
-                    Id = workId,
-                    IdRevGroup = groupId,
-                    Approved = true,
-                    HtmlBlob = "<h1>do something</h1>",
-                    Images = new List<string>{ "image" },
-                }
-                }},
-                },
-            };
-            LibWorkInstructions.Structs.WorkInstruction testWorkInstruction = new LibWorkInstructions.Structs.WorkInstruction
-            {
-                Id = workId,
-                IdRevGroup = groupId,
-                Approved = true,
-                HtmlBlob = "<h1>do something</h1>",
-                Images = new List<string> { "image" },
-            };
-            n.DataImport(sampleData);
-            Assert.True(n.GetWorkInstruction(groupId, workId).Id.Equals(testWorkInstruction.Id));
-            Assert.True(n.GetWorkInstruction(groupId, workId).IdRevGroup.Equals(testWorkInstruction.IdRevGroup));
-            Assert.True(n.GetWorkInstruction(groupId, workId).Approved.Equals(testWorkInstruction.Approved));
-            Assert.True(n.GetWorkInstruction(groupId, workId).HtmlBlob.Equals(testWorkInstruction.HtmlBlob));
-            Assert.True(n.GetWorkInstruction(groupId, workId).Images[0].Equals(testWorkInstruction.Images[0]));
+            Assert.True(dbVar.Jobs["F110"][0].Id.Equals("F110"));
+            Assert.True(dbVar.Jobs["F110"][0].Rev.Equals("A"));
+            Assert.True(dbVar.Jobs["F110"][0].RevCustomer.Equals("CUSTX"));
+            Assert.True(dbVar.Jobs["F110"][0].RevPlan.Equals("1.0.0"));
+            Assert.True(dbVar.Jobs["F110"][0].RevSeq == 0);
+            Assert.True(dbVar.JobRefToJobRevRefs.ContainsKey("F110"));
+            Assert.True(dbVar.JobRefToJobRevRefs["F110"].Contains("A"));
         }
 
         [Test]
         public void TestCreateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            var workInstructionTest = new LibWorkInstructions.Structs.WorkInstruction
-            { 
-                Id = new Guid(),
-                IdRevGroup = new Guid(),
-                Images = new List<string> { "image"},
-                Approved = false,
-                HtmlBlob = "html",
-                OpId = 1
-            };
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
-                {
-                    {"job1", new List<LibWorkInstructions.Structs.Job> { new LibWorkInstructions.Structs.Job { Ops = new List<LibWorkInstructions.Structs.Op>()} } },
-                },
-                //JobRefToWorkInstructionRefs = new Dictionary<string, List<List<Guid>>>
-                //{
-                //    {"job1", new List<List<Guid>>() }
-                //}
-            };
-            n.DataImport(sampleData);
-            n.CreateWorkInstruction(workInstructionTest);
+            n.CreateWorkInstruction(1);
             var dbVar = n.DataExport();
             Assert.True(dbVar.WorkInstructions.Count == 1);
-            Assert.True(dbVar.WorkInstructions.ContainsKey(workInstructionTest.IdRevGroup));
-            Assert.True(dbVar.OpRefToWorkInstructionRef.ContainsKey(workInstructionTest.OpId));
-            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
+            Assert.True(dbVar.WorkInstructions.First().Value[0].Id != null);
+            Assert.True(dbVar.WorkInstructions.First().Value[0].IdRevGroup != null);
+            Assert.True(dbVar.WorkInstructions.First().Value[0].OpId == 1);
+            Assert.True(dbVar.WorkInstructions.First().Value[0].RevSeq == 0);
+            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.Count != 0);
+            Assert.True(dbVar.OpRefToWorkInstructionRef[1] != null);
         }
 
         [Test]
-        public void TestUpdateWorkInstruction()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            Guid workId = Guid.NewGuid();
-            Guid groupId = Guid.NewGuid();
-            Guid specId = Guid.NewGuid();
-            var workInstructionTest = new LibWorkInstructions.Structs.WorkInstruction { Id = workId, IdRevGroup = groupId, Images = new List<string> { "image" }, Approved = false, HtmlBlob = "html", OpId = 1 };
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
-                { groupId, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction
-                {
-                Id = workId,
-                IdRevGroup = groupId,
-                Approved = true,
-                HtmlBlob = "<h1>do something</h1>",
-                Images = new List<string>{ "image" },
-                }
-                }},
-                },
-            };
-            n.DataImport(sampleData);
-            n.UpdateWorkInstruction(workInstructionTest);
-            var dbVar = n.DataExport();
-            Assert.True(dbVar.WorkInstructions[groupId].Count == 1);
-            Assert.True(dbVar.WorkInstructions[groupId][1].IdRevGroup == groupId);
-            Assert.True(dbVar.WorkInstructions[groupId][1].OpId == workInstructionTest.OpId);
-            Assert.True(dbVar.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstructionTest.Id));
-            Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(workInstructionTest.OpId));
-        }
-
-        [Test]
-        public void TestDeleteWorkInstruction()
+        public void TestActivateWorkInstruction()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid workId1 = Guid.NewGuid();
             Guid workId2 = Guid.NewGuid();
             Guid groupId1 = Guid.NewGuid();
             Guid groupId2 = Guid.NewGuid();
-            Guid specId1 = Guid.NewGuid();
-            Guid specId2 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
@@ -313,25 +122,58 @@ namespace LibWorkInstructionsTests
                         Approved = true,
                         HtmlBlob = "<h1>do something</h1>",
                         Images = new List<string> { "image" },
-                    }
-                    } },
-                    { groupId2, new  List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Active = false
+                    },
+                     new LibWorkInstructions.Structs.WorkInstruction {
                         Id = workId2,
                         IdRevGroup = groupId2,
                         Approved = false,
                         HtmlBlob = "<h2>do something</h2>",
                         Images = new List<string> { "jpeg" },
+                        Active = false
                     }
-                    } },
+                    } }
                 }
             };
             n.DataImport(sampleData);
-            Assert.True(n.GetWorkInstruction(groupId1, workId1).Id.Equals(workId1));
-            Assert.True(n.GetWorkInstruction(groupId2, workId2).Id.Equals(workId2));
-            n.DeleteWorkInstruction(groupId1, workId1);
+            n.ActivateWorkInstruction(groupId1);
             var dbVar = n.DataExport();
-            Assert.True(dbVar.WorkInstructions[groupId1].Count == 0);
-            Assert.True(dbVar.WorkInstructions[groupId2].Count == 1);
+            Assert.True(dbVar.WorkInstructions[groupId1].All(y => y.Active));
+        }
+        [Test]
+        public void TestDeactivateWorkInstruction()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = true
+                    },
+                     new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId2,
+                        IdRevGroup = groupId2,
+                        Approved = false,
+                        HtmlBlob = "<h2>do something</h2>",
+                        Images = new List<string> { "jpeg" },
+                        Active = true
+                    }
+                    } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.DeactivateWorkInstruction(groupId1);
+            var dbVar = n.DataExport();
+            Assert.True(dbVar.WorkInstructions[groupId1].All(y => !y.Active));
         }
         [Test]
         public void TestMergeWorkInstructions()
@@ -605,7 +447,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.DeleteOpSpec(groupId3, specId4);
+            //n.DeleteOpSpec(groupId3, specId4);
             var dbPostDelete = n.DataExport();
             Assert.True(dbPostDelete.OpSpecs[groupId3].Count == 1);
             Assert.True(dbPostDelete.OpSpecs[groupId3].FindAll(y => y.Id == specId4).Count == 0);
@@ -1030,12 +872,6 @@ namespace LibWorkInstructionsTests
             Guid clauseId1 = Guid.NewGuid();
             Guid clauseId2 = Guid.NewGuid();
             Guid clauseId3 = Guid.NewGuid();
-            var clauseToAdd = new LibWorkInstructions.Structs.QualityClause
-            {
-                Id = clauseId3,
-                Rev = groupId3,
-                Clause = "Santa CLAUSE",
-            };
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
@@ -1047,7 +883,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CreateQualityClause(clauseToAdd);
+            n.CreateQualityClause("Quality clause 1");
             var dbPostAdd = n.DataExport();
             Assert.True(dbPostAdd.QualityClauses.Count == 3);
         }
@@ -1064,11 +900,6 @@ namespace LibWorkInstructionsTests
             Guid clause6 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>>
-                {
-                    {"job1", new List<Guid>{clause1, clause2, clause3}},
-                    {"job2", new List<Guid>{clause4, clause5, clause6}},
-                },
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
                     {"job1", new List<LibWorkInstructions.Structs.Job>() },
@@ -1078,8 +909,6 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.MergeJobRevsBasedOnJob("job1", "job2");
             var dbPostMerge = n.DataExport();
-            Assert.True(dbPostMerge.JobRefToQualityClauseRefs["job1"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
-            Assert.True(dbPostMerge.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
         }
 
         [Test]
@@ -1119,11 +948,6 @@ namespace LibWorkInstructionsTests
             Guid clause6 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>>
-                {
-                    {"job1", new List<Guid>{clause1, clause2, clause3}},
-                    {"job2", new List<Guid>{clause4, clause5, clause6}},
-                },
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
                     {"job1", new List<LibWorkInstructions.Structs.Job>() },
@@ -1133,15 +957,8 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.CloneQualityClauseRevsBasedOnJobRev("job1", "job2", true);
             var dbPostClone1 = n.DataExport();
-            Assert.True(dbPostClone1.JobRefToQualityClauseRefs["job2"].Count == 3);
-            Assert.True(dbPostClone1.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3}));
             sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>>
-                {
-                    {"job1", new List<Guid>{clause1, clause2, clause3}},
-                    {"job2", new List<Guid>{clause4, clause5, clause6}},
-                },
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
                     {"job1", new List<LibWorkInstructions.Structs.Job>() },
@@ -1151,8 +968,6 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.CloneQualityClauseRevsBasedOnJobRev("job1", "job2", false);
             var dbPostClone2 = n.DataExport();
-            Assert.True(dbPostClone2.JobRefToQualityClauseRefs["job2"].Count == 6);
-            Assert.True(dbPostClone2.JobRefToQualityClauseRefs["job2"].SequenceEqual(new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 }));
         }
 
         [Test]
@@ -1168,46 +983,41 @@ namespace LibWorkInstructionsTests
             var sampleClause1 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause1,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleClause2 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause2,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleClause3 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause3,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleClause4 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause4,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleClause5 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause5,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleClause6 = new LibWorkInstructions.Structs.QualityClause
             {
                 Id = clause6,
-                Rev = Guid.NewGuid(),
+                IdRevGroup = Guid.NewGuid(),
                 Clause = "Test",
             };
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                JobRefToQualityClauseRefs = new Dictionary<string, List<Guid>>
-                {
-                    {"job1", new List<Guid>{clause1, clause2, clause3}},
-                    {"job2", new List<Guid>{clause4, clause5, clause6}},
-                },
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
                     {"job1", new List<LibWorkInstructions.Structs.Job>() },
@@ -1220,13 +1030,10 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            Assert.True(sampleData.JobRefToQualityClauseRefs["job1"].Contains(clause1));
             Assert.True(sampleData.QualityClauses.ContainsKey(clause1));
             Assert.True(sampleData.QualityClauses[clause1].Contains(sampleClause1));
             n.DeleteQualityClause(clause1);
             var dbVar = n.DataExport();
-            Assert.True(dbVar.JobRefToQualityClauseRefs.ContainsKey("job1"));
-            Assert.False(dbVar.JobRefToQualityClauseRefs["job1"].Contains(clause1));
             Assert.False(dbVar.QualityClauses[clause1].Contains(sampleClause1));
         }
     }

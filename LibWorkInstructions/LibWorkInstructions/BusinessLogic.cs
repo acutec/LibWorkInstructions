@@ -48,37 +48,20 @@ namespace LibWorkInstructions
         public void DataImport(MockDB replacementDb) => this.db = replacementDb;
         public MockDB DataExport() => db;
         #endregion
-        /// <summary>
-        /// Retrieve Job from database with current parameters if it exists.
-        /// </summary>
-        /// <param name="jobId"></param>
-        /// <param name="customerRev"></param>
-        /// <param name="internalRev"></param>
-        /// <returns></returns>
-        public Job GetJob(string jobId, string customerRev, string internalRev) =>
-                db.Jobs[jobId + "-" + customerRev].First(y => y.RevPlan == internalRev);
-        /// <summary>
-        /// Rerieve WorkInstruction from darabase with current parameters if it exists.
-        /// </summary>
-        /// <param name="groupId"></param>
-        /// <param name="instructionId"></param>
-        /// <returns></returns>
-        public WorkInstruction GetWorkInstruction(Guid groupId, Guid instructionId) =>
-                db.WorkInstructions.First(y => y.Key == groupId).Value.First(y => y.Id == instructionId);
-        /// <summary>
-        /// Create new Job in database if it doesn't exist.
-        /// </summary>
-        /// <param name="job"></param>
-        public void CreateJob(Job job)
+
+        public void CreateJob(string jobId, string revCustomer, string revPlan, string rev)
         {
-            if (!db.Jobs.ContainsKey(job.Id)) // if the jobs dictionary doesn't already have the job
+            if (!db.Jobs.ContainsKey(jobId)) // if the job doesn't already exist in the database
             {
-                job.RevSeq = 0; // configure it
+                Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev}; // create and configure it
                 db.Jobs[job.Id] = new List<Job> { job }; // add the job to the database
-                db.JobRefToJobRevRefs[job.Id] = new List<string>(); // manage the references
+                db.JobRefToJobRevRefs[job.Id] = new List<string> { job.Rev }; // manage the references
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["NewJob"] = JsonSerializer.Serialize(job);
+                args["JobId"] = jobId;
+                args["RevCustomer"] = revCustomer;
+                args["RevPlan"] = revPlan;
+                args["Rev"] = rev;
                 db.AuditLog.Add(new Event
                 {
                     Action = "CreateJob",
@@ -91,19 +74,22 @@ namespace LibWorkInstructions
                 throw new Exception("Job already exists in the database");
             }
         }
-        /// <summary>
-        /// Remove Job from database if it exists
-        /// </summary>
-        /// <param name="job"></param>
-        public void DeleteJob(string job)
+
+        public void DeleteJob(string jobId)
         {
-            if (db.Jobs.ContainsKey(job)) // if the jobs dictionary has the job
+            if (db.Jobs.ContainsKey(jobId)) // if the jobs dictionary has the job
             {
-                db.Jobs.Remove(job); // remove it from the database
-                db.JobRefToJobRevRefs.Remove(job); // manage the references
+                List<string> jobRevs = db.JobRefToJobRevRefs[jobId];
+                List<Op> ops = db.Ops.Values.Where(y => db.Jobs[jobId].Any(x => x.Ops.Contains(y))).ToList();
+                List<int> opIds = ops.Select(y => y.Id).ToList();
+                db.Jobs.Remove(jobId); // remove it and anything related to it from the database
+                db.JobRefToJobRevRefs.Remove(jobId); // manage the references
+                db.JobRevRefToOpRefs = db.JobRevRefToOpRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
+                db.JobRevRefToQualityClauseRevRefs = db.JobRevRefToQualityClauseRevRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
+                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<string>>(y.Key, y.Value.Where(x => jobRevs.Contains(x)).ToList())).ToDictionary(y => y.Key, y => y.Value);
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["Job"] = job;
+                args["JobId"] = jobId;
                 db.AuditLog.Add(new Event
                 {
                     Action = "RemoveJob",
@@ -234,31 +220,21 @@ namespace LibWorkInstructions
                 throw new Exception("The target job revision doesn't exist in the database");
             }
         }
-        /// <summary>
-        /// Remove JobRev from database if it exists.
-        /// </summary>
-        /// <param name="jobId"></param>
-        /// <param name="jobRev"></param>
-        public void DeleteJobRev(string jobId, string jobRev)
+
+        public void DeactivateJobRev(string jobId, string jobRev)
         {
             if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
                 if (db.Jobs[jobId].Any(y => y.Rev == jobRev)) // if the job has the revision
                 {
-                    db.JobRevs.Remove(jobRev); // remove the revision
-                    db.Jobs[jobId].Remove(db.Jobs[jobId].First(y => y.Rev == jobRev));
-                    db.Jobs[jobId] = db.Jobs[jobId].Select(y => { y.RevSeq = db.Jobs[jobId].IndexOf(y); return y; }).ToList(); // reconfigure the rev sequences
-                    db.JobRefToJobRevRefs[jobId].Remove(jobRev); // manage the references
-                    db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<string>>(y.Key, y.Value.Where(y => y != jobRev).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                    db.JobRevRefToQualityClauseRevRefs.Remove(jobRev);
-                    db.JobRevRefToOpRefs.Remove(jobRev);
+                    db.Jobs[jobId][db.Jobs[jobId].FindIndex(y => y.Rev == jobRev)].Active = false;
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["JobId"] = jobId;
                     args["JobRev"] = jobRev;
                     db.AuditLog.Add(new Event
                     {
-                        Action = "DeleteJobRev",
+                        Action = "DeactivateJobRev",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -273,36 +249,56 @@ namespace LibWorkInstructions
                 throw new Exception("The job doesn't exist in the database");
             }
         }
-        /// <summary>
-        /// Create QualityClause in database if it doesn't already exist.
-        /// </summary>
-        /// <param name="newQualityClause"></param>
-        public void CreateQualityClause(QualityClause newQualityClause)
-        {
-            if (!db.QualityClauses.ContainsKey(newQualityClause.IdRevGroup)) // if the rev group doesn't exist with regard to quality clauses
-            { 
-                newQualityClause.RevSeq = 0; // configure the quality clause
-                db.QualityClauses[newQualityClause.IdRevGroup] =  new List<QualityClause> { newQualityClause }; // add quality clause to database
-                db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.Id] = new List<Guid>(); // manage references
 
-                var args = new Dictionary<string, string>(); // add the event
-                args["NewQualityClause"] = JsonSerializer.Serialize(newQualityClause);
-                db.AuditLog.Add(new Event
+        public void ActivateJobRev(string jobId, string jobRev)
+        {
+            if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
+            {
+                if (db.Jobs[jobId].Any(y => y.Rev == jobRev)) // if the job has the revision
                 {
-                    Action = "CreateQualityClause",
-                    Args = args,
-                    When = DateTime.Now,
-                });
+                    db.Jobs[jobId][db.Jobs[jobId].FindIndex(y => y.Rev == jobRev)].Active = true;
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["JobId"] = jobId;
+                    args["JobRev"] = jobRev;
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "ActivateJobRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The job doesn't have that revision");
+                }
             }
             else
             {
-                throw new Exception("The rev group already exists with regard to quality clauses");
+                throw new Exception("The job doesn't exist in the database");
             }
         }
-        /// <summary>
-        /// Remove QualityClause and its revisions from database, if it exists.
-        /// </summary>
-        /// <param name="clauseId"></param>
+
+        public void CreateQualityClause(string clause)
+        {
+            if (db.QualityClauses.Values.Any(y => y.Any(x => x.Clause == clause)))
+            {
+                throw new Exception("Quality clause is already in the database");
+            }
+            QualityClause newQualityClause = new QualityClause { Id = Guid.NewGuid(), IdRevGroup = Guid.NewGuid(), RevSeq = 0, Clause = clause }; // create and configure the quality clause
+            db.QualityClauses[newQualityClause.IdRevGroup] =  new List<QualityClause> { newQualityClause }; // add quality clause to database
+            db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.Id] = new List<Guid>(); // manage references
+
+            var args = new Dictionary<string, string>(); // add the event
+            args["Clause"] = clause;
+            db.AuditLog.Add(new Event
+            {
+                Action = "CreateQualityClause",
+                Args = args,
+                When = DateTime.Now,
+            });
+        }
+
         public void DeleteQualityClause(Guid clauseId)
         {
             if (db.QualityClauses.Values.Any(y => y[0].Id == clauseId)) // if any original quality clause has the given id
@@ -564,50 +560,7 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group is already in the database");
             }
         }
-        /// <summary>
-        /// Update OpSpec in database if it exists, and isn't already changed.
-        /// </summary>
-        /// <param name="newSpec"></param>
-        public void UpdateOpSpec(OpSpec newSpec)
-        {
-            if (db.OpSpecs.ContainsKey(newSpec.IdRevGroup)) // if the rev group exists in the database
-            {
-                if (db.OpSpecs[newSpec.IdRevGroup].Any(y => y.Id == newSpec.Id)) // if the op spec is in the rev group
-                {
-                    if (db.OpSpecs[newSpec.IdRevGroup][0].Id == newSpec.Id) // if the id indeed refers to the original spec, not the rev of one
-                    {
-                        db.OpSpecs[newSpec.IdRevGroup][0] = newSpec; // update the op spec
-                        List<int> ops = db.OpRefToWorkInstructionRef.Keys.Where(y => db.OpSpecRevRefToOpRefs.Any(x => x.Value.Contains(y) && db.OpSpecRefToOpSpecRevRefs[newSpec.Id].Contains(x.Key))).ToList();
-                        db.WorkInstructions = db.WorkInstructions.Select(y => y = new KeyValuePair<Guid, List<WorkInstruction>>(y.Key, y.Value.Select(x => { if (ops.Contains(x.OpId)) x.Approved = false; return x; }).ToList())).ToDictionary(y => y.Key, y => y.Value); // invalidate the approval status of the work instruction
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["newSpec"] = JsonSerializer.Serialize(newSpec);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateOpSpec",
-                            Args = args,
-                            When = DateTime.Now,
-                        });
-                    }
-                    else
-                    {
-                        throw new Exception("The id refers to a rev of a spec, not an original spec");
-                    }
-                }
-                else
-                {
-                    throw new Exception("The rev group doesn't have the op spec");
-                }
-            }
-            else
-            {
-                throw new Exception("The rev group doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Remove OpSpec from database if it exists.
-        /// </summary>
-        /// <param name="specId"></param>
         public void DeleteOpSpec(Guid specId)
         {
             if (db.OpSpecs.Values.Any(y => y[0].Id == specId)) // if there's any original spec in the database that has the given spec id
@@ -792,21 +745,18 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist with regard to op specs");
             }
         }
-        /// <summary>
-        /// Create WorkInstructioin in database if it doesn't exist.
-        /// </summary>
-        /// <param name="workInstruction"></param>
-        public void CreateWorkInstruction(WorkInstruction workInstruction)
+
+        public void CreateWorkInstruction(int op)
         {
-            if (!db.WorkInstructions.ContainsKey(workInstruction.IdRevGroup)) // if the rev group exists with regard to work instructions
+            if (!db.WorkInstructions.Values.Any(y => y.Any(x => x.OpId == op))) // if there isn't already a work instruction for that op
             {
-                workInstruction.RevSeq = 0; // configure the work instruction
+                WorkInstruction workInstruction = new WorkInstruction { Id = Guid.NewGuid(), IdRevGroup = Guid.NewGuid(), OpId = op, RevSeq = 0 }; // create and configure the work instruction
                 db.WorkInstructions[workInstruction.IdRevGroup] = new List<WorkInstruction> { workInstruction }; // add the work instruction to the database
-                db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.Id; // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.Id] =  new List<Guid>();
+                db.OpRefToWorkInstructionRef[workInstruction.OpId] = workInstruction.IdRevGroup; // manage references
+                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.IdRevGroup] =  new List<Guid> { workInstruction.Id };
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["WorkInstruction"] = JsonSerializer.Serialize(workInstruction);
+                args["Op"] = JsonSerializer.Serialize(workInstruction);
                 db.AuditLog.Add(new Event
                 {
                     Action = "CreateWorkInstruction",
@@ -816,75 +766,49 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The rev group already exists with regard to work instructions");
+                throw new Exception("The op already has a work instruction");
             }
         }
-        /// <summary>
-        /// Update WorkInstruction in database if it doesn't exist, or if it isn't already changed.
-        /// </summary>
-        /// <param name="newWorkInstruction"></param>
-        public void UpdateWorkInstruction(WorkInstruction newWorkInstruction)
-        {
-            if (db.WorkInstructions.ContainsKey(newWorkInstruction.IdRevGroup)) // if the rev group exists with regard to work instructions
-            {
-                if (db.WorkInstructions[newWorkInstruction.IdRevGroup].Any(y => y.Id == newWorkInstruction.Id)) // if the work instruction exists in the rev group
-                {
-                    if (db.WorkInstructions[newWorkInstruction.IdRevGroup][0].Id == newWorkInstruction.Id) // if the id refers to an original work instruction, not a rev of one
-                    {
-                        db.WorkInstructions[newWorkInstruction.IdRevGroup][0] = newWorkInstruction; // update the work instruction
-                        db.OpRefToWorkInstructionRef[newWorkInstruction.OpId] = newWorkInstruction.Id; // manage references
 
-                        var args = new Dictionary<string, string>(); // add the evenet
-                        args["newWorkInstruction"] = JsonSerializer.Serialize(newWorkInstruction);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateWorkInstruction",
-                            Args = args,
-                            When = DateTime.Now,
-                        });
-                    }
-                    else
-                    {
-                        throw new Exception("The id refers to a rev of a work instruction, not an original one");
-                    }
-                }
-                else
-                {
-                    throw new Exception("The work instruction doesn't exist in the rev group");
-                }
-            }
-            else
-            {
-                throw new Exception("The group id doesn't exist with regard to original work instructions");
-            }
-        }
-        /// <summary>
-        /// Remove WorkInstruction from database if it exists.
-        /// </summary>
-        /// <param name="workId"></param>
-        public void DeleteWorkInstruction(Guid workId)
+        public void ActivateWorkInstruction(Guid idRevGroup)
         {
-            if (db.WorkInstructions.Values.Any(y => y[0].Id == workId)) // if any original work instruction has the given id
+            if (db.WorkInstructions.ContainsKey(idRevGroup)) // if the rev group exists in the database
             {
-                WorkInstruction targetWorkInstruction = db.WorkInstructions.Values.First(y => y[0].Id == workId)[0]; // remove the work instruction and the revisions of that work instruction from the database
-                List<Guid> idRevsList = db.WorkInstructions[targetWorkInstruction.IdRevGroup].Select(y => y.Id).ToList();
-                db.WorkInstructions.Remove(targetWorkInstruction.IdRevGroup);
-                db.WorkInstructionRevs = db.WorkInstructionRevs.Where(y => !idRevsList.Contains(y)).ToList();
-                db.OpRefToWorkInstructionRef.Remove(targetWorkInstruction.OpId); // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs.Remove(workId);
+                db.WorkInstructions[idRevGroup] = db.WorkInstructions[idRevGroup].Select(y => { y.Active = true; return y; }).ToList(); // activate the revisions of the work instruction
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["WorkId"] = workId.ToString();
+                args["IdRevGroup"] = idRevGroup.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "DeleteWorkInstruction",
+                    Action = "ActivateWorkInstruction",
                     Args = args,
                     When = DateTime.Now,
                 });
             }
             else
             {
-                throw new Exception("The id doesn't exist with regard to original work instructions (e.g. it could be the id of a rev)");
+                throw new Exception("The rev group doesn't exist in the database");
+            }
+        }
+
+        public void DeactivateWorkInstruction(Guid idRevGroup)
+        {
+            if (db.WorkInstructions.ContainsKey(idRevGroup)) // if the rev group exists in the database
+            {
+                db.WorkInstructions[idRevGroup] = db.WorkInstructions[idRevGroup].Select(y => { y.Active = false; return y; }).ToList(); // deactivate the revisions of the work instruction
+
+                var args = new Dictionary<string, string>(); // add the event
+                args["IdRevGroup"] = idRevGroup.ToString();
+                db.AuditLog.Add(new Event
+                {
+                    Action = "DeactivateWorkInstruction",
+                    Args = args,
+                    When = DateTime.Now,
+                });
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
         /// <summary>
@@ -2231,6 +2155,9 @@ namespace LibWorkInstructions
                 throw new Exception("One or both of the work instructions doesn't exist in the database");
             }
         }
+
+        public List<QualityClause> PullQualityClausesFromJob(string jobId, string customerRev, string internalRev) =>
+        db.Jobs[jobId + "-" + customerRev].First(y => y.RevPlan == internalRev).QualityClauses;
 
         public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(Guid workInstruction)
         {
