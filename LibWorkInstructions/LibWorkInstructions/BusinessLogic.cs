@@ -585,15 +585,18 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group is already in the database");
             }
         }
-
+        /// <summary>
+        /// Remove OpSpec from database if it exists.
+        /// </summary>
+        /// <param name="specId"></param>
         public void DeleteOpSpec(Guid specId)
         {
-            if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
+            if (db.OpSpecs.ContainsKey(specId)) // if the rev group exists in the database
             {
-                db.OpSpecs[revGroup] = db.OpSpecs[revGroup].Select(y => { y.Active = true; return y; }).ToList();
+                db.OpSpecs[specId] = db.OpSpecs[specId].Select(y => { y.Active = true; return y; }).ToList();
 
                 var args = new Dictionary<string, string>(); // add the events
-                args["RevGroup"] = revGroup.ToString();
+                args["RevGroup"] = specId.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "DeleteOpSpec",
@@ -606,7 +609,10 @@ namespace LibWorkInstructions
                 throw new Exception("The rev group doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Change active status of OpSpec to False if it exists.
+        /// </summary>
+        /// <param name="revGroup"></param>
         public void DeactivateOpSpec(Guid revGroup)
         {
             if (db.OpSpecs.ContainsKey(revGroup)) // if the rev group exists in the database
@@ -1943,7 +1949,11 @@ namespace LibWorkInstructions
                 throw new Exception("The op doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Merge given OpSpecRevs if they exist.
+        /// </summary>
+        /// <param name="opId1"></param>
+        /// <param name="opId2"></param>
         public void MergeOpSpecRevs(int opId1, int opId2)
         {
             if (db.Ops.ContainsKey(opId1) && db.Ops.ContainsKey(opId2)) // if both of the ops exist in the database
@@ -2003,7 +2013,11 @@ namespace LibWorkInstructions
                 throw new Exception("One or both of the ops doesn't exist in the database");
             }
         }
-
+        /// <summary>
+        /// Split OpSpecRec within given OpSpec if they exist.
+        /// </summary>
+        /// <param name="opSpecRev"></param>
+        /// <param name="opSpec"></param>
         public void SplitOpSpecRev(Guid opSpecRev, Guid opSpec)
         {
             if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec)) // if the op spec exists in the database
@@ -2299,7 +2313,11 @@ namespace LibWorkInstructions
         /// <returns></returns>
         public List<QualityClause> PullQualityClausesFromJob(string jobId, string customerRev, string internalRev) =>
         db.Jobs[jobId + "-" + customerRev].First(y => y.RevPlan == internalRev).QualityClauses;
-
+        /// <summary>
+        /// Show prior recisions of the selected WorkInstruction if it exists.
+        /// </summary>
+        /// <param name="workInstruction"></param>
+        /// <returns></returns>
         public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(Guid workInstruction)
         {
             if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction)) // if the work instruction exists in the database
@@ -2328,7 +2346,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Show prior revisions of selected OpSpec if it exists.
+        /// Show prior revisions of the selected OpSpec if it exists.
         /// </summary>
         /// <param name="opSpec"></param>
         /// <returns></returns>
@@ -2344,7 +2362,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Show prior revisions of selected WorkInstruction if it exists.
+        /// Show prior revisions of the selected WorkInstruction if it exists.
         /// </summary>
         /// <param name="jobId"></param>
         /// <param name="jobRev"></param>
