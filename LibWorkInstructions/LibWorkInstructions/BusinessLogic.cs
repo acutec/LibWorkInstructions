@@ -1826,7 +1826,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void MergeOpSpecRevsBasedOnJobOp(int opId1, int opId2)
+        public void MergeOpSpecRevs(int opId1, int opId2)
         {
             if (db.Ops.ContainsKey(opId1) && db.Ops.ContainsKey(opId2)) // if both of the ops exist in the database
             {
@@ -1880,7 +1880,7 @@ namespace LibWorkInstructions
             }
         }
 
-        public void SplitOpSpecRevInOpSpec(Guid opSpecRev, Guid opSpec)
+        public void SplitOpSpecRev(Guid opSpecRev, Guid opSpec)
         {
             if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec)) // if the op spec exists in the database
             {

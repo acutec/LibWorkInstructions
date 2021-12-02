@@ -338,7 +338,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeOpSpecRevsBasedOnJobOp()
+        public void TestMergeOpSpecRevs()
         {
             Guid opSpecRev1 = Guid.NewGuid();
             Guid opSpecRev2 = Guid.NewGuid();
@@ -355,14 +355,14 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.MergeOpSpecRevsBasedOnJobOp(1, 2);
+            n.MergeOpSpecRevs(1, 2);
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[1].Count == 4);
             Assert.True(dbPostMerge.OpRefToOpSpecRevRefs[2].Count == 4);
         }
 
         [Test]
-        public void TestSplitOpSpecRevInOpSpec()
+        public void TestSplitOpSpecRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -400,254 +400,58 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.SplitOpSpecRevInOpSpec(groupId1, specId1);
+            n.SplitOpSpecRev(groupId1, specId1);
             var dbPostSplit = n.DataExport();
             Assert.True(dbPostSplit.OpSpecs[groupId1].Count == 4);
             Assert.True(dbPostSplit.OpSpecs[groupId1].Last().Id == specId1);
         }
 
         [Test]
-        public void TestCloneSpecsOverwrite()
+        public void TestCloneOpSpecRevsBasedOnJobOpAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
-            Guid workId2 = Guid.NewGuid();
-            Guid workId3 = Guid.NewGuid();
-            Guid workId4 = Guid.NewGuid();
-            var opSpec1 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId1,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec2 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId2,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec3 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId3,
-                IdRevGroup = groupId2,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec4 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId4,
-                IdRevGroup = groupId2,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpecList1 = new List<LibWorkInstructions.Structs.OpSpec> { opSpec1, opSpec2 };
-            var opSpecList2 = new List<LibWorkInstructions.Structs.OpSpec> { opSpec3, opSpec4 };
-            var op1 = new LibWorkInstructions.Structs.Op
-            {
-                Id = 0,
-                JobId = "job1",
-                OpService = "Op 20",
-                Seq = 2,
-            };
-            var op2 = new LibWorkInstructions.Structs.Op
-            {
-                Id = 1,
-                JobId = "job2",
-                OpService = "Op 30",
-                Seq = 3,
-            };
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            Guid specId3 = Guid.NewGuid();
+            Guid specId4 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>
-                    { new LibWorkInstructions.Structs.Job {
-                        Id = "F110",
-                        Rev = "A",
-                        RevCustomer = "CUSTX",
-                        RevPlan = "1.0.0",
-                        Ops = new List<LibWorkInstructions.Structs.Op> {op1},
-                    }
-                    } },
-
-                    {"job2", new List<LibWorkInstructions.Structs.Job>
-                    { new LibWorkInstructions.Structs.Job {
-                        Id = "F111",
-                        Rev = "A",
-                        RevCustomer = "CUSTH",
-                        RevPlan = "1.0.1",
-                        Ops = new List<LibWorkInstructions.Structs.Op> {op2},
-                    } } }
+                    {1, new List<Guid> { specId1, specId2 } },
+                    {2, new List<Guid> { specId3, specId4 } }
                 }
             };
 
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnJobOp(0, 1, true);
+            n.CloneOpSpecRevsBasedOnJobOp(1, 2, true);
             var dbPostClone = n.DataExport();
-            //Assert.True(dbPostClone.Jobs["job2"][0].Ops[0].OpSpecs.Count == 2);
-            //Assert.True(dbPostClone.Jobs["job2"][0].Ops[0].OpSpecs.SequenceEqual(dbPostClone.Jobs["job1"][0].Ops[0].OpSpecs));
+            Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].Count == 4);
+            Assert.True(dbPostClone.OpRefToOpSpecRevRefs[1].All(y => dbPostClone.OpRefToOpSpecRevRefs[2].Contains(y)));
         }
 
         [Test]
-        public void TestCloneSpecsNoOverwrite()
+        public void TestCloneOpSpecRevsBasedOnJobOpNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
-            Guid workId2 = Guid.NewGuid();
-            Guid workId3 = Guid.NewGuid();
-            Guid workId4 = Guid.NewGuid();
-            var opSpec1 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId1,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec2 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId2,
-                IdRevGroup = groupId1,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec3 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId3,
-                IdRevGroup = groupId2,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpec4 = new LibWorkInstructions.Structs.OpSpec
-            {
-                Id = workId4,
-                IdRevGroup = groupId2,
-                Class = "test",
-                Comment = "test",
-                Grade = "test",
-                Level = "test",
-                Method = "test",
-                Name = "test",
-                Notice = "test",
-                Proctype = "test",
-                Servicecond = "test",
-                Status = "test",
-                Type = "test",
-            };
-            var opSpecList1 = new List<LibWorkInstructions.Structs.OpSpec> { opSpec1, opSpec2 };
-            var opSpecList2 = new List<LibWorkInstructions.Structs.OpSpec> { opSpec3, opSpec4 };
-            var op1 = new LibWorkInstructions.Structs.Op
-            {
-                Id = 0,
-                JobId = "job1",
-                OpService = "Op 20",
-                Seq = 2,
-            };
-            var op2 = new LibWorkInstructions.Structs.Op
-            {
-                Id = 1,
-                JobId = "job2",
-                OpService = "Op 30",
-                Seq = 3,
-            };
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            Guid specId3 = Guid.NewGuid();
+            Guid specId4 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>
-                    { new LibWorkInstructions.Structs.Job {
-                        Id = "F110",
-                        Rev = "A",
-                        RevCustomer = "CUSTX",
-                        RevPlan = "1.0.0",
-                        Ops = new List<LibWorkInstructions.Structs.Op> {op1},
-                    }
-                    } },
-
-                    {"job2", new List<LibWorkInstructions.Structs.Job>
-                    { new LibWorkInstructions.Structs.Job {
-                        Id = "F111",
-                        Rev = "A",
-                        RevCustomer = "CUSTH",
-                        RevPlan = "1.0.1",
-                        Ops = new List<LibWorkInstructions.Structs.Op> {op2},
-                    } }}
+                    {1, new List<Guid> { specId1, specId2 } },
+                    {2, new List<Guid> { specId3, specId4 } }
                 }
             };
-            var mergedOpSpecsList = new List<LibWorkInstructions.Structs.OpSpec> { opSpec1, opSpec2, opSpec3, opSpec4 };
+
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnJobOp(0, 1, false);
+            n.CloneOpSpecRevsBasedOnJobOp(1, 2, false);
             var dbPostClone = n.DataExport();
-            //Assert.True(dbPostClone.Jobs["job2"].Ops[0].OpSpecs.Count == 4);
-            //Assert.True(dbPostClone.Jobs["job2"].Ops[0].OpSpecs.SequenceEqual(mergedOpSpecsList));
+            Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].Count == 2);
+            Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].SequenceEqual(dbPostClone.OpRefToOpSpecRevRefs[1]));
         }
         [Test]
         public void TestAddQualityClause()
