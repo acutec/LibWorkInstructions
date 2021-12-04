@@ -685,7 +685,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="groupId"></param>
         /// <param name="sourceSpecRev"></param>
-        public void CreateOpSpecRev(Guid groupId, Guid sourceSpecRev)
+        public void CreateOpSpecRev(Guid groupId, Guid sourceSpecRev, string name)
         {
             if (db.OpSpecs.ContainsKey(groupId)) // if the rev group exists with regard to op specs
             {
@@ -695,14 +695,16 @@ namespace LibWorkInstructions
                     Guid sourceId = opSpec.Id;
                     opSpec.Id = Guid.NewGuid();
                     opSpec.RevSeq = db.OpSpecs[groupId].Count;
+                    opSpec.Name = name;
                     db.OpSpecs[groupId].Add(opSpec); // add the op spec revision to the database
                     db.OpSpecRevs.Add(opSpec.Id);
                     db.OpSpecRevRefToOpRefs[opSpec.Id] = db.OpSpecRevRefToOpRefs[sourceId]; // manage references
-                    db.OpSpecRefToOpSpecRevRefs[db.OpSpecs[groupId][0].Id].Add(opSpec.Id);
+                    db.OpSpecRefToOpSpecRevRefs[groupId].Add(opSpec.Id);
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["GroupId"] = groupId.ToString();
                     args["SourceSpecRev"] = sourceSpecRev.ToString();
+                    args["Name"] = name;
                     db.AuditLog.Add(new Event
                     {
                         Action = "CreateOpSpecRev",
@@ -734,7 +736,7 @@ namespace LibWorkInstructions
                     db.OpSpecs[newSpecRev.IdRevGroup].Add(newSpecRev); // add the op spec revision to the database
                     db.OpSpecRevs.Add(newSpecRev.Id);
                     db.OpSpecRevRefToOpRefs[newSpecRev.Id] = new List<int>(); // manage references
-                    db.OpSpecRefToOpSpecRevRefs[db.OpSpecs[newSpecRev.IdRevGroup][0].Id].Add(newSpecRev.Id);
+                    db.OpSpecRefToOpSpecRevRefs[newSpecRev.IdRevGroup].Add(newSpecRev.Id);
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["newSpecRev"] = JsonSerializer.Serialize(newSpecRev);

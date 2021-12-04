@@ -628,6 +628,75 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCreateOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1", Active = true},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2", Active = true} } }
+                },
+                OpSpecRevs = new List<Guid> { specId1, specId2 },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {specId1, new List<int>{4,5,6} },
+                    {specId2, new List<int>{5,6,7} }
+                }
+            };
+
+            n.DataImport(sampleData);
+            n.CreateOpSpecRev(groupId1, specId1, "spec3");
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.OpSpecs[groupId1].Count == 3);
+            Assert.True(dbPostCreate.OpSpecs[groupId1][2].RevSeq == 2);
+            Assert.False(dbPostCreate.OpSpecs[groupId1][2].Id == dbPostCreate.OpSpecs[groupId1][0].Id);
+            Assert.False(dbPostCreate.OpSpecs[groupId1][2].Name == dbPostCreate.OpSpecs[groupId1][0].Name);
+            Assert.True(dbPostCreate.OpSpecRevs.Count == 3);
+            Assert.True(dbPostCreate.OpSpecRevRefToOpRefs[dbPostCreate.OpSpecs[groupId1][2].Id] == dbPostCreate.OpSpecRevRefToOpRefs[specId1]);
+        }
+
+        [Test]
+        public void TestCreateOpSpecRevFromScratch()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            Guid specId3 = Guid.NewGuid();
+            var opSpec = new LibWorkInstructions.Structs.OpSpec { Id = specId3, IdRevGroup = groupId1, Name = "spec3", Active = true };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1", Active = true},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2", Active = true} } }
+                },
+                OpSpecRevs = new List<Guid> {specId1, specId2},
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {specId1, new List<int>{4,5,6} },
+                    {specId2, new List<int>{5,6,7} }
+                }
+            };
+
+            n.DataImport(sampleData);
+            n.CreateOpSpec(opSpec);
+            var dbPostDelete = n.DataExport();
+            Assert.True(dbPostDelete.OpSpecs[groupId1].Count == 3);
+            Assert.True(dbPostDelete.OpSpecs[groupId1][2].Name == "spec3");
+            Assert.True(dbPostDelete.OpSpecRevs.Count == 3);
+            Assert.True(dbPostDelete.OpSpecRevs[2] == specId3);
+            Assert.True(dbPostDelete.OpSpecRevRefToOpRefs.ContainsKey(specId3));
+        }
+
+        [Test]
         public void TestMergeOpSpecRevs()
         {
             Guid opSpecRev1 = Guid.NewGuid();
@@ -1515,6 +1584,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbVar.Ops[4].Seq == 0);
             Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(4));
         }
+
         [Test]
         public void TestDeleteJobOp()
         {
@@ -1542,11 +1612,11 @@ namespace LibWorkInstructionsTests
             };
             n.DataImport(sampleData);
             n.DeleteJobOp("jobRev2", 3);
-            var dbVar = n.DataExport();
-            Assert.True(dbVar.Jobs["job1"][1].Ops.Count == 1);
-            Assert.True(dbVar.Jobs["job1"][1].Ops[0].Id == 2);
-            Assert.True(dbVar.JobRevRefToOpRefs["jobRev2"].Count == 1);
-            Assert.True(dbVar.JobRevRefToOpRefs["jobRev1"].Count == 2);
+            var dbPostDelete = n.DataExport();
+            Assert.True(dbPostDelete.Jobs["job1"][1].Ops.Count == 1);
+            Assert.True(dbPostDelete.Jobs["job1"][1].Ops[0].Id == 2);
+            Assert.True(dbPostDelete.JobRevRefToOpRefs["jobRev2"].Count == 1);
+            Assert.True(dbPostDelete.JobRevRefToOpRefs["jobRev1"].Count == 2);
         }
     }
 }
