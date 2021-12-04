@@ -1041,11 +1041,44 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Remove WorkInstructionRev from database if it exists.
+        /// Activate WorkInstructionRev if it exists.
         /// </summary>
         /// <param name="groupId"></param>
         /// <param name="workInstructionRev"></param>
-        public void DeleteWorkInstructionRev(Guid groupId, Guid workInstructionRev)
+        public void ActivateWorkInstructionRev(Guid groupId, Guid workInstructionRev)
+        {
+            if (db.WorkInstructions.ContainsKey(groupId)) // if the rev group exists with regard to work instructions
+            {
+                if (db.WorkInstructions[groupId].Any(y => y.Id == workInstructionRev)) // if the work instruction revision is in the rev group
+                {
+                    db.WorkInstructions[groupId][db.WorkInstructions[groupId].FindIndex(y => y.Id == workInstructionRev)].Active = true; // activate the work instruction revision
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["WorkInstructionRev"] = workInstructionRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "ActivateWorkInstructionRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The work instruction revision isn't in the rev group");
+                }
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist with regard to work instructions");
+            }
+        }
+        /// <summary>
+        /// Deactivate WorkInstructionRev if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="workInstructionRev"></param>
+        public void DeactivateWorkInstructionRev(Guid groupId, Guid workInstructionRev)
         {
             if (db.WorkInstructions.ContainsKey(groupId)) // if the rev group exists with regard to work instructions
             {
@@ -1053,17 +1086,14 @@ namespace LibWorkInstructions
                 {
                     if (db.WorkInstructions[groupId][0].Id != workInstructionRev) // if the id indeed refers to a revision, not an original work instruction
                     {
-                        db.WorkInstructionRevs.Remove(workInstructionRev); // remove the work instruction revision from the database
-                        db.WorkInstructions[groupId].Remove(db.WorkInstructions[groupId].First(y => y.Id == workInstructionRev));
-                        db.WorkInstructions[groupId] = db.WorkInstructions[groupId].Select(y => { y.RevSeq = db.WorkInstructions[groupId].IndexOf(y); return y; }).ToList(); // reconfigure the rev sequences
-                        db.WorkInstructionRefToWorkInstructionRevRefs[db.WorkInstructions[groupId][0].Id].Remove(workInstructionRev); // manage references
+                        db.WorkInstructions[groupId][db.WorkInstructions[groupId].FindIndex(y => y.Id == workInstructionRev)].Active = false; // deactivate the work instruction revision
 
                         var args = new Dictionary<string, string>(); // add the event
                         args["GroupId"] = groupId.ToString();
                         args["WorkInstructionRev"] = workInstructionRev.ToString();
                         db.AuditLog.Add(new Event
                         {
-                            Action = "DeleteWorkInstructionRev",
+                            Action = "DeactivateWorkInstructionRev",
                             Args = args,
                             When = DateTime.Now
                         });
