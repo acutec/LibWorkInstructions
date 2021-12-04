@@ -1500,6 +1500,20 @@ namespace LibWorkInstructionsTests
         public void TestCreateJobOp()
         {
             var n = new LibWorkInstructions.BusinessLogic();
+            var op = new LibWorkInstructions.Structs.Op
+            {
+                Id = 4,
+                JobId = "Job1",
+                OpService = "1.0.1",
+                Seq = 0
+            };
+            n.CreateJobOp(op);
+            var dbVar = n.DataExport();
+            Assert.True(dbVar.Ops.Count == 1);
+            Assert.True(dbVar.Ops[4].OpService == "1.0.1");
+            Assert.True(dbVar.Ops[4].JobId == "Job1");
+            Assert.True(dbVar.Ops[4].Seq == 0);
+            Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(4));
         }
     }
 }
