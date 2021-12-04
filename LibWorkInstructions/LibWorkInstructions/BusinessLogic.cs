@@ -319,7 +319,7 @@ namespace LibWorkInstructions
             });
         }
         /// <summary>
-        /// Activate the quality clause if it exists.
+        /// Change active status of the quality clause to True if it exists.
         /// </summary>
         /// <param name="clauseId"></param>
         public void ActivateQualityClause(Guid revGroup)
@@ -343,7 +343,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Deactivate the quality clause if it exists.
+        /// Change active status of the quality clause to False if it exists.
         /// </summary>
         /// <param name="clauseId"></param>
         public void DeactivateQualityClause(Guid revGroup)
