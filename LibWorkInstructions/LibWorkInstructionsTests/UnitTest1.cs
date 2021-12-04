@@ -1515,5 +1515,38 @@ namespace LibWorkInstructionsTests
             Assert.True(dbVar.Ops[4].Seq == 0);
             Assert.True(dbVar.OpRefToOpSpecRevRefs.ContainsKey(4));
         }
+        [Test]
+        public void TestDeleteJobOp()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job> {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "jobRev1", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op {Id = 1},
+                            new LibWorkInstructions.Structs.Op {Id = 3}
+                        } },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "jobRev2", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op {Id = 2},
+                            new LibWorkInstructions.Structs.Op {Id = 3}
+                        } },
+                     } }
+                },
+                JobRevRefToOpRefs = new Dictionary<string, List<int>>
+                {
+                    {"jobRev1", new List<int>{1, 3}},
+                    {"jobRev2", new List<int>{2, 3}}
+                }
+            };
+            n.DataImport(sampleData);
+            n.DeleteJobOp("jobRev2", 3);
+            var dbVar = n.DataExport();
+            Assert.True(dbVar.Jobs["job1"][1].Ops.Count == 1);
+            Assert.True(dbVar.Jobs["job1"][1].Ops[0].Id == 2);
+            Assert.True(dbVar.JobRevRefToOpRefs["jobRev2"].Count == 1);
+            Assert.True(dbVar.JobRevRefToOpRefs["jobRev1"].Count == 2);
+        }
     }
 }
