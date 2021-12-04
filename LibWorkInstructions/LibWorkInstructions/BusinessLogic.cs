@@ -61,6 +61,7 @@ namespace LibWorkInstructions
             {
                 Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev}; // create and configure it
                 db.Jobs[job.Id] = new List<Job> { job }; // add the job to the database
+                db.JobRevs.Add(rev);
                 db.JobRefToJobRevRefs[job.Id] = new List<string> { job.Rev }; // manage the references
 
                 var args = new Dictionary<string, string>(); // add the event
@@ -307,6 +308,7 @@ namespace LibWorkInstructions
             }
             QualityClause newQualityClause = new QualityClause { Id = Guid.NewGuid(), IdRevGroup = Guid.NewGuid(), RevSeq = 0, Clause = clause }; // create and configure the quality clause
             db.QualityClauses[newQualityClause.IdRevGroup] =  new List<QualityClause> { newQualityClause }; // add quality clause to database
+            db.QualityClauseRevs.Add(newQualityClause.Id);
             db.QualityClauseRefToQualityClauseRevRefs[newQualityClause.IdRevGroup] = new List<Guid> { newQualityClause.Id }; // manage references
 
             var args = new Dictionary<string, string>(); // add the event
@@ -587,6 +589,7 @@ namespace LibWorkInstructions
                 newSpec.Id = Guid.NewGuid();
                 newSpec.IdRevGroup = Guid.NewGuid();
                 db.OpSpecs[newSpec.IdRevGroup] = new List<OpSpec> { newSpec }; // add the op spec to the database
+                db.OpSpecRevs.Add(newSpec.Id);
                 db.OpSpecRefToOpSpecRevRefs[newSpec.IdRevGroup] = new List<Guid> { newSpec.Id }; // manage references
 
                 var args = new Dictionary<string, string>(); // add the event
