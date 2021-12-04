@@ -321,7 +321,7 @@ namespace LibWorkInstructions
             });
         }
         /// <summary>
-        /// Activate the quality clause if it exists.
+        /// Change active status of the quality clause to True if it exists.
         /// </summary>
         /// <param name="clauseId"></param>
         public void ActivateQualityClause(Guid revGroup)
@@ -345,7 +345,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Deactivate the quality clause if it exists.
+        /// Change active status of the quality clause to False if it exists.
         /// </summary>
         /// <param name="clauseId"></param>
         public void DeactivateQualityClause(Guid revGroup)
@@ -479,28 +479,69 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Remove QualityClauseRev from database, if it exists.
+        /// Activate QualityClauseRev, if it exists.
         /// </summary>
         /// <param name="groupId"></param>
         /// <param name="qualityClauseRev"></param>
-        public void DeactivateQualityClauseRev(Guid qualityClauseRev)
+        public void ActivateQualityClauseRev(Guid groupId, Guid qualityClauseRev)
         {
-            if (db.QualityClauses.Any(y => y.Value.Any(x => x.Id == qualityClauseRev))) // if the quality clause revision exists in the database
+            if (db.QualityClauses.ContainsKey(groupId)) // if the rev group exists with regard to quality clauses
             {
-                db.QualityClauses
-
-                var args = new Dictionary<string, string>(); // add the event
-                args["QualityClauseRev"] = qualityClauseRev.ToString();
-                db.AuditLog.Add(new Event
+                if (db.QualityClauses[groupId].Any(y => y.Id == qualityClauseRev)) // if the quality clause revision is in the rev group
                 {
-                    Action = "DeactivateQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
+                    db.QualityClauses[groupId][db.QualityClauses[groupId].FindIndex(y => y.Id == qualityClauseRev)].Active = true; // activate the revision
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "ActivateQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The rev group doesn't have the target quality clause revision");
+                }
             }
             else
             {
-                throw new Exception("The quality clause revision exists in the database");
+                throw new Exception("The rev group doesn't exist with regard to quality clauses");
+            }
+        }
+        /// <summary>
+        /// Deactivate QualityClauseRev, if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="qualityClauseRev"></param>
+        public void DeactivateQualityClauseRev(Guid groupId, Guid qualityClauseRev)
+        {
+            if (db.QualityClauses.ContainsKey(groupId)) // if the rev group exists with regard to quality clauses
+            {
+                if (db.QualityClauses[groupId].Any(y => y.Id == qualityClauseRev)) // if the quality clause revision is in the rev group
+                {
+                    db.QualityClauses[groupId][db.QualityClauses[groupId].FindIndex(y => y.Id == qualityClauseRev)].Active = false; // deactivate the revision
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["QualityClauseRev"] = qualityClauseRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "DeactivateQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The rev group doesn't have the target quality clause revision");
+                }
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist with regard to quality clauses");
             }
         }
         /// <summary>

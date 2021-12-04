@@ -314,6 +314,11 @@ namespace LibWorkInstructionsTests
             });
             var dbPostUpdate = n.DataExport();
             Assert.True(dbPostUpdate.Jobs["job1"][1].Ops.Count == 3);
+            Assert.True(dbPostUpdate.Jobs["job1"][1].QualityClauses[0].Id == clauseId1);
+            Assert.True(dbPostUpdate.Jobs["job1"][1].QualityClauses[1].Id == clauseId2);
+            Assert.True(dbPostUpdate.Jobs["job1"][1].Ops[0].Id == 3);
+            Assert.True(dbPostUpdate.Jobs["job1"][1].Ops[1].Id == 6);
+            Assert.True(dbPostUpdate.Jobs["job1"][1].Ops[2].Id == 7);
         }
 
         [Test]
@@ -1423,7 +1428,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostDeactivate.QualityClauses[groupId2][0].Active);
         }
 
-    [Test]
+        [Test]
         public void TestDeactivateQualityClauseRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
@@ -1489,6 +1494,12 @@ namespace LibWorkInstructionsTests
             n.DeactivateQualityClauseRev(groupId2, clause2);
             var dbPostDeactivate = n.DataExport();
             Assert.False(dbPostDeactivate.QualityClauses[groupId2][0].Active);
+        }
+
+        [Test]
+        public void TestCreateJobOp()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
         }
     }
 }
