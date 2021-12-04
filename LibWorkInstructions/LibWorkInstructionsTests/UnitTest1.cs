@@ -567,6 +567,121 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestUpdateWorkInstructionRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            var newWorkInstructionRev = new LibWorkInstructions.Structs.WorkInstruction
+            {
+                Id = workId2,
+                IdRevGroup = groupId1,
+                Approved = true,
+                Images = new List<string> { "image23" },
+                Active = true
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = false
+                    },
+                     new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId2,
+                        IdRevGroup = groupId1,
+                        Approved = false,
+                        HtmlBlob = "<h2>do something</h2>",
+                        Images = new List<string> { "jpeg" },
+                        Active = false
+                    }
+                    } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.UpdateWorkInstructionRev(newWorkInstructionRev);
+            var dbVarPostUpdate = n.DataExport();
+            Assert.True(dbVarPostUpdate.WorkInstructions[groupId1][1].Approved);
+            Assert.True(dbVarPostUpdate.WorkInstructions[groupId1][1].Images.SequenceEqual(new List<string> { "image23" }));
+            Assert.True(dbVarPostUpdate.WorkInstructions[groupId1].Count == 2);
+        }
+
+        [Test]
+        public void TestActivateWorkInstructionRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = false
+                    },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId2,
+                            IdRevGroup = groupId1,
+                            Approved = false,
+                            HtmlBlob = "<h2>do something</h2>",
+                            Images = new List<string> { "jpeg" },
+                            Active = false
+                        }
+                    } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.ActivateWorkInstructionRev(groupId1, workId1);
+            var dbPostActivate = n.DataExport();
+            Assert.True(dbPostActivate.WorkInstructions[groupId1][0].Active);
+        }
+
+        [Test]
+        public void TestDeactivateWorkInstructionRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = true
+                    },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId2,
+                            IdRevGroup = groupId1,
+                            Approved = false,
+                            HtmlBlob = "<h2>do something</h2>",
+                            Images = new List<string> { "jpeg" },
+                            Active = false
+                        }
+                    } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.DeactivateWorkInstructionRev(groupId1, workId1);
+            var dbPostDeactivate = n.DataExport();
+            Assert.False(dbPostDeactivate.WorkInstructions[groupId1][0].Active);
+        }
+
+        [Test]
         public void TestCloneWorkInstructionRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
