@@ -584,7 +584,7 @@ namespace LibWorkInstructions
                     db.JobRevRefToOpRefs[jobRev] = db.JobRevRefToOpRefs[jobRev].Where(y => y != opId).ToList(); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
-                    args["jobRev"] = jobRev;
+                    args["JobRev"] = jobRev;
                     args["OpId"] = opId.ToString();
                     db.AuditLog.Add(new Event
                     {
