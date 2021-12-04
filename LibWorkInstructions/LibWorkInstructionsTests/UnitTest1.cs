@@ -512,6 +512,61 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCreateWorkInstructionRevFromScratch()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid workId3 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            var workInstruction = new LibWorkInstructions.Structs.WorkInstruction
+            {
+                Id = workId3,
+                IdRevGroup = groupId1,
+                Approved = true,
+                HtmlBlob = "<h3>do something</h3>",
+                Images = new List<string> { "image1" },
+                Active = true
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = false
+                    },
+                     new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId2,
+                        IdRevGroup = groupId1,
+                        Approved = false,
+                        HtmlBlob = "<h2>do something</h2>",
+                        Images = new List<string> { "jpeg" },
+                        Active = false
+                    }
+                    } }
+                },
+                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid> { workId1, workId2 } }
+                },
+                WorkInstructionRevs = new List<Guid> { workId1, workId2 }
+            };
+            n.DataImport(sampleData);
+            n.CreateWorkInstructionRev(workInstruction);
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.WorkInstructions[groupId1].Count == 3);
+            Assert.True(dbPostCreate.WorkInstructions[groupId1][2].IdRevGroup == groupId1);
+            Assert.True(dbPostCreate.WorkInstructions[groupId1][2].Id == workId3);
+            Assert.True(dbPostCreate.WorkInstructionRefToWorkInstructionRevRefs[groupId1].Count == 3);
+            Assert.True(dbPostCreate.WorkInstructionRefToWorkInstructionRevRefs[groupId1][2] == workId3);
+            Assert.True(dbPostCreate.WorkInstructionRevs.Count == 3);
+        }
+
+        [Test]
         public void TestCloneWorkInstructionRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();

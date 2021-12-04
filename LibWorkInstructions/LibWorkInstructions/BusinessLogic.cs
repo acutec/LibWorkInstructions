@@ -988,7 +988,7 @@ namespace LibWorkInstructions
                     newWorkInstructionRev.RevSeq = db.WorkInstructions[newWorkInstructionRev.IdRevGroup].Count; // configure the work instruction revision
                     db.WorkInstructions[newWorkInstructionRev.IdRevGroup].Add(newWorkInstructionRev); // add the work instruction revision to the database
                     db.WorkInstructionRevs.Add(newWorkInstructionRev.Id);
-                    db.WorkInstructionRefToWorkInstructionRevRefs[db.WorkInstructions[newWorkInstructionRev.IdRevGroup][0].Id].Add(newWorkInstructionRev.Id); // manage references
+                    db.WorkInstructionRefToWorkInstructionRevRefs[newWorkInstructionRev.IdRevGroup].Add(newWorkInstructionRev.Id); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["NewWorkInstructionRev"] = JsonSerializer.Serialize(newWorkInstructionRev);
@@ -1019,23 +1019,16 @@ namespace LibWorkInstructions
             {
                 if (db.WorkInstructions[newWorkInstructionRev.IdRevGroup].Any(y => y.Id == newWorkInstructionRev.Id)) // if the work instruction revision is in the rev group
                 {
-                    if (db.WorkInstructions[newWorkInstructionRev.IdRevGroup][0].Id != newWorkInstructionRev.Id) // if the id refers to a revision of a work instruction, not an original one
-                    {
-                        db.WorkInstructions[newWorkInstructionRev.IdRevGroup][db.WorkInstructions[newWorkInstructionRev.IdRevGroup].FindIndex(y => y.Id == newWorkInstructionRev.Id)] = newWorkInstructionRev; // update the work instruction revision
+                    db.WorkInstructions[newWorkInstructionRev.IdRevGroup][db.WorkInstructions[newWorkInstructionRev.IdRevGroup].FindIndex(y => y.Id == newWorkInstructionRev.Id)] = newWorkInstructionRev; // update the work instruction revision
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["NewWorkInstructionRev"] = JsonSerializer.Serialize(newWorkInstructionRev);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateWorkInstructionRev",
-                            Args = args,
-                            When = DateTime.Now
-                        });
-                    }
-                    else
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["NewWorkInstructionRev"] = JsonSerializer.Serialize(newWorkInstructionRev);
+                    db.AuditLog.Add(new Event
                     {
-                        throw new Exception("The id refers to an original work instruction, not a rev of one");
-                    }
+                        Action = "UpdateWorkInstructionRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
                 }
                 else
                 {
