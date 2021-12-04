@@ -953,7 +953,7 @@ namespace LibWorkInstructions
                     workInstruction.RevSeq = db.WorkInstructions[workInstruction.IdRevGroup].Count;
                     db.WorkInstructions[workInstruction.IdRevGroup].Add(workInstruction); // add the work instruction revision to the database
                     db.WorkInstructionRevs.Add(workInstruction.Id);
-                    db.WorkInstructionRefToWorkInstructionRevRefs[db.WorkInstructions[groupId][0].Id].Add(workInstruction.Id); // manage references
+                    db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.IdRevGroup].Add(workInstruction.Id); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["GroupId"] = groupId.ToString();

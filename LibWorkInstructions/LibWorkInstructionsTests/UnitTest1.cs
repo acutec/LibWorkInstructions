@@ -467,6 +467,51 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCreateWorkInstructionRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid groupId1 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction {
+                        Id = workId1,
+                        IdRevGroup = groupId1,
+                        Approved = true,
+                        HtmlBlob = "<h1>do something</h1>",
+                        Images = new List<string> { "image" },
+                        Active = false
+                    },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId2,
+                            IdRevGroup = groupId1,
+                            Approved = false,
+                            HtmlBlob = "<h2>do something</h2>",
+                            Images = new List<string> { "jpeg" },
+                            Active = false
+                        }
+                    } }
+                },
+                WorkInstructionRevs = new List<Guid> { workId1, workId2 },
+                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid> {workId1, workId2} }
+                }
+            };
+            n.DataImport(sampleData);
+            n.CreateWorkInstructionRev(groupId1, workId1);
+            var dbPostCreate = n.DataExport();
+            Assert.True(dbPostCreate.WorkInstructions[groupId1].Count == 3);
+            Assert.False(dbPostCreate.WorkInstructions[groupId1][2].Id == dbPostCreate.WorkInstructions[groupId1][0].Id);
+            Assert.True(dbPostCreate.WorkInstructions[groupId1][2].IdRevGroup == groupId1);
+            Assert.True(dbPostCreate.WorkInstructions[groupId1][2].RevSeq == 2);
+            Assert.True(dbPostCreate.WorkInstructionRevs.Count == 3);
+            Assert.True(dbPostCreate.WorkInstructionRefToWorkInstructionRevRefs[groupId1].Count == 3);
+        }
+
+        [Test]
         public void TestCloneWorkInstructionRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
