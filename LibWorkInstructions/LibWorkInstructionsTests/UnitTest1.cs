@@ -1356,7 +1356,75 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestDeleteQualityClauseRev()
+        public void TestActivateQualityClauseRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clause1 = Guid.NewGuid();
+            Guid clause2 = Guid.NewGuid();
+            Guid clause3 = Guid.NewGuid();
+            Guid clause4 = Guid.NewGuid();
+            Guid clause5 = Guid.NewGuid();
+            Guid clause6 = Guid.NewGuid();
+            var sampleClause1 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause1,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause2 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause2,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = false
+            };
+            var sampleClause3 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause3,
+                IdRevGroup = groupId1,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause4 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause4,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause5 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause5,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleClause6 = new LibWorkInstructions.Structs.QualityClause
+            {
+                Id = clause6,
+                IdRevGroup = groupId2,
+                Clause = "Test",
+                Active = true
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause1, sampleClause4, sampleClause3} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause2, sampleClause5, sampleClause6} },
+                }
+            };
+            n.DataImport(sampleData);
+            n.ActivateQualityClauseRev(groupId2, clause2);
+            var dbPostDeactivate = n.DataExport();
+            Assert.True(dbPostDeactivate.QualityClauses[groupId2][0].Active);
+        }
+
+    [Test]
+        public void TestDeactivateQualityClauseRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -1418,9 +1486,9 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.DeleteQualityClauseRev(groupId2, clause2);
-            var dbPostDelete = n.DataExport();
-            Assert.True(dbPostDelete.QualityClauses[groupId2].Count == 2);
+            n.DeactivateQualityClauseRev(groupId2, clause2);
+            var dbPostDeactivate = n.DataExport();
+            Assert.False(dbPostDeactivate.QualityClauses[groupId2][0].Active);
         }
     }
 }
