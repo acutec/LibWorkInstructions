@@ -697,6 +697,37 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestUpdateOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            var newSpec = new LibWorkInstructions.Structs.OpSpec
+            {
+                Id = specId1,
+                IdRevGroup = groupId1,
+                Name = "spec56",
+                Comment = "This is a test"
+            };
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, IdRevGroup = groupId1, Name = "spec1", Active = true, },
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, IdRevGroup = groupId1, Name = "spec2", Active = true} } }
+                },
+            };
+            n.DataImport(sampleData);
+            n.UpdateOpSpecRev(newSpec);
+            var dbPostUpdate = n.DataExport();
+            Assert.True(dbPostUpdate.OpSpecs.Count == 2);
+            Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Name == "spec56");
+            Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Comment == "This is a test");
+        }
+
+        [Test]
         public void TestMergeOpSpecRevs()
         {
             Guid opSpecRev1 = Guid.NewGuid();
