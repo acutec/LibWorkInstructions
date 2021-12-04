@@ -573,25 +573,30 @@ namespace LibWorkInstructions
         /// Remove JobOp from database if it exists.
         /// </summary>
         /// <param name="opId"></param>
-        public void DeleteJobOp(int opId)
+        public void DeleteJobOp(string jobRev, int opId)
         {
             if (db.Ops.ContainsKey(opId)) // if the op is in the database
             {
-                db.Ops.Remove(opId); // remove the op from the database
-                db.Jobs = db.Jobs.Select(y => y = new KeyValuePair<string, List<Job>>(y.Key, y.Value.Select(y => { y.Ops = y.Ops.Where(y => y.Id != opId).ToList(); return y; }).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                db.OpRefToOpSpecRevRefs.Remove(opId); // manage references
-                db.OpRefToWorkInstructionRef.Remove(opId);
-                db.JobRevRefToOpRefs = db.JobRevRefToOpRefs.Select(y => y = new KeyValuePair<string, List<int>>(y.Key, y.Value.Where(y => y != opId).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                db.OpSpecRevRefToOpRefs = db.OpSpecRevRefToOpRefs.Select(y => y = new KeyValuePair<Guid, List<int>>(y.Key, y.Value.Where(y => y != opId).ToList())).ToDictionary(y => y.Key, y => y.Value);
-
-                var args = new Dictionary<string, string>(); // add the event
-                args["OpId"] = opId.ToString();
-                db.AuditLog.Add(new Event
+                if (db.JobRevs.Contains(jobRev)) // if the job revision is in the database
                 {
-                    Action = "DeleteJobOp",
-                    Args = args,
-                    When = DateTime.Now
-                });
+                    var revGroup = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev));
+                    db.Jobs[revGroup.Key][revGroup.Value.FindIndex(y => y.Rev == jobRev)].Ops = db.Jobs[revGroup.Key][revGroup.Value.FindIndex(y => y.Rev == jobRev)].Ops.Where(y => y.Id != opId).ToList(); // remove the op from the job revision
+                    db.JobRevRefToOpRefs[jobRev] = db.JobRevRefToOpRefs[jobRev].Where(y => y != opId).ToList(); // manage references
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["JobRev"] = jobRev;
+                    args["OpId"] = opId.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "DeleteJobOp",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The job revision doesn't exist in the database");
+                }
             }
             else
             {
