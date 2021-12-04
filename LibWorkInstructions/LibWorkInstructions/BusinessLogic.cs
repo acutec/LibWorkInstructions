@@ -796,39 +796,60 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Remove OpSpecRev from database if it exists.
+        /// Activate OpSpecRev if it exists.
         /// </summary>
         /// <param name="groupId"></param>
         /// <param name="specRev"></param>
-        public void DeleteOpSpecRev(Guid groupId, Guid specRev)
+        public void ActivateOpSpecRev(Guid groupId, Guid specRev)
         {
             if (db.OpSpecs.ContainsKey(groupId)) // if the rev group exists with regard to op specs
             {
                 if (db.OpSpecs[groupId].Any(y => y.Id == specRev)) // if the op spec revision is in the rev group
                 {
-                    if (db.OpSpecs[groupId][0].Id != specRev) // if the id indeed refers to a revision of an op spec, not an original op spec
-                    {
-                        db.OpSpecRevs.Remove(specRev); // remove the op spec revision from the database
-                        db.OpSpecs[groupId].Remove(db.OpSpecs[groupId].First(y => y.Id == specRev));
-                        db.OpSpecs[groupId] = db.OpSpecs[groupId].Select(y => { y.RevSeq = db.OpSpecs[groupId].IndexOf(y); return y; }).ToList(); // reconfigure the rev sequences
-                        db.OpSpecRevRefToOpRefs.Remove(specRev); // manage references
-                        db.OpRefToOpSpecRevRefs = db.OpRefToOpSpecRevRefs.Select(y => y = new KeyValuePair<int, List<Guid>>(y.Key, y.Value.Where(y => y != specRev).ToList())).ToDictionary(y => y.Key, y => y.Value);
-                        db.OpSpecRefToOpSpecRevRefs[db.OpSpecs[groupId][0].Id].Remove(specRev);
+                    db.OpSpecs[groupId][db.OpSpecs[groupId].FindIndex(y => y.Id == specRev)].Active = true; // activate the op spec revision
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["GroupId"] = groupId.ToString();
-                        args["SpecRev"] = specRev.ToString();
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "DeleteOpSpecRev",
-                            Args = args,
-                            When = DateTime.Now
-                        });
-                    }
-                    else
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["SpecRev"] = specRev.ToString();
+                    db.AuditLog.Add(new Event
                     {
-                        throw new Exception("The id refers to an original op spec, not a rev of one");
-                    }
+                        Action = "ActivateOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
+                }
+                else
+                {
+                    throw new Exception("The op spec revision doesn't exist in the rev group");
+                }
+            }
+            else
+            {
+                throw new Exception("The rev group doesn't exist with regard to op specs");
+            }
+        }
+        /// <summary>
+        /// Deactivate OpSpecRev if it exists.
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <param name="specRev"></param>
+        public void DeactivateOpSpecRev(Guid groupId, Guid specRev)
+        {
+            if (db.OpSpecs.ContainsKey(groupId)) // if the rev group exists with regard to op specs
+            {
+                if (db.OpSpecs[groupId].Any(y => y.Id == specRev)) // if the op spec revision is in the rev group
+                {
+                    db.OpSpecs[groupId][db.OpSpecs[groupId].FindIndex(y => y.Id == specRev)].Active = false; // deactivate the op spec revision
+
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["SpecRev"] = specRev.ToString();
+                    db.AuditLog.Add(new Event
+                    {
+                        Action = "DeactivateOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
                 }
                 else
                 {

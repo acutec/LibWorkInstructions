@@ -728,6 +728,50 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestActivateOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, IdRevGroup = groupId1, Name = "spec1", Active = false},
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, IdRevGroup = groupId1, Name = "spec2", Active = true} } }
+                },
+            };
+            n.DataImport(sampleData);
+            n.ActivateOpSpecRev(groupId1, specId1);
+            var dbPostActivate = n.DataExport();
+            Assert.True(dbPostActivate.OpSpecs[groupId1][0].Active);
+        }
+
+        [Test]
+        public void TestDeactivateOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, IdRevGroup = groupId1, Name = "spec1", Active = true, },
+                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, IdRevGroup = groupId1, Name = "spec2", Active = true} } }
+                },
+            };
+            n.DataImport(sampleData);
+            n.DeactivateOpSpecRev(groupId1, specId1);
+            var dbPostDeactivate = n.DataExport();
+            Assert.False(dbPostDeactivate.OpSpecs[groupId1][0].Active);
+        }
+
+        [Test]
         public void TestMergeOpSpecRevs()
         {
             Guid opSpecRev1 = Guid.NewGuid();
