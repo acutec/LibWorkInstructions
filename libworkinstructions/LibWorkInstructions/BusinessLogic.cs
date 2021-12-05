@@ -1523,7 +1523,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="jobRev"></param>
-        public void LinkJobOpToJobRev(int opId, string jobRev)
+        public void LinkJobOpAndJobRev(int opId, string jobRev)
         {
             if(db.JobRevs.Contains(jobRev)) // if the job revision exists in the database
             {
@@ -1542,7 +1542,7 @@ namespace LibWorkInstructions
                         args["OpId"] = opId.ToString();
                         db.AuditLog.Add(new Event
                         {
-                            Action = "LinkJobOpToJobRev",
+                            Action = "LinkJobOpAndJobRev",
                             Args = args,
                             When = DateTime.Now
                         });
@@ -1567,7 +1567,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="jobRev"></param>
-        public void UnlinkJobOpFromJobRev(int opId, string jobRev)
+        public void UnlinkJobOpAndJobRev(int opId, string jobRev)
         {
             if (db.JobRevs.Contains(jobRev))
             {
@@ -1583,7 +1583,7 @@ namespace LibWorkInstructions
                     args["JobRev"] = jobRev;
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UnlinkJobOpFromJobRev",
+                        Action = "UnlinkJobOpAndJobRev",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -1685,20 +1685,21 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="opSpecRev"></param>
-        public void LinkJobOpToOpSpecRev(int opId, Guid opSpecRev)
+        public void LinkJobOpAndOpSpecRev(int opId, Guid opSpecRev)
         {
             if (db.OpSpecRevs.Contains(opSpecRev)) // if the op spec revision exists in the database
             {
                 if (!db.OpSpecRevRefToOpRefs[opSpecRev].Contains(opId)) // if the op isn't already linked to the op spec
                 {
                     db.OpSpecRevRefToOpRefs[opSpecRev].Add(opId); // link the op to the op spec
+                    db.OpRefToOpSpecRevRefs[opId].Add(opSpecRev); // link the op spec revision to the op
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["OpId"] = opId.ToString();
                     args["OpSpecRev"] = opSpecRev.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "LinkJobOpToOpSpecRev",
+                        Action = "LinkJobOpAndOpSpecRev",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -1718,20 +1719,21 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="opSpecRev"></param>
-        public void UnlinkJobOpFromOpSpecRev(int opId, Guid opSpecRev)
+        public void UnlinkJobOpAndOpSpecRev(int opId, Guid opSpecRev)
         {
             if (db.OpSpecRevs.Contains(opSpecRev)) // if the op spec revision exists in the database
             {
                 if (db.OpSpecRevRefToOpRefs[opSpecRev].Contains(opId)) // if the op is linked to the op spec revision
                 {
                     db.OpSpecRevRefToOpRefs[opSpecRev].Remove(opId); // unlink the op from the op spec revision
+                    db.OpRefToOpSpecRevRefs[opId].Remove(opSpecRev); // unlink the op spec revision from the op
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["OpId"] = opId.ToString();
                     args["OpSpecRev"] = opSpecRev.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UnlinkJobOpFromOpSpecRev",
+                        Action = "UnlinkJobOpAndOpSpecRev",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -1808,72 +1810,6 @@ namespace LibWorkInstructions
             else
             {
                 throw new Exception("One or both of the op spec revisions doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Link OpSpec and JobOp together if they exist.
-        /// </summary>
-        /// <param name="opSpecRev"></param>
-        /// <param name="opId"></param>
-        public void LinkOpSpecRevToJobOp(Guid opSpecRev, int opId)
-        {
-            if (db.Ops.ContainsKey(opId)) // if the op exists in the database
-            {
-                if (!db.OpRefToOpSpecRevRefs[opId].Contains(opSpecRev)) // if the op spec revision isn't already linked to the op
-                {
-                    db.OpRefToOpSpecRevRefs[opId].Add(opSpecRev); // link the op spec revision to the op
-
-                    var args = new Dictionary<string, string>(); // add the event
-                    args["OpSpecRev"] = opSpecRev.ToString();
-                    args["OpId"] = opId.ToString();
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "LinkOpSpecRevToJobOp",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("Op spec revision is already linked to the op");
-                }
-            }
-            else
-            {
-                throw new Exception("The op doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Unlink OpSpec from given JobOp if they exist.
-        /// </summary>
-        /// <param name="opSpecRev"></param>
-        /// <param name="opId"></param>
-        public void UnlinkOpSpecRevFromJobOp(Guid opSpecRev, int opId)
-        {
-            if (db.Ops.ContainsKey(opId)) // if the op exists in the database
-            {
-                if (db.OpRefToOpSpecRevRefs[opId].Contains(opSpecRev)) // if the op spec revision is linked to the op
-                {
-                    db.OpRefToOpSpecRevRefs[opId].Remove(opSpecRev); // unlink the op spec revision from the op
-
-                    var args = new Dictionary<string, string>(); // add the event
-                    args["OpSpecRev"] = opSpecRev.ToString();
-                    args["OpId"] = opId.ToString();
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "UnlinkOpSpecRevFromJobOp",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("Op spec revision isn't linked to the given op");
-                }
-            }
-            else
-            {
-                throw new Exception("The op doesn't exist in the database");
             }
         }
         /// <summary>
