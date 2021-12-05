@@ -1757,6 +1757,7 @@ namespace LibWorkInstructionsTests
                 QualityClauseRevs = new List<Guid> { clauseId1, clauseId2, clauseId3, clauseId4 }
             };
             n.DataImport(sampleData);
+            n.MergeQualityClauses(groupId1, groupId2);
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.QualityClauses[groupId1].Count == 4);
             Assert.True(dbPostMerge.QualityClauses[groupId2].Count == 4);
