@@ -1698,6 +1698,12 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestLinkJobOpAndJobRev()
+        {
+
+        }
+
+        [Test]
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
