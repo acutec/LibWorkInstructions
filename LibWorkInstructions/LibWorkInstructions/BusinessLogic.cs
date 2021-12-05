@@ -1405,7 +1405,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Merge QualityClauseRevs within given QualityClauses if they exist.
+        /// Merge quality clauses so that they each have all of the revisions from both quality clauses.
         /// </summary>
         /// <param name="clauseId1"></param>
         /// <param name="clauseId2"></param>
@@ -1477,42 +1477,38 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Clone QualityClauseRevs within given QualityClauses if they exist.
+        /// Clone quality clauses so that each one has all of the revisions from both quality clauses.
         /// Behavior changes depending on the additive parameter.
         /// </summary>
         /// <param name="sourceClause"></param>
         /// <param name="targetClause"></param>
         /// <param name="additive"></param>
-        public void CloneQualityClauseRevsBasedOnQualityClause(Guid sourceClause, Guid targetClause, bool additive)
+        public void CloneQualityClauseRevs(Guid sourceRevGroup, Guid targetRevGroup, bool additive)
         {
-            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(sourceClause) && db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(targetClause)) // if both clauses exist in the database
+            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(sourceRevGroup) && db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(targetRevGroup)) // if both clauses exist in the database
             {
-                Guid targetRevGroup = db.QualityClauses.First(y => y.Value[0].Id == targetClause).Key;
-                Guid sourceRevGroup = db.QualityClauses.First(y => y.Value[0].Id == sourceClause).Key;
                 if (!additive)
                 {
-                    db.QualityClauses[targetRevGroup] = new List<QualityClause> { db.QualityClauses[targetRevGroup][0] }; // replace the target revisions with the source revisions in the database
-                    db.QualityClauses[targetRevGroup].AddRange(db.QualityClauses[sourceRevGroup].Where(y => db.QualityClauses[sourceRevGroup].IndexOf(y) != 0));
+                    db.QualityClauses[targetRevGroup] = db.QualityClauses[sourceRevGroup]; // replace the target revisions with the source revisions in the database
                     db.QualityClauses[targetRevGroup] = db.QualityClauses[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; return y; }).ToList(); // reconfigure the revisions
-                    db.QualityClauseRefToQualityClauseRevRefs[targetClause] = db.QualityClauseRefToQualityClauseRevRefs[sourceClause]; // manage references
+                    db.QualityClauseRefToQualityClauseRevRefs[targetRevGroup] = db.QualityClauseRefToQualityClauseRevRefs[sourceRevGroup]; // manage references
                 }
                 else
                 {
-                    List<Guid> mergedIdList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[sourceClause].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[targetClause].Contains(y)).ToList(); // create a merged id list and object list
+                    List<Guid> mergedIdList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[sourceRevGroup].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[targetRevGroup].Contains(y)).ToList(); // create a merged id list and object list
                     List<QualityClause> mergedClauseRevList = mergedIdList.Select(y => db.QualityClauses.Values.First(x => x.Any(z => z.Id == y)).First(x => x.Id == y)).ToList();
-                    db.QualityClauses[targetRevGroup] = new List<QualityClause> { db.QualityClauses[targetRevGroup][0] }; // add the merged revisions to the target rev group
-                    db.QualityClauses[targetRevGroup].AddRange(mergedClauseRevList);
+                    db.QualityClauses[targetRevGroup] = mergedClauseRevList; // add the merged revisions to the target rev group
                     db.QualityClauses[targetRevGroup] = db.QualityClauses[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.QualityClauses[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                    db.QualityClauseRefToQualityClauseRevRefs[targetClause] = mergedIdList; // manage references
+                    db.QualityClauseRefToQualityClauseRevRefs[targetRevGroup] = mergedIdList; // manage references
                 }
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["SourceClause"] = sourceClause.ToString();
-                args["TargetClause"] = targetClause.ToString();
+                args["SourceRevGroup"] = sourceRevGroup.ToString();
+                args["TargetRevGroup"] = targetRevGroup.ToString();
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneQualityClauseRevsBasedOnQualityClause",
+                    Action = "CloneQualityClauseRevs",
                     Args = args,
                     When = DateTime.Now
                 });
