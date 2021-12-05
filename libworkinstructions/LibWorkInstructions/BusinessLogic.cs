@@ -1144,7 +1144,7 @@ namespace LibWorkInstructions
                     return y;
                 }).ToList();
                 db.JobRefToJobRevRefs[jobId1] = mergedIdList; // manage references
-                db.JobRefToJobRevRefs.Remove(jobId2);
+                db.JobRefToJobRevRefs[jobId2] = mergedIdList;
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId1"] = jobId1;

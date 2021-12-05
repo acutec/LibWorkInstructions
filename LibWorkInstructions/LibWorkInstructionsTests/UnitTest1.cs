@@ -728,6 +728,8 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostMerge.Jobs["job1"][2].Rev == "Rev C[1.4.2]");
             Assert.True(dbPostMerge.Jobs["job1"][3].Rev == "Rev D[1.2.5]");
             Assert.True(dbPostMerge.JobRevs.SequenceEqual(new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev C[1.4.2]", "Rev D[1.2.5]" }));
+            Assert.True(dbPostMerge.JobRefToJobRevRefs["job1"].SequenceEqual(dbPostMerge.JobRevs));
+            Assert.True(dbPostMerge.JobRefToJobRevRefs["job2"].SequenceEqual(dbPostMerge.JobRevs));
         }
 
         [Test]
