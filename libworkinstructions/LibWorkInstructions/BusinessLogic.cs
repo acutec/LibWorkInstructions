@@ -1135,14 +1135,6 @@ namespace LibWorkInstructions
                 db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { y.Id = jobId1; return y; }).ToList();
                 db.Jobs[jobId2] = mergedJobRevList;
                 db.Jobs[jobId2] = db.Jobs[jobId2].Select(y => { y.Id = jobId2; return y; }).ToList();
-                db.JobRevs = db.JobRevs.Select(y => 
-                {
-                    if (mergedIdList.Contains(y)) 
-                    {
-                        return y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)));
-                    } 
-                    return y;
-                }).ToList();
                 db.JobRefToJobRevRefs[jobId1] = mergedIdList; // manage references
                 db.JobRefToJobRevRefs[jobId2] = mergedIdList;
 
@@ -1210,7 +1202,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJob"></param>
         /// <param name="targetJob"></param>
         /// <param name="additive"></param>
-        public void CloneJobRevsBasedOnJob(string sourceJob, string targetJob, bool additive)
+        public void CloneJobRevs(string sourceJob, string targetJob, bool additive)
         {
             if(db.Jobs.ContainsKey(sourceJob) && db.Jobs.ContainsKey(targetJob)) // if both of the jobs exist in the database
             {
@@ -1225,9 +1217,16 @@ namespace LibWorkInstructions
                 {
                     List<string> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[sourceJob].Contains(y) || db.JobRefToJobRevRefs[targetJob].Contains(y)).ToList(); // create a merged id list and object list
                     List<Job> mergedJobRevList = mergedIdList.Select(y => db.Jobs.Values.First(x => x.Any(z => z.Rev == y)).First(x => x.Rev == y)).ToList();
-                    db.Jobs[targetJob] = new List<Job> { db.Jobs[targetJob][0] }; // add the merged revisions to the target job
-                    db.Jobs[targetJob].AddRange(mergedJobRevList);
-                    db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob; y.RevSeq = db.Jobs[targetJob].IndexOf(y);  return y; }).ToList(); // reconfigure the revisions
+                    mergedJobRevList = mergedJobRevList.Select(y => // reconfigure the job revisions
+                    {
+                        y.RevSeq = mergedJobRevList.IndexOf(y);
+                        y.Rev = y.Rev.Replace(y.Rev[4], (char)(65 + y.RevSeq));
+                        y.Ops = y.Ops.Select(x => { x.JobId = y.Id; return x; }).ToList();
+                        return y;
+                    }).ToList();
+                    mergedIdList = mergedIdList.Select(y => y = y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)))).ToList();
+                    db.Jobs[targetJob] = mergedJobRevList; // add the merged revisions to the target job
+                    db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob;  return y; }).ToList(); // reconfigure the revisions
                     db.JobRefToJobRevRefs[targetJob] = mergedIdList; // manage references
                 }
 
@@ -1339,43 +1338,6 @@ namespace LibWorkInstructions
                 db.AuditLog.Add(new Event
                 {
                     Action = "MergeJobRevsBasedOnQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Clone JobRevs within the given QualityClause if they exist.
-        /// Behavior changed depening on the additive parameter.
-        /// </summary>
-        /// <param name="sourceQualityClauseRev"></param>
-        /// <param name="targetQualityClauseRev"></param>
-        /// <param name="additive"></param>
-        public void CloneJobRevsBasedOnQualityClauseRev(Guid sourceQualityClauseRev, Guid targetQualityClauseRev, bool additive)
-        {
-            if (db.QualityClauseRevs.Contains(sourceQualityClauseRev) && db.QualityClauseRevs.Contains(targetQualityClauseRev)) // if both quality clause revisions exist in the database
-            {
-                if (!additive)
-                {
-                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev]; // replace the job revisions in the target clause with the revisions in the source quality clause
-                }
-                else
-                {
-                    List<string> mergedList = db.JobRevs.Where(y => db.QualityClauseRevRefToJobRevRefs[sourceQualityClauseRev].Contains(y) || db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev].Contains(y)).ToList(); // create a merged id list
-                    db.QualityClauseRevRefToJobRevRefs[targetQualityClauseRev] = mergedList; // manage references
-                }
-
-                var args = new Dictionary<string, string>(); // add the event
-                args["SourceQualityClauseRev"] = sourceQualityClauseRev.ToString();
-                args["TargetQualityClauseRev"] = targetQualityClauseRev.ToString();
-                args["Additive"] = additive.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "CloneJobRevsBasedOnQualityClauseRev",
                     Args = args,
                     When = DateTime.Now
                 });
