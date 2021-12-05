@@ -1208,8 +1208,7 @@ namespace LibWorkInstructions
             {
                 if(!additive)
                 {
-                    db.Jobs[targetJob] = new List<Job> { db.Jobs[targetJob][0] }; // replace the target job revisions with the source job revisions
-                    db.Jobs[targetJob].AddRange(db.Jobs[sourceJob].Where(y => db.Jobs[sourceJob].IndexOf(y) != 0));
+                    db.Jobs[targetJob] = db.Jobs[sourceJob]; // replace the target job revisions with the source job revisions
                     db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob; return y; }).ToList(); // reconfigure the revisions
                     db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[sourceJob]; // manage references
                 }

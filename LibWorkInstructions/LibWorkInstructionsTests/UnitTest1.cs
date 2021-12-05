@@ -837,6 +837,60 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCloneJobRevsNotAdditive()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "Rev A[1.2.3]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},
+                        } },
+                        new LibWorkInstructions.Structs.Job {Id = "job1", Rev = "Rev B[1.2.3]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},
+                        } }
+                    }
+                    },
+                    {"job2", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job {Id = "job2", Rev = "Rev A[1.4.2]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"},
+                            new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"},
+                            new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"},
+                        } },
+                        new LibWorkInstructions.Structs.Job {Id = "job2", Rev = "Rev B[1.2.5]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"},
+                            new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"},
+                            new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"},
+                        } }
+                    }
+                    }
+                },
+                JobRevs = new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev A[1.4.2]", "Rev B[1.2.5]" },
+                JobRefToJobRevRefs = new Dictionary<string, List<string>>
+                {
+                    { "job1", new List<string>{ "Rev A[1.2.3]", "Rev B[1.2.3]" } },
+                    { "job2", new List<string>{ "Rev A[1.4.2]", "Rev B[1.2.5]" } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.CloneJobRevs("job1", "job2", false);
+            var dbPostClone = n.DataExport();
+            Assert.True(dbPostClone.Jobs["job2"].Count == 2);
+            Assert.True(dbPostClone.Jobs["job2"].Select(y => y.Rev).SequenceEqual(dbPostClone.Jobs["job1"].Select(y => y.Rev)));
+            Assert.True(dbPostClone.Jobs["job2"].All(y => y.Id == "job2"));
+            Assert.True(dbPostClone.Jobs["job2"].All(y => y.Ops.All(x => x.JobId == "job2")));
+            Assert.True(dbPostClone.JobRefToJobRevRefs["job2"].SequenceEqual(new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev C[1.4.2]", "Rev D[1.2.5]" }));
+        }
+
+        [Test]
         public void TestCloneWorkInstructionRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
