@@ -1235,7 +1235,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneJobRevsBasedOnJob",
+                    Action = "CloneJobRevs",
                     Args = args,
                     When = DateTime.Now,
                 });
@@ -1250,7 +1250,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev"></param>
         /// <param name="qualityClauseRev"></param>
-        public void LinkJobRevToQualityClauseRev(string jobRev, Guid qualityClauseRev)
+        public void LinkJobRevAndQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
             {
@@ -1258,14 +1258,19 @@ namespace LibWorkInstructions
                 {
                     if (!db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev)) // if the job revision isn't already linked to the quality clause revision
                     {
+                        QualityClause clauseRev = db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev); // create new instance of quality clause revision
+                        clauseRev.RevSeq = db.JobRevRefToQualityClauseRevRefs[jobRev].Count; // configure the quality clause revision
+                        db.Jobs[db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key] // link the quality clause revision to the job revision
+                            [db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev)].QualityClauses.Add(clauseRev);
                         db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Add(jobRev); // link the job revision to the quality clause revision
+                        db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev); // link the quality clause revision to the job revision
 
                         var args = new Dictionary<string, string>(); // add the event
                         args["JobRev"] = jobRev;
                         args["QualityClauseRev"] = qualityClauseRev.ToString();
                         db.AuditLog.Add(new Event
                         {
-                            Action = "LinkJobRevToQualityClauseRev",
+                            Action = "LinkJobRevAndQualityClauseRev",
                             Args = args,
                             When = DateTime.Now
                         });
@@ -1344,43 +1349,6 @@ namespace LibWorkInstructions
             else
             {
                 throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Link QualityClause and JobRev together if they exist.
-        /// </summary>
-        /// <param name="qualityClauseRev"></param>
-        /// <param name="jobRev"></param>
-        public void LinkQualityClauseRevToJobRev(Guid qualityClauseRev, string jobRev)
-        {
-            if (db.JobRevs.Contains(jobRev)) // if the job revision exists in the database
-            {
-                if (!db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev)) // if the quality clause revision isn't already linked to the job revision
-                {
-                    QualityClause clauseRev = db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev); // create new instance of quality clause revision
-                    clauseRev.RevSeq = db.JobRevRefToQualityClauseRevRefs[jobRev].Count; // configure the quality clause revision
-                    db.Jobs[db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key] // link the quality clause revision to the job revision
-                        [db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev)].QualityClauses.Add(clauseRev);
-                    db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev); // manage references
-
-                    var args = new Dictionary<string, string>(); // add the event
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "LinkQualityClauseRevToJobRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("Quality clause revision already has an association with the given job revision");
-                }
-            }
-            else
-            {
-                throw new Exception("The job revision doesn't exist in the database");
             }
         }
         /// <summary>
