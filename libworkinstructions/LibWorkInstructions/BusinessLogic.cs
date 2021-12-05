@@ -1246,7 +1246,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Link JobRev to given QualityClauseRev if they exist.
+        /// Link JobRev and given QualityClauseRev if they exist.
         /// </summary>
         /// <param name="jobRev"></param>
         /// <param name="qualityClauseRev"></param>
@@ -1291,24 +1291,28 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Unlink JobRev from given QualityClauseRev if they exist.
+        /// Unlink JobRev and given QualityClauseRev if they exist.
         /// </summary>
         /// <param name="jobRev"></param>
         /// <param name="qualityClauseRev"></param>
-        public void UnlinkJobRevFromQualityClauseRev(string jobRev, Guid qualityClauseRev)
+        public void UnlinkJobRevAndQualityClauseRev(string jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
             {
                 if (db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Contains(jobRev)) // if the job revision is linked to the quality clause revision
                 {
-                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev); // unlink the job revision from the quality clause revision
+                    string jobRevKey = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key; // unlink the quality clause revision from the job revision
+                    int jobRevIndex = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev);
+                    db.Jobs[jobRevKey][jobRevIndex].QualityClauses.Remove(db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev));
+                    db.JobRevRefToQualityClauseRevRefs[jobRev].Remove(qualityClauseRev); // manage references
+                    db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev);
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["JobRev"] = jobRev;
                     args["QualityClauseRev"] = qualityClauseRev.ToString();
                     db.AuditLog.Add(new Event
                     {
-                        Action = "UnlinkJobRevFromQualityClauseRev",
+                        Action = "UnlinkJobRevAndQualityClauseRev",
                         Args = args,
                         When = DateTime.Now
                     });
@@ -1349,43 +1353,6 @@ namespace LibWorkInstructions
             else
             {
                 throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
-            }
-        }
-        /// <summary>
-        /// Unlink QualityClause from JobRev if they both exist.
-        /// </summary>
-        /// <param name="qualityClauseRev"></param>
-        /// <param name="jobRev"></param>
-        public void UnlinkQualityClauseRevFromJobRev(Guid qualityClauseRev, string jobRev)
-        {
-            if (db.JobRevs.Contains(jobRev)) // if the job revision exists in the database
-            {
-                if (db.JobRevRefToQualityClauseRevRefs[jobRev].Contains(qualityClauseRev)) // if the quality clause revision is linked to the job revision
-                {
-                    string jobRevKey = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key; // unlink the quality clause revision from the job revision
-                    int jobRevIndex = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev);
-                    db.Jobs[jobRevKey][jobRevIndex].QualityClauses.Remove(db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev));
-                    db.JobRevRefToQualityClauseRevRefs[jobRev].Remove(qualityClauseRev); // manage references
-                    db.Jobs[jobRevKey][jobRevIndex].QualityClauses.Select(y => { y.RevSeq = db.Jobs[jobRevKey][jobRevIndex].QualityClauses.IndexOf(y); return y; }); // reconfigure the rev sequences
-
-                    var args = new Dictionary<string, string>(); // add the event
-                    args["QualityClauseRev"] = qualityClauseRev.ToString();
-                    args["JobRev"] = jobRev;
-                    db.AuditLog.Add(new Event
-                    {
-                        Action = "UnlinkQualityClauseRevToJobRev",
-                        Args = args,
-                        When = DateTime.Now
-                    });
-                }
-                else
-                {
-                    throw new Exception("Quality clause revision doesn't have an association with the given job revision");
-                }
-            }
-            else
-            {
-                throw new Exception("This job revision doesn't exist in the database");
             }
         }
         /// <summary>
