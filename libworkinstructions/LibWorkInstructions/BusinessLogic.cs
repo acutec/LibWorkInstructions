@@ -1114,7 +1114,7 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Combine all of the revisions of the  if they exist and there are no duplicates.
+        /// Merge two jobs so that they each have all of the revisions of both jobs.
         /// </summary>
         /// <param name="jobId1"></param>
         /// <param name="jobId2"></param>
@@ -1167,7 +1167,7 @@ namespace LibWorkInstructions
         /// <param name="jobId"></param>
         /// <param name="jobRev"></param>
         /// <param name="newJobRev"></param>
-        public void SplitJobRevInJob(string jobId, string jobRev, string newJobRev)
+        public void SplitJobRev(string jobId, string jobRev, string newJobRev)
         {
             if(db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
