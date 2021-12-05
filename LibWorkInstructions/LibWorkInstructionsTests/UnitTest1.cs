@@ -1665,6 +1665,39 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCloneQualityClauseRevsNotAdditive()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clauseId1 = Guid.NewGuid();
+            Guid clauseId2 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
+                },
+                QualityClauseRevs = new List<Guid> { clauseId1, clauseId2 },
+                QualityClauseRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid> { clauseId1 } },
+                    {groupId2, new List<Guid> { clauseId2 } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.CloneQualityClauseRevs(groupId1, groupId2, false);
+            var dbPostClone = n.DataExport();
+            Assert.True(dbPostClone.QualityClauses[groupId2].Count == 1);
+            Assert.True(dbPostClone.QualityClauses[groupId2].Last().IdRevGroup == groupId2);
+            Assert.True(dbPostClone.QualityClauseRefToQualityClauseRevRefs[groupId2].Count == 1);
+            Assert.True(dbPostClone.QualityClauseRefToQualityClauseRevRefs[groupId2][0] == clauseId1);
+        }
+
+        [Test]
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
