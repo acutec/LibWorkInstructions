@@ -1726,6 +1726,45 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestMergeQualityClauses()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clauseId1 = Guid.NewGuid();
+            Guid clauseId2 = Guid.NewGuid();
+            Guid clauseId3 = Guid.NewGuid();
+            Guid clauseId4 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId1, IdRevGroup = groupId1},
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId2, IdRevGroup = groupId1} }
+                    },
+                    { groupId2, new List<LibWorkInstructions.Structs.QualityClause>
+                    {
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId3, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId4, IdRevGroup = groupId2}
+                    } }
+                },
+                QualityClauseRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid>{clauseId1, clauseId2} },
+                    {groupId2, new List<Guid>{clauseId3, clauseId4} }
+                },
+                QualityClauseRevs = new List<Guid> { clauseId1, clauseId2, clauseId3, clauseId4 }
+            };
+            n.DataImport(sampleData);
+            var dbPostMerge = n.DataExport();
+            Assert.True(dbPostMerge.QualityClauses[groupId1].Count == 4);
+            Assert.True(dbPostMerge.QualityClauses[groupId2].Count == 4);
+            Assert.True(dbPostMerge.QualityClauseRefToQualityClauseRevRefs[groupId1].Count == 4);
+            Assert.True(dbPostMerge.QualityClauseRefToQualityClauseRevRefs[groupId2].Count == 4);
+        }
+
+        [Test]
         public void TestActivateQualityClause()
         {
             var n = new LibWorkInstructions.BusinessLogic();

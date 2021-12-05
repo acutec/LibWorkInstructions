@@ -1328,34 +1328,6 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Merge JobRevs in the given QualityClauseRev if they exist.
-        /// </summary>
-        /// <param name="qualityClauseRev1"></param>
-        /// <param name="qualityClauseRev2"></param>
-        public void MergeJobRevsBasedOnQualityClauseRev(Guid qualityClauseRev1, Guid qualityClauseRev2)
-        {
-            if (db.QualityClauseRevs.Contains(qualityClauseRev1) && db.QualityClauseRevs.Contains(qualityClauseRev2)) // if both of the quality clause revisions exist in the database
-            {
-                List<string> mergedList = db.JobRevs.Where(y => db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1].Contains(y) || db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2].Contains(y)).ToList(); // create id list
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev1] = mergedList; // manage references
-                db.QualityClauseRevRefToJobRevRefs[qualityClauseRev2] = mergedList;
-
-                var args = new Dictionary<string, string>(); // add the event
-                args["QualityClauseRev1"] = qualityClauseRev1.ToString();
-                args["QualityClauseRev2"] = qualityClauseRev2.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeJobRevsBasedOnQualityClauseRev",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the quality clause revisions doesn't exist in the database");
-            }
-        }
-        /// <summary>
         /// Merege QualityClauses within given JobRevs if they exist.
         /// </summary>
         /// <param name="jobRev1"></param>
@@ -1437,36 +1409,32 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="clauseId1"></param>
         /// <param name="clauseId2"></param>
-        public void MergeQualityClauseRevsBasedOnQualityClause(Guid clauseId1, Guid clauseId2)
+        public void MergeQualityClauses(Guid groupId1, Guid groupId2)
         {
-            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(clauseId1) && db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(clauseId2)) // if both of the quality clauses exist in the database
+            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(groupId1) && db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(groupId2)) // if both of the rev groups exist in the database
             {
-                List<Guid> mergedIdList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[clauseId1].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[clauseId2].Contains(y)).ToList(); // create a merged id list and object list
+                List<Guid> mergedIdList = db.QualityClauseRevs.Where(y => db.QualityClauseRefToQualityClauseRevRefs[groupId1].Contains(y) || db.QualityClauseRefToQualityClauseRevRefs[groupId2].Contains(y)).ToList(); // create a merged id list and object list
                 List<QualityClause> mergedClauseRevList = mergedIdList.Select(y => db.QualityClauses.First(x => x.Value.Any(z => mergedIdList.Contains(y))).Value.First(x => mergedIdList.Contains(y))).ToList();
-                Guid groupId1 = db.QualityClauses.First(y => y.Value[0].Id == clauseId1).Key;
-                Guid groupId2 = db.QualityClauses.First(y => y.Value[0].Id == clauseId2).Key;
-                db.QualityClauses[groupId1] = new List<QualityClause> { db.QualityClauses[groupId1][0] }; // add merged revisions to database
-                db.QualityClauses[groupId1].AddRange(mergedClauseRevList);
-                db.QualityClauses[groupId2] = new List<QualityClause> { db.QualityClauses[groupId2][0] };
-                db.QualityClauses[groupId2].AddRange(mergedClauseRevList);
+                db.QualityClauses[groupId1] = mergedClauseRevList; // add merged revisions to database
+                db.QualityClauses[groupId2] = mergedClauseRevList;
                 db.QualityClauses[groupId1] = db.QualityClauses[groupId1].Select(y => { y.IdRevGroup = groupId1; y.RevSeq = db.QualityClauses[groupId1].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
                 db.QualityClauses[groupId2] = db.QualityClauses[groupId2].Select(y => { y.IdRevGroup = groupId2; y.RevSeq = db.QualityClauses[groupId2].IndexOf(y); return y; }).ToList();
-                db.QualityClauseRefToQualityClauseRevRefs[clauseId1] = mergedIdList; // manage references
-                db.QualityClauseRefToQualityClauseRevRefs[clauseId2] = mergedIdList;
+                db.QualityClauseRefToQualityClauseRevRefs[groupId1] = mergedIdList; // manage references
+                db.QualityClauseRefToQualityClauseRevRefs[groupId2] = mergedIdList;
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["ClauseId1"] = clauseId1.ToString();
-                args["ClauseId2"] = clauseId2.ToString();
+                args["GroupId1"] = groupId1.ToString();
+                args["GroupId2"] = groupId2.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeQualityClauseRevsBasedOnQualityClause",
+                    Action = "MergeQualityClauses",
                     Args = args,
                     When = DateTime.Now
                 });
             }
             else
             {
-                throw new Exception("One or both of the quality clauses doesn't exist in the database");
+                throw new Exception("One or both of the rev groups doesn't exist in the database");
             }
         }
         /// <summary>
