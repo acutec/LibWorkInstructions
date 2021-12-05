@@ -1114,31 +1114,44 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Merge the given jobs into a combination of them if they exist and there are no duplicates.
+        /// Combine all of the revisions of the  if they exist and there are no duplicates.
         /// </summary>
         /// <param name="jobId1"></param>
         /// <param name="jobId2"></param>
-        public void MergeJobRevsBasedOnJob(string jobId1, string jobId2)
+        public void MergeJobs(string jobId1, string jobId2)
         {
             if(db.Jobs.ContainsKey(jobId1) && db.Jobs.ContainsKey(jobId2)) // if both jobs exist in the database
             {
                 List<string> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[jobId1].Contains(y) || db.JobRefToJobRevRefs[jobId2].Contains(y)).ToList(); // create a merged id list and object list
                 List<Job> mergedJobRevList = mergedIdList.Select(y => db.Jobs.Values.First(x => x.Any(z => z.Rev == y)).First(x => x.Rev == y)).ToList();
-                db.Jobs[jobId1] = new List<Job> { db.Jobs[jobId1][0] }; // add merged list to both jobs
-                db.Jobs[jobId1].AddRange(mergedJobRevList);
-                db.Jobs[jobId2] = new List<Job> { db.Jobs[jobId2][0] };
-                db.Jobs[jobId2].AddRange(mergedJobRevList);
-                db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { y.Id = jobId1; y.RevSeq = db.Jobs[jobId1].IndexOf(y); return y; }).ToList(); // reconfigure the job revisions
-                db.Jobs[jobId2] = db.Jobs[jobId2].Select(y => { y.Id = jobId2; y.RevSeq = db.Jobs[jobId2].IndexOf(y); return y; }).ToList();
+                mergedJobRevList = mergedJobRevList.Select(y =>
+                {
+                    y.RevSeq = mergedJobRevList.IndexOf(y);
+                    y.Rev = y.Rev.Replace(y.Rev[4], (char)(65 + y.RevSeq));
+                    return y;
+                }).ToList();
+                mergedIdList = mergedIdList.Select(y => y = y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)))).ToList();
+                db.Jobs[jobId1] = mergedJobRevList; // add merged list to the jobs
+                db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { y.Id = jobId1; return y; }).ToList();
+                db.Jobs[jobId2] = mergedJobRevList;
+                db.Jobs[jobId2] = db.Jobs[jobId2].Select(y => { y.Id = jobId2; return y; }).ToList();
+                db.JobRevs = db.JobRevs.Select(y => 
+                {
+                    if (mergedIdList.Contains(y)) 
+                    {
+                        return y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)));
+                    } 
+                    return y;
+                }).ToList();
                 db.JobRefToJobRevRefs[jobId1] = mergedIdList; // manage references
-                db.JobRefToJobRevRefs[jobId2] = mergedIdList;
+                db.JobRefToJobRevRefs.Remove(jobId2);
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId1"] = jobId1;
                 args["JobId2"] = jobId2;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeJobRevsBasedOnJob",
+                    Action = "MergeJobs",
                     Args = args,
                     When = DateTime.Now,
                 });

@@ -1124,14 +1124,22 @@ namespace LibWorkInstructions
             {
                 List<string> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[jobId1].Contains(y) || db.JobRefToJobRevRefs[jobId2].Contains(y)).ToList(); // create a merged id list and object list
                 List<Job> mergedJobRevList = mergedIdList.Select(y => db.Jobs.Values.First(x => x.Any(z => z.Rev == y)).First(x => x.Rev == y)).ToList();
-                db.Jobs[jobId1] = new List<Job> { db.Jobs[jobId1][0] }; // add merged list to both jobs
-                db.Jobs[jobId1].AddRange(mergedJobRevList);
-                db.Jobs[jobId2] = new List<Job> { db.Jobs[jobId2][0] };
-                db.Jobs[jobId2].AddRange(mergedJobRevList);
-                db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { y.Id = jobId1; y.RevSeq = db.Jobs[jobId1].IndexOf(y); return y; }).ToList(); // reconfigure the job revisions
-                db.Jobs[jobId2] = db.Jobs[jobId2].Select(y => { y.Id = jobId2; y.RevSeq = db.Jobs[jobId2].IndexOf(y); return y; }).ToList();
+                db.Jobs[jobId1] = mergedJobRevList; // add merged list to the job
+                db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { // reconfigure the job revisions
+                    y.Id = jobId1; 
+                    y.RevSeq = db.Jobs[jobId1].IndexOf(y);
+                    y.Rev = y.Rev.Replace(y.Rev[4], (char)(65 + y.RevSeq));
+                    return y; }).ToList();
+                db.JobRevs = db.JobRevs.Select(y => {
+                    if (mergedIdList.Contains(y)) 
+                    {
+                        return y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)));
+                    } 
+                    return y;
+                }).ToList();
+                db.Jobs.Remove(jobId2); // remove the other job, putting all the revisions from both jobs into job1
                 db.JobRefToJobRevRefs[jobId1] = mergedIdList; // manage references
-                db.JobRefToJobRevRefs[jobId2] = mergedIdList;
+                db.JobRefToJobRevRefs.Remove(jobId2);
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId1"] = jobId1;
