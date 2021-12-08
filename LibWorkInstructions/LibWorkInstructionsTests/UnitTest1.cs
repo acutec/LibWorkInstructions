@@ -13,12 +13,6 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void Test1()
-        {
-            Assert.Pass();
-        }
-
-        [Test]
         public void ExampleCallingTheLibrary()
         {
             var n = new LibWorkInstructions.BusinessLogic();
