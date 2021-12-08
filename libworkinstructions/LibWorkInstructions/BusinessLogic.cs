@@ -2003,20 +2003,19 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="workInstruction"></param>
         /// <param name="opId"></param>
-        public void UnlinkWorkInstructionFromJobOp(Guid workInstruction, int opId)
+        public void UnlinkWorkInstructionFromJobOp(Guid revGroup, int opId)
         {
             if (db.Ops.ContainsKey(opId)) // if the op exists in the database
             {
-                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction)) // if the work instruction exists in the database
+                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the work instruction exists in the database
                 {
-                    if (db.OpRefToWorkInstructionRef[opId] == workInstruction) // if the work instruction is linked to the op
+                    if (db.OpRefToWorkInstructionRef[opId] == revGroup) // if the work instruction is linked to the op
                     {
-                        Guid revGroup = db.WorkInstructions.First(y => y.Value[0].Id == workInstruction).Key;
                         db.WorkInstructions[revGroup] = db.WorkInstructions[revGroup].Select(y => { y.OpId = -1; return y; }).ToList(); // unlink the work instruction from the op
                         db.OpRefToWorkInstructionRef.Remove(opId); // manage references
 
                         var args = new Dictionary<string, string>(); // add the event
-                        args["WorkInstruction"] = workInstruction.ToString();
+                        args["RevGroup"] = revGroup.ToString();
                         args["OpId"] = opId.ToString();
                         db.AuditLog.Add(new Event
                         {
