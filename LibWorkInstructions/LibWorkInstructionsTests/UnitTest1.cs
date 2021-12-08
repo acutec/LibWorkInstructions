@@ -882,7 +882,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostClone.Jobs["job2"].Select(y => y.Rev).SequenceEqual(dbPostClone.Jobs["job1"].Select(y => y.Rev)));
             Assert.True(dbPostClone.Jobs["job2"].All(y => y.Id == "job2"));
             Assert.True(dbPostClone.Jobs["job2"].All(y => y.Ops.All(x => x.JobId == "job2")));
-            Assert.True(dbPostClone.JobRefToJobRevRefs["job2"].SequenceEqual(new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev C[1.4.2]", "Rev D[1.2.5]" }));
+            Assert.True(dbPostClone.JobRefToJobRevRefs["job2"].SequenceEqual(new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]"}));
         }
 
         [Test]

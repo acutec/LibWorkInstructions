@@ -1209,7 +1209,7 @@ namespace LibWorkInstructions
                 if(!additive)
                 {
                     db.Jobs[targetJob] = db.Jobs[sourceJob]; // replace the target job revisions with the source job revisions
-                    db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob; return y; }).ToList(); // reconfigure the revisions
+                    db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob; y.Ops = y.Ops.Select(x => { x.JobId = y.Id; return x; }).ToList(); return y; }).ToList(); // reconfigure the revisions
                     db.JobRefToJobRevRefs[targetJob] = db.JobRefToJobRevRefs[sourceJob]; // manage references
                 }
                 else
