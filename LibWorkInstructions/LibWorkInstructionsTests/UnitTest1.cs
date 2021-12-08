@@ -1458,6 +1458,117 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestCloneOpSpecRevsBasedOnOpSpecAdditive()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid groupId3 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            Guid specId3 = Guid.NewGuid();
+            Guid specId4 = Guid.NewGuid();
+            Guid specId5 = Guid.NewGuid();
+            Guid specId6 = Guid.NewGuid();
+            Guid specId7 = Guid.NewGuid();
+            Guid specId8 = Guid.NewGuid();
+            Guid specId9 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId1, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId2, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId3, RevSeq = 2 }
+                    } },
+                    { groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId4, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId5, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId6, RevSeq = 2 }
+                    } },
+                    { groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId7, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId8, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId9, RevSeq = 2 }
+                    } },
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    { groupId1, new List<Guid> { specId1, specId2, specId3 } },
+                    { groupId2, new List<Guid> { specId4, specId5, specId6 } },
+                    { groupId3, new List<Guid> { specId7, specId8, specId9 } }
+                },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {specId1, new List<int>{ 3, 4, 5 } }
+                },
+                OpSpecRevs = new List<Guid> { specId1, specId2, specId3, specId4, specId5, specId6, specId7, specId8, specId9 }
+            };
+
+            n.DataImport(sampleData);
+            n.CloneOpSpecRevsBasedOnOpSpec(groupId1, groupId2, true);
+            var dbPostClone = n.DataExport();
+            Assert.True(dbPostClone.OpSpecs[groupId2].Count == 6);
+            Assert.True(dbPostClone.OpSpecs[groupId1].All(y => dbPostClone.OpSpecs[groupId2].Contains(y)));
+        }
+
+        [Test]
+        public void TestCloneOpSpecRevsBasedOnOpSpecNotAdditive()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid groupId3 = Guid.NewGuid();
+            Guid specId1 = Guid.NewGuid();
+            Guid specId2 = Guid.NewGuid();
+            Guid specId3 = Guid.NewGuid();
+            Guid specId4 = Guid.NewGuid();
+            Guid specId5 = Guid.NewGuid();
+            Guid specId6 = Guid.NewGuid();
+            Guid specId7 = Guid.NewGuid();
+            Guid specId8 = Guid.NewGuid();
+            Guid specId9 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId1, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId2, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId3, RevSeq = 2 }
+                    } },
+                    { groupId2, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId4, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId5, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId6, RevSeq = 2 }
+                    } },
+                    { groupId3, new List<LibWorkInstructions.Structs.OpSpec> {
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId7, RevSeq = 0 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId8, RevSeq = 1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId9, RevSeq = 2 }
+                    } },
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    { groupId1, new List<Guid> { specId1, specId2, specId3 } },
+                    { groupId2, new List<Guid> { specId4, specId5, specId6 } },
+                    { groupId3, new List<Guid> { specId7, specId8, specId9 } }
+                },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {specId1, new List<int>{ 3, 4, 5 } }
+                },
+                OpSpecRevs = new List<Guid> { specId1, specId2, specId3, specId4, specId5, specId6, specId7, specId8, specId9 }
+            };
+
+            n.DataImport(sampleData);
+            n.CloneOpSpecRevsBasedOnOpSpec(groupId1, groupId2, false);
+            var dbPostClone = n.DataExport();
+            Assert.True(dbPostClone.OpSpecs[groupId2].SequenceEqual(dbPostClone.OpSpecs[groupId1]));
+        }
+
+        [Test]
         public void TestCloneOpSpecRevsBasedOnJobOpAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();

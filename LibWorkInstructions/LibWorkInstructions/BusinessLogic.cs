@@ -1922,32 +1922,28 @@ namespace LibWorkInstructions
         /// <param name="sourceOpSpec"></param>
         /// <param name="targetOpSpec"></param>
         /// <param name="additive"></param>
-        public void CloneOpSpecRevsBasedOnOpSpec(Guid sourceOpSpec, Guid targetOpSpec, bool additive)
+        public void CloneOpSpecRevsBasedOnOpSpec(Guid sourceRevGroup, Guid targetRevGroup, bool additive)
         {
-            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(sourceOpSpec) && db.OpSpecRefToOpSpecRevRefs.ContainsKey(targetOpSpec)) // if both op specs exist in the database
+            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(sourceRevGroup) && db.OpSpecRefToOpSpecRevRefs.ContainsKey(targetRevGroup)) // if both op specs exist in the database
             {
-                Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetOpSpec).Key;
-                Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceOpSpec).Key;
                 if (!additive)
                 {
-                    db.OpSpecs[targetRevGroup] = new List<OpSpec> { db.OpSpecs[targetRevGroup][0] }; // replace the revisions in the target op spec with the revisions in the source op spec
-                    db.OpSpecs[targetRevGroup].AddRange(db.OpSpecs[sourceRevGroup].Where(y => db.OpSpecs[sourceRevGroup].IndexOf(y) != 0));
+                    db.OpSpecs[targetRevGroup] = db.OpSpecs[sourceRevGroup]; // replace the revisions in the target op spec with the revisions in the source op spec
                     db.OpSpecs[targetRevGroup] = db.OpSpecs[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; return y; }).ToList(); // reconfigure the revisions
-                    db.OpSpecRefToOpSpecRevRefs[targetOpSpec] = db.OpSpecRefToOpSpecRevRefs[sourceOpSpec]; // manage references
+                    db.OpSpecRefToOpSpecRevRefs[targetRevGroup] = db.OpSpecRefToOpSpecRevRefs[sourceRevGroup]; // manage references
                 }
                 else
                 {
-                    List<Guid> mergedIdList = db.OpSpecRevs.Where(y => db.OpSpecRefToOpSpecRevRefs[targetOpSpec].Contains(y) || db.OpSpecRefToOpSpecRevRefs[sourceOpSpec].Contains(y)).ToList(); // create merged id list and object list
+                    List<Guid> mergedIdList = db.OpSpecRevs.Where(y => db.OpSpecRefToOpSpecRevRefs[targetRevGroup].Contains(y) || db.OpSpecRefToOpSpecRevRefs[sourceRevGroup].Contains(y)).ToList(); // create merged id list and object list
                     List<OpSpec> mergedOpSpecList = mergedIdList.Select(y => db.OpSpecs.Values.First(x => x.Any(z => z.Id == y)).First(x => x.Id == y)).ToList();
-                    db.OpSpecs[targetRevGroup] = new List<OpSpec> { db.OpSpecs[targetRevGroup][0] }; // merge the revisions in the target op spec with the revisions in the source op spec
-                    db.OpSpecs[targetRevGroup].AddRange(mergedOpSpecList);
+                    db.OpSpecs[targetRevGroup] = mergedOpSpecList; // merge the revisions in the target op spec with the revisions in the source op spec
                     db.OpSpecs[targetRevGroup] = db.OpSpecs[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.OpSpecs[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                    db.OpSpecRefToOpSpecRevRefs[targetOpSpec] = mergedIdList; // manage references
+                    db.OpSpecRefToOpSpecRevRefs[targetRevGroup] = mergedIdList; // manage references
                 }
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["SourceOpSpec"] = sourceOpSpec.ToString();
-                args["TargetOpSpec"] = targetOpSpec.ToString();
+                args["SourceRevGroup"] = sourceRevGroup.ToString();
+                args["TargetRevGroup"] = targetRevGroup.ToString();
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
