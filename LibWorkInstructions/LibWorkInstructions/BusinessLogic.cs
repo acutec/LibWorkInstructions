@@ -2044,26 +2044,22 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="workInstruction1"></param>
         /// <param name="workInstruction2"></param>
-        public void MergeWorkInstructionRevs(Guid workInstruction1, Guid workInstruction2)
+        public void MergeWorkInstructionRevs(Guid groupId1, Guid groupId2)
         {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction1) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction2)) // if both work instructions exist in the database
+            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(groupId1) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(groupId2)) // if both rev groups exist in the database
             {
-                List<Guid> mergedIdList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction1].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction2].Contains(y)).ToList(); // create a merged id list and object list
+                List<Guid> mergedIdList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[groupId1].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[groupId2].Contains(y)).ToList(); // create a merged id list and object list
                 List<WorkInstruction> mergedWorkInstructionList = mergedIdList.Select(y => db.WorkInstructions.First(x => x.Value.Any(z => mergedIdList.Contains(y))).Value.First(x => mergedIdList.Contains(y))).ToList();
-                Guid groupId1 = db.WorkInstructions.First(y => y.Value[0].Id == workInstruction1).Key;
-                Guid groupId2 = db.WorkInstructions.First(y => y.Value[0].Id == workInstruction2).Key;
-                db.WorkInstructions[groupId1] = new List<WorkInstruction> { db.WorkInstructions[groupId1][0] }; // add the merged list to the database
-                db.WorkInstructions[groupId1].AddRange(mergedWorkInstructionList);
-                db.WorkInstructions[groupId2] = new List<WorkInstruction> { db.WorkInstructions[groupId2][0] };
-                db.WorkInstructions[groupId2].AddRange(mergedWorkInstructionList);
+                db.WorkInstructions[groupId1] = mergedWorkInstructionList;
+                db.WorkInstructions[groupId2] = mergedWorkInstructionList;
                 db.WorkInstructions[groupId1] = db.WorkInstructions[groupId1].Select(y => { y.IdRevGroup = groupId1; y.RevSeq = db.WorkInstructions[groupId1].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
                 db.WorkInstructions[groupId2] = db.WorkInstructions[groupId2].Select(y => { y.IdRevGroup = groupId2; y.RevSeq = db.WorkInstructions[groupId2].IndexOf(y); return y; }).ToList();
-                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction1] = mergedIdList; // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction2] = mergedIdList;
+                db.WorkInstructionRefToWorkInstructionRevRefs[groupId1] = mergedIdList; // manage references
+                db.WorkInstructionRefToWorkInstructionRevRefs[groupId2] = mergedIdList;
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["WorkInstruction1"] = workInstruction1.ToString();
-                args["WorkInstruction2"] = workInstruction2.ToString();
+                args["GroupId1"] = groupId1.ToString();
+                args["GroupId2"] = groupId2.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "MergeWorkInstructionRevs",
