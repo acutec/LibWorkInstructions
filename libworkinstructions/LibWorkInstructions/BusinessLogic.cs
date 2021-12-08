@@ -2219,7 +2219,7 @@ namespace LibWorkInstructions
         /// <param name="jobRev"></param>
         /// <param name="opId"></param>
         /// <returns></returns>
-        public object[] DisplayLatestRevisionOfWorkInstruction(string jobId, string jobRev, string opService)
+        public string[] DisplayLatestRevisionOfWorkInstruction(string jobId, string jobRev, string opService)
         {
             if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
@@ -2227,11 +2227,11 @@ namespace LibWorkInstructions
                 {
                     if (db.Jobs[jobId].First(y => y.RevPlan == jobRev).Ops.Any(y => y.OpService == opService)) // if the job revision has the op
                     {
-                        object[] data = new object[3];
+                        string[] data = new string[3];
                         int opId = db.Jobs[jobId].First(y => y.RevPlan == jobRev).Ops.First(y => y.OpService == opService).Id;
-                        data[0] = db.WorkInstructions.Values.First(y => y.Last().Id == db.WorkInstructionRefToWorkInstructionRevRefs[db.OpRefToWorkInstructionRef[opId]].Last()).Last();
-                        data[1] = db.Jobs[jobId].First(y => y.RevPlan == jobRev).QualityClauses;
-                        data[2] = db.OpSpecs.Where(y => db.OpRefToOpSpecRevRefs[opId].Contains(y.Key)).Select(y => y.Value).ToList();
+                        data[0] = JsonSerializer.Serialize(db.WorkInstructions.Values.First(y => y.Last().Id == db.WorkInstructionRefToWorkInstructionRevRefs[db.OpRefToWorkInstructionRef[opId]].Last()).Last());
+                        data[1] = JsonSerializer.Serialize(db.Jobs[jobId].First(y => y.RevPlan == jobRev).QualityClauses);
+                        data[2] = JsonSerializer.Serialize(db.OpSpecRevs.Where(y => db.OpRefToOpSpecRevRefs[opId].Contains(y)).Select(y => db.OpSpecs.Values.First(x => x.Any(z => z.Id == y)).First(x => x.Id == y)).ToList());
                         return data;
                     }
                     else
