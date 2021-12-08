@@ -1846,6 +1846,81 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestMergeJobOpsBasedOnJobRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    { "job1", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job { Id = "job1", Rev = "Rev A[1.2.3]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1" },
+                            new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1" },
+                            new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1" },
+                        } },
+                        new LibWorkInstructions.Structs.Job { Id = "job1", Rev = "Rev B[1.2.3]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1" },
+                            new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1" },
+                            new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1" },
+                        } }
+                    }
+                    },
+                    { "job2", new List<LibWorkInstructions.Structs.Job>
+                    {
+                        new LibWorkInstructions.Structs.Job { Id = "job2", Rev = "Rev A[1.4.2]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2" },
+                            new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2" },
+                            new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2" },
+                        } },
+                        new LibWorkInstructions.Structs.Job { Id = "job2", Rev = "Rev B[1.2.5]", Ops = new List<LibWorkInstructions.Structs.Op> {
+                            new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2" },
+                            new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2" },
+                            new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2" },
+                        } }
+                    }
+                    }
+                },
+                JobRevs = new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev A[1.4.2]", "Rev B[1.2.5]" },
+                JobRefToJobRevRefs = new Dictionary<string, List<string>>
+                {
+                    { "job1", new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]" } },
+                    { "job2", new List<string> { "Rev A[1.4.2]", "Rev B[1.2.5]" } }
+                },
+                JobRevRefToOpRefs = new Dictionary<string, List<int>>
+                {
+                    { "Rev A[1.2.3]", new List<int>{ 1, 2, 3 } },
+                    { "Rev B[1.2.3]", new List<int>{ 4, 5, 6 } },
+                    { "Rev A[1.4.2]", new List<int>{ 7, 8, 9 } },
+                    { "Rev B[1.2.5]", new List<int>{ 10, 11, 12 } },
+                },
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"} },
+                    {2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"} },
+                    {3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"} },
+                    {4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"} },
+                    {5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"} },
+                    {6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"} },
+                    {7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"} },
+                    {8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"} },
+                    {9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"} },
+                    {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"} },
+                    {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"} },
+                    {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"} },
+                }
+            };
+            n.DataImport(sampleData);
+            n.MergeJobOpsBasedOnJobRev("Rev A[1.2.3]", "Rev B[1.2.3]");
+            var dbPostMerge = n.DataExport();
+            Assert.True(dbPostMerge.Jobs["job1"][0].Ops.Count == 6);
+            Assert.True(dbPostMerge.Jobs["job1"][1].Ops.Count == 6);
+            Assert.True(dbPostMerge.JobRevRefToOpRefs["Rev A[1.2.3]"].Count == 6);
+            Assert.True(dbPostMerge.JobRevRefToOpRefs["Rev B[1.2.3]"].Count == 6);
+        }
+
+        [Test]
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
