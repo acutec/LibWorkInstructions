@@ -3221,5 +3221,80 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostDelete.JobRevRefToOpRefs["jobRev2"].Count == 1);
             Assert.True(dbPostDelete.JobRevRefToOpRefs["jobRev1"].Count == 2);
         }
+
+        [Test]
+        public void TestPullQualityClausesFromJob()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid clauseId1 = Guid.NewGuid();
+            Guid clauseId2 = Guid.NewGuid();
+            Guid clauseId3 = Guid.NewGuid();
+            Guid clauseId4 = Guid.NewGuid();
+            Guid clauseId5 = Guid.NewGuid();
+            Guid clauseId6 = Guid.NewGuid();
+            Guid clauseId7 = Guid.NewGuid();
+            Guid clauseId8 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
+                {
+                    {"job1-cust1", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job {RevPlan = "plan1", RevSeq = 0, Id = "job1", Rev = "job1-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},}},
+                        new LibWorkInstructions.Structs.Job {RevPlan = "plan2", RevSeq = 1, Id = "job1", Rev = "job1-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId3},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId4}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
+                                    new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},} } } },
+                    {"job2-cust2", new List<LibWorkInstructions.Structs.Job>{
+                        new LibWorkInstructions.Structs.Job {RevSeq = 0, Id = "job2", Rev = "job2-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId5},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId6}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"},}},
+                        new LibWorkInstructions.Structs.Job {RevSeq = 1, Id = "job2", Rev = "job2-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId7},
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId8}}, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                    new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"},
+                                    new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"},}} } },
+                },
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"}},
+                    {2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"}},
+                    {3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"}},
+                    {4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"}},
+                    {5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"}},
+                    {6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"}},
+                    {7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"}},
+                    {8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"}},
+                    {9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"}},
+                    {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"}},
+                    {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"}},
+                    {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"}}
+                },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
+                },
+            };
+            n.DataImport(sampleData);
+            var qualityClauses = n.PullQualityClausesFromJob("job1", "cust1", "plan1");
+            Assert.True(qualityClauses.SequenceEqual(new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
+                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}));
+        }
     }
 }
