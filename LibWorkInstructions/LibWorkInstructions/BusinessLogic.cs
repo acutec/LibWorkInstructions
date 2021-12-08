@@ -1962,20 +1962,19 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="workInstruction"></param>
         /// <param name="opId"></param>
-        public void LinkWorkInstructionToJobOp(Guid workInstruction, int opId)
+        public void LinkWorkInstructionToJobOp(Guid revGroup, int opId)
         {
             if (db.Ops.ContainsKey(opId)) // if the op exists in the database
             {
-                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction)) // if the work instruction exists in the database
+                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the work instruction exists in the database
                 {
                     if (!db.OpRefToWorkInstructionRef.ContainsKey(opId)) // if op isn't already linked to a work instruction
                     {
-                        Guid revGroup = db.WorkInstructions.First(y => y.Value[0].Id == workInstruction).Key;
                         db.WorkInstructions[revGroup] = db.WorkInstructions[revGroup].Select(y => { y.OpId = opId; return y; }).ToList(); // link the work instruction to the op
-                        db.OpRefToWorkInstructionRef[opId] = workInstruction; // manage references
+                        db.OpRefToWorkInstructionRef[opId] = revGroup; // manage references
 
                         var args = new Dictionary<string, string>(); // add the event
-                        args["WorkInstruction"] = workInstruction.ToString();
+                        args["RevGroup"] = revGroup.ToString();
                         args["OpId"] = opId.ToString();
                         db.AuditLog.Add(new Event
                         {

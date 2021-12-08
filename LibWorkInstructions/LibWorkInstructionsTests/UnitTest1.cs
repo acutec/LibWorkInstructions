@@ -1619,6 +1619,60 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestLinkWorkInstructionToJobOp()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid workId1 = Guid.NewGuid();
+            Guid workId2 = Guid.NewGuid();
+            Guid workId3 = Guid.NewGuid();
+            Guid workId4 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    { 1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1" } },
+                    { 2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1" } },
+                    { 3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1" } },
+                    { 4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1" } },
+                    { 5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1" } },
+                    { 6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1" } },
+                    { 7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2" } },
+                    { 8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2" } },
+                    { 9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2" } },
+                    { 10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2" } },
+                    { 11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2" } },
+                    { 12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2" } },
+                },
+                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    { groupId1, new List<Guid>() },
+                    { groupId2, new List<Guid>() },
+                },
+                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId1, IdRevGroup = groupId1 },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId2, IdRevGroup = groupId1 } } },
+                    { groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId3, IdRevGroup = groupId2 },
+                        new LibWorkInstructions.Structs.WorkInstruction {
+                            Id = workId4, IdRevGroup = groupId2 } } },
+                },
+                OpRefToWorkInstructionRef = new Dictionary<int, Guid>()
+            };
+            n.DataImport(sampleData);
+            n.LinkWorkInstructionToJobOp(groupId1, 1);
+            var dbPostLink = n.DataExport();
+            Assert.True(dbPostLink.WorkInstructions[groupId1].All(y => y.OpId == 1));
+            Assert.True(dbPostLink.OpRefToWorkInstructionRef[1] == groupId1);
+        }
+
+        [Test]
         public void TestCreateQualityClause()
         {
             var n = new LibWorkInstructions.BusinessLogic();
