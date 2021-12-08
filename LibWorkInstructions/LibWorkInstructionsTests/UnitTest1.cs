@@ -2067,6 +2067,72 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestLinkJobOpAndOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid opSpecRev1 = Guid.NewGuid();
+            Guid opSpecRev2 = Guid.NewGuid();
+            Guid opSpecRev3 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecRevs = new List<Guid> { opSpecRev1, opSpecRev2, opSpecRev3 },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {opSpecRev1, new List<int>{1, 2, 3} },
+                    {opSpecRev2, new List<int>{4, 2, 6} },
+                    {opSpecRev3, new List<int>{1, 3, 5} },
+                },
+                OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>
+                {
+                    {1, new List<Guid>{ opSpecRev1, opSpecRev3} },
+                    {2, new List<Guid>{ opSpecRev1, opSpecRev2} },
+                    {3, new List<Guid>{ opSpecRev1, opSpecRev3} },
+                    {4, new List<Guid>{ opSpecRev2 } },
+                    {5, new List<Guid>{ opSpecRev3 } },
+                    {6, new List<Guid>{ opSpecRev2 } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.LinkJobOpAndOpSpecRev(1, opSpecRev2);
+            var dbPostLink = n.DataExport();
+            Assert.True(dbPostLink.OpSpecRevRefToOpRefs[opSpecRev2].Contains(1));
+            Assert.True(dbPostLink.OpRefToOpSpecRevRefs[1].Contains(opSpecRev2));
+        }
+
+        [Test]
+        public void TestUnlinkJobOpAndOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid opSpecRev1 = Guid.NewGuid();
+            Guid opSpecRev2 = Guid.NewGuid();
+            Guid opSpecRev3 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                OpSpecRevs = new List<Guid> { opSpecRev1, opSpecRev2, opSpecRev3 },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {opSpecRev1, new List<int>{1, 2, 3} },
+                    {opSpecRev2, new List<int>{4, 2, 6} },
+                    {opSpecRev3, new List<int>{1, 3, 5} },
+                },
+                OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>
+                {
+                    {1, new List<Guid>{ opSpecRev1, opSpecRev3} },
+                    {2, new List<Guid>{ opSpecRev1, opSpecRev2} },
+                    {3, new List<Guid>{ opSpecRev1, opSpecRev3} },
+                    {4, new List<Guid>{ opSpecRev2 } },
+                    {5, new List<Guid>{ opSpecRev3 } },
+                    {6, new List<Guid>{ opSpecRev2 } }
+                }
+            };
+            n.DataImport(sampleData);
+            n.UnlinkJobOpAndOpSpecRev(1, opSpecRev1);
+            var dbPostLink = n.DataExport();
+            Assert.False(dbPostLink.OpSpecRevRefToOpRefs[opSpecRev1].Contains(1));
+            Assert.False(dbPostLink.OpRefToOpSpecRevRefs[1].Contains(opSpecRev1));
+        }
+
+        [Test]
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
