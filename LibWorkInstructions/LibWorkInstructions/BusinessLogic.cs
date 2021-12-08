@@ -2169,15 +2169,15 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="workInstruction"></param>
         /// <returns></returns>
-        public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(Guid workInstruction)
+        public List<WorkInstruction> DisplayPriorRevisionsOfWorkInstruction(Guid revGroup)
         {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction)) // if the work instruction exists in the database
+            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                return db.WorkInstructions[db.WorkInstructions.First(y=> y.Value[0].Id == workInstruction).Key];
+                return db.WorkInstructions[revGroup];
             }
             else
             {
-                throw new Exception("Work instruction doesn't exist in the database");
+                throw new Exception("Rev group doesn't exist in the database");
             }
         }
         /// <summary>
@@ -2185,15 +2185,15 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="qualityClause"></param>
         /// <returns></returns>
-        public List<QualityClause> DisplayPriorRevisionsOfQualityClauses(Guid qualityClause)
+        public List<QualityClause> DisplayPriorRevisionsOfQualityClauses(Guid revGroup)
         {
-            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(qualityClause)) // if the quality clause exists in the database
+            if (db.QualityClauseRefToQualityClauseRevRefs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                return db.QualityClauses[db.QualityClauses.First(y => y.Value[0].Id == qualityClause).Key];
+                return db.QualityClauses[revGroup];
             }
             else
             {
-                throw new Exception("Quality clause doesn't exist in the database");
+                throw new Exception("Rev group doesn't exist in the database");
             }
         }
         /// <summary>
@@ -2201,15 +2201,15 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opSpec"></param>
         /// <returns></returns>
-        public List<OpSpec> DisplayPriorRevisionsOfSpecs(Guid opSpec)
+        public List<OpSpec> DisplayPriorRevisionsOfSpecs(Guid revGroup)
         {
-            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(opSpec)) // if the op spec exists in the database
+            if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(revGroup)) // if the rev group exists in the database
             {
-                return db.OpSpecs[db.OpSpecs.First(y => y.Value[0].Id == opSpec).Key];
+                return db.OpSpecs[revGroup];
             }
             else
             {
-                throw new Exception("Op spec doesn't exist in the database");
+                throw new Exception("Rev group doesn't exist in the database");
             }
         }
         /// <summary>
@@ -2219,19 +2219,24 @@ namespace LibWorkInstructions
         /// <param name="jobRev"></param>
         /// <param name="opId"></param>
         /// <returns></returns>
-        public WorkInstruction DisplayLatestRevisionOfWorkInstruction(string jobId, string jobRev, int opId)
+        public object[] DisplayLatestRevisionOfWorkInstruction(string jobId, string jobRev, string opService)
         {
             if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
-                if (db.JobRefToJobRevRefs[jobId].Contains(jobRev)) // if the job has the revision
+                if (db.Jobs[jobId].Any(y => y.RevPlan == jobRev)) // if the job has the revision
                 {
-                    if (db.JobRevRefToOpRefs[jobRev].Contains(opId)) // if the job revision has the op
+                    if (db.Jobs[jobId].First(y => y.RevPlan == jobRev).Ops.Any(y => y.OpService == opService)) // if the job revision has the op
                     {
-                        return db.WorkInstructions.Values.First(y => y.Last().Id == db.WorkInstructionRefToWorkInstructionRevRefs[db.OpRefToWorkInstructionRef[opId]].Last()).Last();
+                        object[] data = new object[3];
+                        int opId = db.Jobs[jobId].First(y => y.RevPlan == jobRev).Ops.First(y => y.OpService == opService).Id;
+                        data[0] = db.WorkInstructions.Values.First(y => y.Last().Id == db.WorkInstructionRefToWorkInstructionRevRefs[db.OpRefToWorkInstructionRef[opId]].Last()).Last();
+                        data[1] = db.Jobs[jobId].First(y => y.RevPlan == jobRev).QualityClauses;
+                        data[2] = db.OpSpecs.Where(y => db.OpRefToOpSpecRevRefs[opId].Contains(y.Key)).Select(y => y.Value).ToList();
+                        return data;
                     }
                     else
                     {
-                        throw new Exception("Job revision doesn't have the op");
+                        throw new Exception("Job revision doesn't have the op service");
                     }
                 }
                 else
