@@ -2133,6 +2133,39 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
+        public void TestMergeJobOpsBasedOnOpSpecRev()
+        {
+            var n = new LibWorkInstructions.BusinessLogic();
+            Guid opSpecRev1 = Guid.NewGuid();
+            Guid opSpecRev2 = Guid.NewGuid();
+            Guid opSpecRev3 = Guid.NewGuid();
+            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
+            {
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    {1, new LibWorkInstructions.Structs.Op{Id = 1} },
+                    {2, new LibWorkInstructions.Structs.Op{Id = 2} },
+                    {3, new LibWorkInstructions.Structs.Op{Id = 3} },
+                    {4, new LibWorkInstructions.Structs.Op{Id = 4} },
+                    {5, new LibWorkInstructions.Structs.Op{Id = 5} },
+                    {6, new LibWorkInstructions.Structs.Op{Id = 6} }
+                },
+                OpSpecRevs = new List<Guid> { opSpecRev1, opSpecRev2, opSpecRev3 },
+                OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {opSpecRev1, new List<int>{1, 2, 3} },
+                    {opSpecRev2, new List<int>{4, 2, 6} },
+                    {opSpecRev3, new List<int>{1, 3, 5} },
+                }
+            };
+            n.DataImport(sampleData);
+            n.MergeJobOpsBasedOnOpSpecRev(opSpecRev1, opSpecRev2);
+            var dbPostMerge = n.DataExport();
+            Assert.True(dbPostMerge.OpSpecRevRefToOpRefs[opSpecRev1].Count == 5);
+            Assert.True(dbPostMerge.OpSpecRevRefToOpRefs[opSpecRev2].Count == 5);
+        }
+
+        [Test]
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
