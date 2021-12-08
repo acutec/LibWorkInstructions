@@ -1966,7 +1966,7 @@ namespace LibWorkInstructions
         {
             if (db.Ops.ContainsKey(opId)) // if the op exists in the database
             {
-                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the work instruction exists in the database
+                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the rev group exists in the database
                 {
                     if (!db.OpRefToWorkInstructionRef.ContainsKey(opId)) // if op isn't already linked to a work instruction
                     {
@@ -1990,7 +1990,7 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    throw new Exception("The work instruction doesn't exist in the database");
+                    throw new Exception("The rev group doesn't exist in the database");
                 }
             }
             else
@@ -2007,7 +2007,7 @@ namespace LibWorkInstructions
         {
             if (db.Ops.ContainsKey(opId)) // if the op exists in the database
             {
-                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the work instruction exists in the database
+                if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if the rev group exists in the database
                 {
                     if (db.OpRefToWorkInstructionRef[opId] == revGroup) // if the work instruction is linked to the op
                     {
@@ -2031,7 +2031,7 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    throw new Exception("The work instruction doesn't exist in the database");
+                    throw new Exception("The rev group doesn't exist in the database");
                 }
             }
             else
@@ -2069,7 +2069,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("One or both of the work instructions doesn't exist in the database");
+                throw new Exception("One or both of the rev groups doesn't exist in the database");
             }
         }
         /// <summary>
@@ -2077,23 +2077,22 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="workInstructionRev"></param>
         /// <param name="workInstruction"></param>
-        public void SplitWorkInstructionRev(Guid workInstructionRev, Guid workInstruction)
+        public void SplitWorkInstructionRev(Guid revGroup, Guid workInstructionRev)
         {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(workInstruction)) // if work instruction exists in the database
+            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(revGroup)) // if rev group exists in the database
             {
-                if (db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Contains(workInstructionRev)) // if the work instruction has the revision
+                if (db.WorkInstructionRefToWorkInstructionRevRefs[revGroup].Contains(workInstructionRev)) // if the work instruction has the revision
                 {
-                    Guid revGroup = db.WorkInstructions.First(y => y.Value[0].Id == workInstruction).Key;
                     int newRevPosition = db.WorkInstructions[revGroup].Count;
                     db.WorkInstructions[revGroup].Add(db.WorkInstructions[revGroup].First(y => y.Id == workInstructionRev)); // split the revision in the database
                     db.WorkInstructions[revGroup][newRevPosition].Id = Guid.NewGuid(); // configure the new revision
                     db.WorkInstructions[revGroup][newRevPosition].RevSeq = newRevPosition;
                     db.WorkInstructionRevs.Add(db.WorkInstructions[revGroup][newRevPosition].Id); // add the new revision to the database
-                    db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction].Add(db.WorkInstructions[revGroup][newRevPosition].Id); // manage references
+                    db.WorkInstructionRefToWorkInstructionRevRefs[revGroup].Add(db.WorkInstructions[revGroup][newRevPosition].Id); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
+                    args["RevGroup"] = revGroup.ToString();
                     args["WorkInstructionRev"] = workInstructionRev.ToString();
-                    args["WorkInstruction"] = workInstruction.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "SplitWorkInstructionRev",
@@ -2108,7 +2107,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("The work instruction doesn't exist in the database");
+                throw new Exception("The rev group doesn't exist in the database");
             }
         }
         /// <summary>
