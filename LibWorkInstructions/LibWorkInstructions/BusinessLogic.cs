@@ -1092,24 +1092,17 @@ namespace LibWorkInstructions
             {
                 if (db.WorkInstructions[groupId].Any(y => y.Id == workInstructionRev)) // if the work instruction revision is in the rev group
                 {
-                    if (db.WorkInstructions[groupId][0].Id != workInstructionRev) // if the id indeed refers to a revision, not an original work instruction
-                    {
-                        db.WorkInstructions[groupId][db.WorkInstructions[groupId].FindIndex(y => y.Id == workInstructionRev)].Active = false; // deactivate the work instruction revision
+                    db.WorkInstructions[groupId][db.WorkInstructions[groupId].FindIndex(y => y.Id == workInstructionRev)].Active = false; // deactivate the work instruction revision
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["GroupId"] = groupId.ToString();
-                        args["WorkInstructionRev"] = workInstructionRev.ToString();
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "DeactivateWorkInstructionRev",
-                            Args = args,
-                            When = DateTime.Now
-                        });
-                    }
-                    else
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["GroupId"] = groupId.ToString();
+                    args["WorkInstructionRev"] = workInstructionRev.ToString();
+                    db.AuditLog.Add(new Event
                     {
-                        throw new Exception("The id refers to an original work instruction, not a revision of one");
-                    }
+                        Action = "DeactivateWorkInstructionRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
                 }
                 else
                 {
