@@ -1577,7 +1577,7 @@ namespace LibWorkInstructions
                 {
                     string job = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key; // unlink the op from the job revision
                     int revIndex = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev);
-                    db.Jobs[job][revIndex].Ops.Remove(db.Ops[opId]);
+                    db.Jobs[job][revIndex].Ops.Remove(db.Jobs[job][revIndex].Ops.First(y => y.Id == opId));
                     db.JobRevRefToOpRefs[jobRev].Remove(opId); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
