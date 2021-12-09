@@ -99,7 +99,7 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.DeleteJob("job1");
             var dbPostDelete = n.DataExport();
-            Assert.True(dbPostDelete.Jobs.Count == 0);
+            Assert.True(dbPostDelete.Jobs.Count == 1);
             Assert.True(dbPostDelete.JobRefToJobRevRefs.Count == 0);
             Assert.True(dbPostDelete.JobRevRefToOpRefs.Count == 0);
             Assert.True(dbPostDelete.QualityClauseRevRefToJobRevRefs[clauseRev1].Count == 1);
