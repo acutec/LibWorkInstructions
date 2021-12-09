@@ -807,6 +807,20 @@ namespace LibWorkInstructionsTests
                 {
                     { "job1", new List<string>{ "Rev A[1.2.3]", "Rev B[1.2.3]" } },
                     { "job2", new List<string>{ "Rev A[1.4.2]", "Rev B[1.2.5]" } }
+                },
+                JobRevRefToOpRefs = new Dictionary<string, List<int>>
+                {
+                    {"Rev A[1.2.3]", new List<int>{1, 2, 3} },
+                    {"Rev B[1.2.3]", new List<int>{4, 5, 6} },
+                    {"Rev A[1.4.2]", new List<int>{7, 8, 9} },
+                    {"Rev B[1.2.5]", new List<int>{10, 11, 12} }
+                },
+                JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>
+                {
+                    {"Rev A[1.2.3]", new List<Guid>() },
+                    {"Rev B[1.2.3]", new List<Guid>() },
+                    {"Rev A[1.4.2]", new List<Guid>() },
+                    {"Rev B[1.2.5]", new List<Guid>() },
                 }
             };
             n.DataImport(sampleData);
