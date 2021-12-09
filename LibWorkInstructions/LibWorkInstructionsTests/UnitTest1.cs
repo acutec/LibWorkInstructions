@@ -1607,6 +1607,8 @@ namespace LibWorkInstructionsTests
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpSpecs[groupId2].Count == 6);
             Assert.True(dbPostClone.OpSpecs[groupId1].All(y => dbPostClone.OpSpecs[groupId2].Contains(y)));
+            Assert.True(dbPostClone.OpSpecs[groupId2].All(y => y.IdRevGroup == groupId2));
+            Assert.True(dbPostClone.OpSpecs[groupId2].All(y => y.RevSeq == dbPostClone.OpSpecs[groupId2].IndexOf(y)));
         }
 
         [Test]
