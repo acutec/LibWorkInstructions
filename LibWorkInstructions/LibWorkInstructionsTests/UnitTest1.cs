@@ -3524,14 +3524,17 @@ namespace LibWorkInstructionsTests
                 {
                     {specId1, new List<int>{4,5,6} },
                     {specId2, new List<int>{5,6,7} }
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid>{ specId1, specId2} }
                 }
             };
 
             n.DataImport(sampleData);
             var specList = n.DisplayPriorRevisionsOfSpecs(groupId1);
-            Assert.True(specList.SequenceEqual(new List<LibWorkInstructions.Structs.OpSpec> {
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId1, Name = "spec1", Active = true},
-                        new LibWorkInstructions.Structs.OpSpec{Id = specId2, Name = "spec2", Active = true} }));
+            Assert.True(specList[0].Id == specId1);
+            Assert.True(specList[1].Id == specId2);
         }
 
         [Test]
