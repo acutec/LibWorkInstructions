@@ -93,7 +93,24 @@ Revisions for a specific Job.  Many Revisions can exist to one Job, but only one
   - **Description:**
     - Duplicate the selected Job and Job Revision into a new entity, if they both exist.
 
-### Linking Methods
+**CloneJobRevBasedOnJobOps()**
+  - **Parameters:**
+    - string: sourceJobRev
+    - string: targetJobRev
+    - bool: additive
+  - **Description:**
+    - Clone the content of the `sourceJobRev` into the `targetJobRev`, if they exist.
+    - Data transfer behaves differently depending on the `additive` parameter.
+      - Data will be added instead of overwritten if `additive` is true
+
+**MergeJobRevBasedOnJobOps()**
+  - **Parameters:**
+    - string: jobRev1
+    - string: jobRev2
+  - **Description:**
+    - Merge the content of `jobRev1` and `jobRev2` depending on their `JobOps`, if they exist.
+
+### Links
 
 **LinkJobOpAndJobRev():**
   - **Parameters:**
@@ -193,6 +210,23 @@ Revision to a specific `QualityClause`, many `QualityClauseRevs` to a singular `
   - **Description:**
     - Duplicate the selected `QualityClause` and `QualityClauseRev` into a new entity, if they both exist.
 
+**CloneJobRevBasedOnQualityClauseRevs():**
+  - **Parameters:**
+    - string: sourceJobRev
+    - string: targetJobRev
+    - bool: additive
+  - **Description:**
+  - Clone the content of the `sourceJobRev` into the `targetJobRev`, if they exist.
+    - Data transfer behaves differently depending on the `additive` parameter.
+      - Data will be added instead of overwritten if `additive` is true
+
+**MergeJobRevsBasedOnQualityClauseRevs():**
+  - **Parameters:**
+    - string: jobRev1
+    - string: jobRev2
+  - **Description:**
+    - Merge the selected `JobRevs` into a new entity, if they both exist.
+
 ### Links
 
 **LinkJobRevAndQualityClauseRev():**
@@ -243,11 +277,184 @@ Defines a specific quality standard that a given part within a job must adhere t
 
 ## Operation Spec Revs (OpSpecRevs)
 
+### Description
+Revision for selected `OpSpecs`
+
+### Methods
+
+**CreateOpSpecRev():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: sourceSpecRev
+    - string: name
+  - **Description:**
+    - Create `OpSpecRev` and link it to selected `OpSpec` if they both exist.
+
+**CreateOpSpecRev():**
+  - **Parameters:**
+    - OpSpec: newSpecRev
+  - **Description:**
+    - Create `OpSpecRev` if it doesn't already exist.
+
+**UpdateOpSpecRev():**
+  - **Parameters:**
+    - OpSpec: newSpecRev
+  - **Description:**
+    - Change `OpSpecRev` to `OpSpecRev` parameter if it exists.
+
+**ActivateQualityClause():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: specRev
+  - **Description:**
+    - Changes the active status of the selected `OpSpecRev` to True, if it exists.
+
+**DeactivateQualityClause():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: specRev
+  - **Description:**
+    - Changes the active status of the selected `OpSpecRev` to False, if it exists.
+
+**SplitQualityClauseRev():**
+  - **Parameters:**
+    - guid: revGroup
+    - guid: opSpecRev
+  - **Description:**
+    - Duplicate the selected `OpSpec` and `OpSpecRev` into a new entity, if they both exist.
+
+### Links
+
+**LinkJobOpAndOpSpecRev():**
+  - **Parameters:**
+    - int: opId
+    - guid: opSpecRev
+  - **Description:**
+    - Links the selected `JobOp` to the selected `OpSpecRev`, if they both exist.
+
+**UnlinkJobRevAndQualityClauseRev():**
+  - **Parameters:**
+    - int: opId
+    - guid: opSpecRev
+  - **Description:**
+    - Unlinks the selected `JobOp` to the selected `OpSpecRev`, if they both exist.
+
 ## Operation Specs (OpSpecs)
+
+### Description
+`OpSpecs` are specifications for their respective `JobOps`
+
+### Methods
+
+**CreateJobOpSpec():**
+  - **Parameters:**
+    - OpSpec: newSpec
+  - **Description:**
+    - Create `OpSpec` if it does not already exist.
+
+**ActivateOpSpec():**
+  - **Parameters:**
+    - guid: revGroup
+  - **Description:**
+    - Change the active status of selected `OpSpec` to True, if it exists.
+
+**DeactivateOpSpec():**
+  - **Parameters:**
+    - guid: revGroup
+  - **Description:**
+    - Change the active status of selected `OpSpec` to False, if it exists.
+
+
 
 ## Work Instructions (WorkInstructions)
 
+### Description
+Holds the information needed to complete a necessary action for the Job
+
+### Methods
+
+**CreateWorkInstruction():**
+  - **Parameters:**
+    - int: op
+  - **Description:**
+    - Create `WorkInstruction` if it doesn't already exist.
+
+**ActivateWorkInstruction():**
+  - **Parameters:**
+    - guid: idRevGroup
+  - **Description:**
+    - Change the active status of selected `WorkInstruction` to True, if it exists.
+
+**DeactivateWorkInstruction():**
+  - **Parameters:**
+    - guid: idRevGroup
+  - **Description:**
+    - Change the active status of selected `WorkInstruction` to False, if it exists.
+
 ## Work Instruction Revs (WorkInstructionRevs)
+
+### Description
+Revision for Work Instructions.  Many revisions to one Work Instruction
+
+### Methods
+
+**CreateWorkInstructionRev():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: sourceWorkInstructionRev
+  - **Description:**
+    - Create `WorkInstructionRev` if it does not exist.
+
+**CreateWorkInstructionRev():**
+  - **Parameters:**
+    - WorkInstruction: newWorkInstruction
+  - **Description:**
+    - Create `WorkInstructionRev` from `WorkInstruction` object if it does not exist.
+
+**UpdateWorkInstructionRev():**
+  - **Parameters:**
+  -  WorkInstruction: newWorkInstructionRev
+  - **Description:**
+    - Update `WorkInstructionRev` to `WorkInstructionRev` in parameter, if it exists.
+
+**ActivateWorkInstruction():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: workInstructionRev
+  - **Description:**
+    - Change the active status of selected `WorkInstructionRev` to True, if it exists.
+
+**DeactivateWorkInstruction():**
+  - **Parameters:**
+    - guid: groupId
+    - guid: workInstructionRev
+  - **Description:**
+    - Change the active status of selected `WorkInstructionRev` to False, if it exists.
+
+**MergeWorkInstructionRev():**
+  - **Parameters:**
+    - guid: groupId1
+    - guid: groupId2
+  - **Description:**
+    - Merge the selected `WorkInstruction` and `WorkInstructionRev` into a new entity, if they both exist.
+
+**SplitWorkInstructionRev():**
+  - **Parameters:**
+    - guid: revGroup
+    - guid: workInstructionRev
+  - **Description:**
+    - Duplicate the selected `WorkInstruction` and `WorkInstructionRev` into a new entity, if they both exist.
+
+**CloneWorkInstructionRev():**
+  - **Parameters:**
+    - guid: sourceRevGroup
+    - guid: targetRevGroup
+    - bool: additive
+  - **Description:**
+  - Clone the content of the `sourceRevGroup` into the `targetRevGroup`, if they exist.
+    - Data transfer behaves differently depending on the `additive` parameter.
+      - Data will be added instead of overwritten if `additive` is true
+
 
 ## Display (Pull)
 
@@ -268,3 +475,15 @@ Collection of all of the display methods found within this library
     - guid: revGroup
   - **Description:**
     - Display all prior revisions of the selected `QualityClause` if it exists.
+
+**DisplayPriorRevisionsOfWorkInstructions():**
+  - **Parameters:**
+    - guid: revGroup
+  - **Description:**
+    - Display all prior revisions of the selected `WorkInstruction` if it exists.
+
+**DisplayLatestRevisionsOfWorkInstruction():**
+  - **Parameters:**
+    - guid: revGroup
+  - **Description:**
+    - Display the latest revisions of the selected `WorkInstruction` if it exists.
