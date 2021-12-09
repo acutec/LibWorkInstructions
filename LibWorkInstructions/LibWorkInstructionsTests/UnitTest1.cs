@@ -3420,11 +3420,8 @@ namespace LibWorkInstructionsTests
             };
             n.DataImport(sampleData);
             var workInstructionList = n.DisplayPriorRevisionsOfWorkInstruction(groupId1);
-            Assert.True(workInstructionList.SequenceEqual(new List<LibWorkInstructions.Structs.WorkInstruction> {
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId1, IdRevGroup = groupId1, OpId = 5 },
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId2, IdRevGroup = groupId1, OpId = 5 } }));
+            Assert.True(workInstructionList[0].Id == workId1);
+            Assert.True(workInstructionList[1].Id == workId2);
         }
 
         [Test]
