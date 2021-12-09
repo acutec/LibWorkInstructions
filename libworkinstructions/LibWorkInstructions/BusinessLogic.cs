@@ -696,6 +696,7 @@ namespace LibWorkInstructions
                     OpSpec newSpec = new OpSpec
                     {
                         Id = Guid.NewGuid(),
+                        IdRevGroup = sourceOpSpec.IdRevGroup,
                         RevSeq = db.OpSpecs[groupId].Count,
                         Name = name
                     };
@@ -950,13 +951,17 @@ namespace LibWorkInstructions
             {
                 if (db.WorkInstructions[groupId].Any(y => y.Id == sourceWorkInstructionRev)) // if the source work instruction revision is in the rev group
                 {
-                    WorkInstruction workInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // configure the work instruction revision
-                    Guid sourceId = workInstruction.Id;
-                    workInstruction.Id = Guid.NewGuid();
-                    workInstruction.RevSeq = db.WorkInstructions[workInstruction.IdRevGroup].Count;
-                    db.WorkInstructions[workInstruction.IdRevGroup].Add(workInstruction); // add the work instruction revision to the database
-                    db.WorkInstructionRevs.Add(workInstruction.Id);
-                    db.WorkInstructionRefToWorkInstructionRevRefs[workInstruction.IdRevGroup].Add(workInstruction.Id); // manage references
+                    WorkInstruction sourceWorkInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // configure the work instruction revision
+                    Guid sourceId = sourceWorkInstruction.Id;
+                    WorkInstruction newWorkInstruction = new WorkInstruction
+                    {
+                        Id = Guid.NewGuid(),
+                        IdRevGroup = sourceWorkInstruction.IdRevGroup,
+                        RevSeq = db.WorkInstructions[sourceWorkInstruction.IdRevGroup].Count,
+                    };
+                    db.WorkInstructions[newWorkInstruction.IdRevGroup].Add(newWorkInstruction); // add the work instruction revision to the database
+                    db.WorkInstructionRevs.Add(newWorkInstruction.Id);
+                    db.WorkInstructionRefToWorkInstructionRevRefs[newWorkInstruction.IdRevGroup].Add(newWorkInstruction.Id); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["GroupId"] = groupId.ToString();
