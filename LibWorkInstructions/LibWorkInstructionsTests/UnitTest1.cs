@@ -156,6 +156,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostCreate.Jobs["job1"].Count == 3);
             Assert.True(dbPostCreate.Jobs["job1"].Last().Rev == jobRev3);
             Assert.True(dbPostCreate.Jobs["job1"].Last().RevSeq == 2);
+            Assert.False(dbPostCreate.Jobs["job1"][0].Rev == dbPostCreate.Jobs["job1"][2].Rev);
         }
 
         [Test]

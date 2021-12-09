@@ -126,10 +126,19 @@ namespace LibWorkInstructions
                 {
                     if (db.Jobs[jobId].Any(y => y.Rev == sourceJobRev)) // if the job has the revision
                     {
-                        Job job = db.Jobs[jobId].First(y => y.Rev == sourceJobRev); // create a new instance of a job revision
-                        job.Rev = newJobRev; // configure the job revision
-                        job.RevSeq = db.Jobs[jobId].Count;
-                        db.Jobs[jobId].Add(job); // add the job revision to the database
+                        Job sourceJob = db.Jobs[jobId].First(y => y.Rev == sourceJobRev); // create a reference to the source job revision
+                        Job newJob = new Job // create and configure the new job revision
+                        {
+                            Id = jobId,
+                            RevCustomer = sourceJob.RevCustomer,
+                            RevPlan = sourceJob.RevPlan,
+                            Rev = newJobRev,
+                            RevSeq = db.Jobs[jobId].Count,
+                            Active = sourceJob.Active,
+                            Ops = sourceJob.Ops,
+                            QualityClauses = sourceJob.QualityClauses
+                        };
+                        db.Jobs[jobId].Add(newJob); // add the job revision to the database
                         db.JobRevs.Add(newJobRev);
                         db.JobRevRefToQualityClauseRevRefs[newJobRev] = db.JobRevRefToQualityClauseRevRefs[sourceJobRev]; // manage the references
                         db.JobRevRefToOpRefs[newJobRev] = db.JobRevRefToOpRefs[sourceJobRev];
