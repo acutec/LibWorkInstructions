@@ -3146,7 +3146,8 @@ namespace LibWorkInstructionsTests
                 {
                     {groupId1, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause1, sampleClause4, sampleClause3} },
                     {groupId2, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause2, sampleClause5, sampleClause6} },
-                }
+                },
+                QualityClauseRevs = new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6}
             };
             n.DataImport(sampleData);
             n.UpdateQualityClauseRev(sampleClause7);

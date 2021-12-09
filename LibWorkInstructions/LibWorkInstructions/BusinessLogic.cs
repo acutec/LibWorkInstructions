@@ -450,23 +450,16 @@ namespace LibWorkInstructions
             {
                 if (db.QualityClauses[newClauseRev.IdRevGroup].Any(y => y.Id == newClauseRev.Id)) // if the rev group has the revision
                 {
-                    if (db.QualityClauses[newClauseRev.IdRevGroup][0].Id != newClauseRev.Id) // if the id indeed refers to a revision, not the original quality clause
-                    {
-                        db.QualityClauses[newClauseRev.IdRevGroup][db.QualityClauses[newClauseRev.IdRevGroup].FindIndex(y => y.Id == newClauseRev.Id)] = newClauseRev; // update the quality clause revision
+                    db.QualityClauses[newClauseRev.IdRevGroup][db.QualityClauses[newClauseRev.IdRevGroup].FindIndex(y => y.Id == newClauseRev.Id)] = newClauseRev; // update the quality clause revision
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["NewClauseRev"] = JsonSerializer.Serialize(newClauseRev);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateQualityClauseRev",
-                            Args = args,
-                            When = DateTime.Now
-                        });
-                    }
-                    else
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["NewClauseRev"] = JsonSerializer.Serialize(newClauseRev);
+                    db.AuditLog.Add(new Event
                     {
-                        throw new Exception("The id refers to an original quality clause, not the rev of one");
-                    }
+                        Action = "UpdateQualityClauseRev",
+                        Args = args,
+                        When = DateTime.Now
+                    });
                 }
                 else
                 {
