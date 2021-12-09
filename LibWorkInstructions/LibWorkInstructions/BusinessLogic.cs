@@ -1882,7 +1882,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opSpecRev"></param>
         /// <param name="opSpec"></param>
-        public void SplitOpSpecRev(Guid opSpecRev, Guid revGroup)
+        public void SplitOpSpecRev(Guid revGroup, Guid opSpecRev)
         {
             if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(revGroup)) // if the op spec exists in the database
             {
@@ -1891,6 +1891,7 @@ namespace LibWorkInstructions
                     int newRevPosition = db.OpSpecs[revGroup].Count;
                     db.OpSpecs[revGroup].Add(db.OpSpecs[revGroup].First(y => y.Id == opSpecRev)); // split the revision in the database
                     db.OpSpecs[revGroup][newRevPosition].Id = Guid.NewGuid(); // configure the new revision
+                    db.OpSpecs[revGroup][newRevPosition].IdRevGroup = revGroup;
                     db.OpSpecs[revGroup][newRevPosition].RevSeq = newRevPosition;
                     db.OpSpecRevs.Add(db.OpSpecs[revGroup][newRevPosition].Id); // add the new revision to the database
                     db.OpSpecRefToOpSpecRevRefs[revGroup].Add(opSpecRev); // manage references
