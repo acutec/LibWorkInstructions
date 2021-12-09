@@ -3285,7 +3285,23 @@ namespace LibWorkInstructionsTests
                 {
                     {"jobRev1", new List<int>{1, 3}},
                     {"jobRev2", new List<int>{2, 3}}
-                }
+                },
+                Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
+                {
+                    {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"} },
+                    {2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"} },
+                    {3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"} },
+                    {4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"} },
+                    {5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"} },
+                    {6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"} },
+                    {7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"} },
+                    {8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"} },
+                    {9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"} },
+                    {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"} },
+                    {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"} },
+                    {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"} },
+                },
+                JobRevs = new List<string> { "jobRev1", "jobRev2"}
             };
             n.DataImport(sampleData);
             n.DeleteJobOp("jobRev2", 3);
