@@ -2114,34 +2114,31 @@ namespace LibWorkInstructions
         /// Clone given WorkInstructionRev into the target WorkInstructionRev if they exist.
         /// Behavior changes depending on the additive parameter.
         /// </summary>
-        /// <param name="sourceWorkInstruction"></param>
-        /// <param name="targetWorkInstruction"></param>
+        /// <param name="sourceRevGroup"></param>
+        /// <param name="targetRevGroup"></param>
         /// <param name="additive"></param>
-        public void CloneWorkInstructionRevs(Guid sourceWorkInstruction, Guid targetWorkInstruction, bool additive)
+        public void CloneWorkInstructionRevs(Guid sourceRevGroup, Guid targetRevGroup, bool additive)
         {
-            Guid targetRevGroup = db.OpSpecs.First(y => y.Value[0].Id == targetWorkInstruction).Key;
-            Guid sourceRevGroup = db.OpSpecs.First(y => y.Value[0].Id == sourceWorkInstruction).Key;
             if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(targetRevGroup) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(sourceRevGroup)) // if both rev groups exist in the database
             {
                 if (!additive)
                 {
                     db.WorkInstructions[targetRevGroup] = db.WorkInstructions[sourceRevGroup]; // replace the revisions in the target work instruction with the revisions in the source work instruction
                     db.WorkInstructions[targetRevGroup] = db.WorkInstructions[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.WorkInstructions[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                    db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction]; // manage references
+                    db.WorkInstructionRefToWorkInstructionRevRefs[targetRevGroup] = db.WorkInstructionRefToWorkInstructionRevRefs[sourceRevGroup]; // manage references
                 }
                 else
                 {
-                    List<Guid> mergedIdList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[sourceWorkInstruction].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction].Contains(y)).ToList();
+                    List<Guid> mergedIdList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[sourceRevGroup].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[targetRevGroup].Contains(y)).ToList();
                     List<WorkInstruction> mergedWorkInstructionList = mergedIdList.Select(y => db.WorkInstructions.Values.First(x => x.Any(z => z.Id == y)).First(x => x.Id == y)).ToList();
-                    db.WorkInstructions[targetRevGroup] = new List<WorkInstruction> { db.WorkInstructions[targetRevGroup][0] }; // merge the revisions in the target work instruction with the revisions in the source work instruction
-                    db.WorkInstructions[targetRevGroup].AddRange(mergedWorkInstructionList);
+                    db.WorkInstructions[targetRevGroup] = mergedWorkInstructionList; // merge the revisions in the target work instruction with the revisions in the source work instruction
                     db.WorkInstructions[targetRevGroup] = db.WorkInstructions[targetRevGroup].Select(y => { y.IdRevGroup = targetRevGroup; y.RevSeq = db.WorkInstructions[targetRevGroup].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                    db.WorkInstructionRefToWorkInstructionRevRefs[targetWorkInstruction] = mergedIdList; // manage references
+                    db.WorkInstructionRefToWorkInstructionRevRefs[targetRevGroup] = mergedIdList; // manage references
                 }
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["SourceWorkInstruction"] = sourceWorkInstruction.ToString();
-                args["TargetWorkInstruction"] = targetWorkInstruction.ToString();
+                args["SourceRevGroup"] = sourceRevGroup.ToString();
+                args["TargetRevGroup"] = targetRevGroup.ToString();
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
@@ -2152,7 +2149,7 @@ namespace LibWorkInstructions
             }
             else
             {
-                throw new Exception("One or both of the work instructions doesn't exist in the database");
+                throw new Exception("One or both of the rev groups doesn't exist in the database");
             }
         }
         /// <summary>
