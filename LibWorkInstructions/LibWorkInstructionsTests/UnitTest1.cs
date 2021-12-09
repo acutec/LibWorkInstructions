@@ -816,7 +816,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestCloneJobRevsAdditive()
+        public void TestCloneJobAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -860,7 +860,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobRevs("job1", "job2", true);
+            n.CloneJob("job1", "job2", true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"].Count == 4);
             Assert.True(dbPostClone.Jobs["job2"][2].Rev == "Rev C[1.4.2]");
@@ -869,7 +869,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestCloneJobRevsNotAdditive()
+        public void TestCloneJobNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -913,7 +913,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobRevs("job1", "job2", false);
+            n.CloneJob("job1", "job2", false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"].Count == 2);
             Assert.True(dbPostClone.Jobs["job2"].Select(y => y.Rev).SequenceEqual(dbPostClone.Jobs["job1"].Select(y => y.Rev)));
@@ -1498,7 +1498,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestCloneOpSpecRevsBasedOnOpSpecAdditive()
+        public void TestCloneOpSpecAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -1547,14 +1547,14 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnOpSpec(groupId1, groupId2, true);
+            n.CloneOpSpec(groupId1, groupId2, true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpSpecs[groupId2].Count == 6);
             Assert.True(dbPostClone.OpSpecs[groupId1].All(y => dbPostClone.OpSpecs[groupId2].Contains(y)));
         }
 
         [Test]
-        public void TestCloneOpSpecRevsBasedOnOpSpecNotAdditive()
+        public void TestCloneOpSpecNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -1603,13 +1603,13 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnOpSpec(groupId1, groupId2, false);
+            n.CloneOpSpec(groupId1, groupId2, false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpSpecs[groupId2].SequenceEqual(dbPostClone.OpSpecs[groupId1]));
         }
 
         [Test]
-        public void TestCloneOpSpecRevsBasedOnJobOpAdditive()
+        public void TestCloneJobOpBasedOnOpSpecRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid specId1 = Guid.NewGuid();
@@ -1627,14 +1627,14 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnJobOp(1, 2, true);
+            n.CloneJobOpBasedOnOpSpecRevs(1, 2, true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].Count == 4);
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[1].All(y => dbPostClone.OpRefToOpSpecRevRefs[2].Contains(y)));
         }
 
         [Test]
-        public void TestCloneOpSpecRevsBasedOnJobOpNotAdditive()
+        public void TestCloneJobOpBasedOnOpSpecRevsNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid specId1 = Guid.NewGuid();
@@ -1652,7 +1652,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneOpSpecRevsBasedOnJobOp(1, 2, false);
+            n.CloneJobOpBasedOnOpSpecRevs(1, 2, false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].Count == 2);
             Assert.True(dbPostClone.OpRefToOpSpecRevRefs[2].SequenceEqual(dbPostClone.OpRefToOpSpecRevRefs[1]));
@@ -1928,7 +1928,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.MergeQualityClauseRevsBasedOnJobRev("job1-A", "job2-C");
+            n.MergeJobRevsBasedOnQualityClauseRevs("job1-A", "job2-C");
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 3);
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][3].QualityClauses));
@@ -2183,7 +2183,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeJobOpsBasedOnJobRev()
+        public void TestMergeJobRevsBasedOnJobOps()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -2249,7 +2249,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.MergeJobOpsBasedOnJobRev("Rev A[1.2.3]", "Rev B[1.2.3]");
+            n.MergeJobRevsBasedOnJobOps("Rev A[1.2.3]", "Rev B[1.2.3]");
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.Jobs["job1"][0].Ops.Count == 6);
             Assert.True(dbPostMerge.Jobs["job1"][1].Ops.Count == 6);
@@ -2258,7 +2258,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestCloneJobOpsBasedOnJobRevAdditive()
+        public void TestCloneJobRevBasedOnJobOpsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -2324,14 +2324,14 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobOpsBasedOnJobRev("Rev A[1.4.2]", "Rev B[1.2.5]", true);
+            n.CloneJobRevBasedOnJobOps("Rev A[1.4.2]", "Rev B[1.2.5]", true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"][1].Ops.Count == 6);
             Assert.True(dbPostClone.JobRevRefToOpRefs["Rev B[1.2.5]"].Count == 6);
         }
 
         [Test]
-        public void TestCloneJobOpsBasedOnJobRevNotAdditive()
+        public void TestCloneJobRevBasedOnJobOpsNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
@@ -2397,7 +2397,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobOpsBasedOnJobRev("Rev A[1.4.2]", "Rev B[1.2.5]", false);
+            n.CloneJobRevBasedOnJobOps("Rev A[1.4.2]", "Rev B[1.2.5]", false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"][1].Ops.Count == 3);
             Assert.True(dbPostClone.JobRevRefToOpRefs["Rev B[1.2.5]"].Count == 3);
@@ -2470,7 +2470,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeJobOpsBasedOnOpSpecRev()
+        public void TestMergeOpSpecRevsBasedOnJobOps()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid opSpecRev1 = Guid.NewGuid();
@@ -2496,14 +2496,14 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.MergeJobOpsBasedOnOpSpecRev(opSpecRev1, opSpecRev2);
+            n.MergeOpSpecRevsBasedOnJobOps(opSpecRev1, opSpecRev2);
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.OpSpecRevRefToOpRefs[opSpecRev1].Count == 5);
             Assert.True(dbPostMerge.OpSpecRevRefToOpRefs[opSpecRev2].Count == 5);
         }
 
         [Test]
-        public void TestCloneJobOpsBasedOnOpSpecRevAdditive()
+        public void TestCloneOpSpecRevBasedOnJobOpsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid opSpecRev1 = Guid.NewGuid();
@@ -2529,13 +2529,13 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobOpsBasedOnOpSpecRev(opSpecRev1, opSpecRev2, true);
+            n.CloneOpSpecRevBasedOnJobOps(opSpecRev1, opSpecRev2, true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpSpecRevRefToOpRefs[opSpecRev2].Count == 5);
         }
 
         [Test]
-        public void TestCloneJobOpsBasedOnOpSpecRevNotAdditive()
+        public void TestCloneOpSpecRevBasedOnJobOpsNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid opSpecRev1 = Guid.NewGuid();
@@ -2561,13 +2561,13 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneJobOpsBasedOnOpSpecRev(opSpecRev1, opSpecRev2, false);
+            n.CloneOpSpecRevBasedOnJobOps(opSpecRev1, opSpecRev2, false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.OpSpecRevRefToOpRefs[opSpecRev2].Count == 3);
         }
 
         [Test]
-        public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
+        public void TestCloneJobRevBasedOnQualityClauseRevsAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
@@ -2626,14 +2626,14 @@ namespace LibWorkInstructionsTests
                 },
             };
             n.DataImport(sampleData);
-            n.CloneQualityClauseRevsBasedOnJobRev("job1-A", "job2-B", true);
+            n.CloneJobRevBasedOnQualityClauseRevs("job1-A", "job2-B", true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"][1].QualityClauses.Count == 4);
             Assert.True(dbPostClone.Jobs["job1"][0].QualityClauses.All(y => dbPostClone.Jobs["job2"][1].QualityClauses.Any(x => x.Id == y.Id)));
         }
 
         [Test]
-        public void TestCloneQualityClauseRevsBasedOnJobRevNotAdditive()
+        public void TestCloneJobRevBasedOnQualityClauseRevsNotAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid clauseId1 = Guid.NewGuid();
@@ -2673,7 +2673,7 @@ namespace LibWorkInstructionsTests
                 }
             };
             n.DataImport(sampleData);
-            n.CloneQualityClauseRevsBasedOnJobRev("job1-A", "job2-B", false);
+            n.CloneJobRevBasedOnQualityClauseRevs("job1-A", "job2-B", false);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"][1].QualityClauses.SequenceEqual(dbPostClone.Jobs["job1"][0].QualityClauses));
             Assert.True(dbPostClone.Jobs["job2"][1].QualityClauses.Count == 2);

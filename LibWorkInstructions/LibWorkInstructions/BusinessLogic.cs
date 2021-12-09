@@ -1205,7 +1205,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJob"></param>
         /// <param name="targetJob"></param>
         /// <param name="additive"></param>
-        public void CloneJobRevs(string sourceJob, string targetJob, bool additive)
+        public void CloneJob(string sourceJob, string targetJob, bool additive)
         {
             if(db.Jobs.ContainsKey(sourceJob) && db.Jobs.ContainsKey(targetJob)) // if both of the jobs exist in the database
             {
@@ -1238,7 +1238,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneJobRevs",
+                    Action = "CloneJob",
                     Args = args,
                     When = DateTime.Now,
                 });
@@ -1335,7 +1335,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev1"></param>
         /// <param name="jobRev2"></param>
-        public void MergeQualityClauseRevsBasedOnJobRev(string jobRev1, string jobRev2)
+        public void MergeJobRevsBasedOnQualityClauseRevs(string jobRev1, string jobRev2)
         {
             if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2)) // if both job revisions exist in the database
             {
@@ -1356,7 +1356,7 @@ namespace LibWorkInstructions
                 args["JobRev2"] = jobRev2;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeQualityClauseRevsBasedOnJobRev",
+                    Action = "MergeJobRevsBasedOnQualityClauseRevs",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1373,7 +1373,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJobRev"></param>
         /// <param name="targetJobRev"></param>
         /// <param name="additive"></param>
-        public void CloneQualityClauseRevsBasedOnJobRev(string sourceJobRev, string targetJobRev, bool additive)
+        public void CloneJobRevBasedOnQualityClauseRevs(string sourceJobRev, string targetJobRev, bool additive)
         {
             if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev)) // if both job revisions exist in the database
             {
@@ -1397,7 +1397,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneQualityClauseRevsBasedOnJobRev",
+                    Action = "CloneJobRevBasedOnQualityClauseRevs",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1606,7 +1606,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev1"></param>
         /// <param name="jobRev2"></param>
-        public void MergeJobOpsBasedOnJobRev(string jobRev1, string jobRev2)
+        public void MergeJobRevsBasedOnJobOps(string jobRev1, string jobRev2)
         {
             if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2)) // if both job revisions exist in the database
             {
@@ -1627,7 +1627,7 @@ namespace LibWorkInstructions
                 args["JobRev2"] = jobRev2;
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeJobOpsBasedOnJobRev",
+                    Action = "MergeJobRevsBasedOnJobOps",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1644,7 +1644,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJobRev"></param>
         /// <param name="targetJobRev"></param>
         /// <param name="additive"></param>
-        public void CloneJobOpsBasedOnJobRev(string sourceJobRev, string targetJobRev, bool additive)
+        public void CloneJobRevBasedOnJobOps(string sourceJobRev, string targetJobRev, bool additive)
         {
             if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev)) // if both job revisions exist in the database
             {
@@ -1673,7 +1673,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneJobOpsBasedOnJobRev",
+                    Action = "CloneJobRevBasedOnJobOps",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1756,7 +1756,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opSpecRev1"></param>
         /// <param name="opSpecRev2"></param>
-        public void MergeJobOpsBasedOnOpSpecRev(Guid opSpecRev1, Guid opSpecRev2)
+        public void MergeOpSpecRevsBasedOnJobOps(Guid opSpecRev1, Guid opSpecRev2)
         {
             if (db.OpSpecRevs.Contains(opSpecRev1) && db.OpSpecRevs.Contains(opSpecRev2)) // if both op spec revisions exist in the database
             {
@@ -1769,7 +1769,7 @@ namespace LibWorkInstructions
                 args["OpSpecRev2"] = opSpecRev2.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "MergeJobOpsBasedOnOpSpecRev",
+                    Action = "MergeOpSpecRevsBasedOnJobOps",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1786,7 +1786,7 @@ namespace LibWorkInstructions
         /// <param name="sourceOpSpecRev"></param>
         /// <param name="targetOpSpecRev"></param>
         /// <param name="additive"></param>
-        public void CloneJobOpsBasedOnOpSpecRev(Guid sourceOpSpecRev, Guid targetOpSpecRev, bool additive)
+        public void CloneOpSpecRevBasedOnJobOps(Guid sourceOpSpecRev, Guid targetOpSpecRev, bool additive)
         {
             if (db.OpSpecRevs.Contains(sourceOpSpecRev) && db.OpSpecRevs.Contains(targetOpSpecRev)) // if both op spec revisions exist in the database
             {
@@ -1805,7 +1805,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneJobOpsBasedOnOpSpecRev",
+                    Action = "CloneOpSpecRevBasedOnJobOps",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1850,7 +1850,7 @@ namespace LibWorkInstructions
         /// <param name="sourceOp"></param>
         /// <param name="targetOp"></param>
         /// <param name="additive"></param>
-        public void CloneOpSpecRevsBasedOnJobOp(int sourceOp, int targetOp, bool additive)
+        public void CloneJobOpBasedOnOpSpecRevs(int sourceOp, int targetOp, bool additive)
         {
             if (db.OpRefToOpSpecRevRefs.ContainsKey(sourceOp) && db.OpRefToOpSpecRevRefs.ContainsKey(targetOp)) // if both ops exist in the database
             {
@@ -1869,7 +1869,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneOpSpecRevsBasedOnJobOp",
+                    Action = "CloneJobOpBasedOnOpSpecRevs",
                     Args = args,
                     When = DateTime.Now
                 });
@@ -1925,7 +1925,7 @@ namespace LibWorkInstructions
         /// <param name="sourceOpSpec"></param>
         /// <param name="targetOpSpec"></param>
         /// <param name="additive"></param>
-        public void CloneOpSpecRevsBasedOnOpSpec(Guid sourceRevGroup, Guid targetRevGroup, bool additive)
+        public void CloneOpSpec(Guid sourceRevGroup, Guid targetRevGroup, bool additive)
         {
             if (db.OpSpecRefToOpSpecRevRefs.ContainsKey(sourceRevGroup) && db.OpSpecRefToOpSpecRevRefs.ContainsKey(targetRevGroup)) // if both op specs exist in the database
             {
@@ -1950,7 +1950,7 @@ namespace LibWorkInstructions
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
-                    Action = "CloneOpSpecRevsBasedOnOpSpec",
+                    Action = "CloneOpSpec",
                     Args = args,
                     When = DateTime.Now
                 });
