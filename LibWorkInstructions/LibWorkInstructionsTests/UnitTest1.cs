@@ -1868,6 +1868,8 @@ namespace LibWorkInstructionsTests
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.WorkInstructions[groupId1].Count == 4);
             Assert.True(dbPostMerge.WorkInstructions[groupId2].Count == 4);
+            Assert.True(dbPostMerge.WorkInstructions[groupId1].All(y => y.IdRevGroup == groupId1));
+            Assert.True(dbPostMerge.WorkInstructions[groupId2].All(y => y.IdRevGroup == groupId2));
         }
 
         [Test]
@@ -2006,6 +2008,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 2);
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][1].QualityClauses));
             Assert.True(dbPostMerge.JobRevRefToQualityClauseRevRefs[jobRev1].SequenceEqual(dbPostMerge.JobRevRefToQualityClauseRevRefs[jobRev5]));
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.All(y => y.RevSeq == dbPostMerge.Jobs["job1"][0].QualityClauses.IndexOf(y)));
         }
 
         [Test]
