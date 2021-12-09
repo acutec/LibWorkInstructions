@@ -3556,71 +3556,72 @@ namespace LibWorkInstructionsTests
             {
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>{
-                        new LibWorkInstructions.Structs.Job {RevPlan = "RevPlan", RevSeq = 0, Id = "job1", Rev = "job1-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}, Ops = new List<LibWorkInstructions.Structs.Op> {
-                                    new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1", OpService = "OpService"},
-                                    new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"},
-                                    new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"},}},
-                        new LibWorkInstructions.Structs.Job {RevSeq = 1, Id = "job1", Rev = "job1-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId3},
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId4}}, Ops = new List<LibWorkInstructions.Structs.Op> {
-                                    new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"},
-                                    new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"},
-                                    new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"},} } } },
-                    {"job2", new List<LibWorkInstructions.Structs.Job>{
-                        new LibWorkInstructions.Structs.Job {RevSeq = 0, Id = "job2", Rev = "job2-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId5},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId6}}, Ops = new List<LibWorkInstructions.Structs.Op> {
-                                    new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"},
-                                    new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"},
-                                    new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"},}},
-                        new LibWorkInstructions.Structs.Job {RevSeq = 1, Id = "job2", Rev = "job2-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId7},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId8}}, Ops = new List<LibWorkInstructions.Structs.Op> {
-                                    new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"},
-                                    new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"},
-                                    new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"},}} } },
+                    { "job1", new List<LibWorkInstructions.Structs.Job> {
+                        new LibWorkInstructions.Structs.Job { RevPlan = "RevPlan", RevSeq = 0, Id = "job1", Rev = "job1-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId1 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId2 } }, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1", OpService = "OpService" },
+                                new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1" },
+                                new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1" }, } },
+                        new LibWorkInstructions.Structs.Job { RevSeq = 1, Id = "job1", Rev = "job1-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId3 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId4 } }, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1" },
+                                new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1" },
+                                new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1" }, } } } },
+                    { "job2", new List<LibWorkInstructions.Structs.Job> {
+                        new LibWorkInstructions.Structs.Job { RevSeq = 0, Id = "job2", Rev = "job2-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId5 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId6 } }, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2" },
+                                new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2" },
+                                new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2" }, } },
+                        new LibWorkInstructions.Structs.Job { RevSeq = 1, Id = "job2", Rev = "job2-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId7 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId8 } }, Ops = new List<LibWorkInstructions.Structs.Op> {
+                                new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2" },
+                                new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2" },
+                                new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2" }, } } } },
                 },
                 Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
                 {
-                    {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"}},
-                    {2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1"}},
-                    {3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1"}},
-                    {4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1"}},
-                    {5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1"}},
-                    {6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1"}},
-                    {7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2"}},
-                    {8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2"}},
-                    {9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2"}},
-                    {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"}},
-                    {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"}},
-                    {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"}}
+                    { 1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1", OpService = "OpService" } },
+                    { 2, new LibWorkInstructions.Structs.Op { Id = 2, JobId = "job1" } },
+                    { 3, new LibWorkInstructions.Structs.Op { Id = 3, JobId = "job1" } },
+                    { 4, new LibWorkInstructions.Structs.Op { Id = 4, JobId = "job1" } },
+                    { 5, new LibWorkInstructions.Structs.Op { Id = 5, JobId = "job1" } },
+                    { 6, new LibWorkInstructions.Structs.Op { Id = 6, JobId = "job1" } },
+                    { 7, new LibWorkInstructions.Structs.Op { Id = 7, JobId = "job2" } },
+                    { 8, new LibWorkInstructions.Structs.Op { Id = 8, JobId = "job2" } },
+                    { 9, new LibWorkInstructions.Structs.Op { Id = 9, JobId = "job2" } },
+                    { 10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2" } },
+                    { 11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2" } },
+                    { 12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2" } }
                 },
                 QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
                 {
-                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1}} },
-                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}} },
+                    { groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId1 } } },
+                    { groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId2 } } },
                 },
                 OpRefToWorkInstructionRef = new Dictionary<int, Guid>
                 {
-                    {1, groupId3}
+                    { 1, groupId3 }
                 },
                 OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>
                 {
-                    {1,  new List<Guid> { specId1, specId2} }
+                    { 1, new List<Guid> { specId1, specId2 } }
                 },
                 OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>>
                 {
-                    {groupId5, new List<LibWorkInstructions.Structs.OpSpec>
+                    { groupId5, new List<LibWorkInstructions.Structs.OpSpec>
                     {
-                        new LibWorkInstructions.Structs.OpSpec {Id = specId1},
-                        new LibWorkInstructions.Structs.OpSpec {Id = specId2}
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId1 },
+                        new LibWorkInstructions.Structs.OpSpec { Id = specId2 }
                     } }
                 },
+                OpSpecRevs = new List<Guid> { specId1, specId2 },
                 WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
                 {
                     {groupId3, new List<Guid> {workId1, workId2} }
@@ -3637,19 +3638,15 @@ namespace LibWorkInstructionsTests
                             Id = workId3, IdRevGroup = groupId4 },
                         new LibWorkInstructions.Structs.WorkInstruction {
                             Id = workId4, IdRevGroup = groupId4 } } },
-                },
+                }
             };
             n.DataImport(sampleData);
             string[] data = n.DisplayLatestRevisionOfWorkInstruction("job1", "RevPlan", "OpService");
             Assert.True(JsonSerializer.Deserialize<LibWorkInstructions.Structs.WorkInstruction>(data[0]).Id == workId2);
-            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.QualityClause>>(data[1]).SequenceEqual(new List<LibWorkInstructions.Structs.QualityClause> {
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}));
-            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.OpSpec>>(data[2]).SequenceEqual(new List<LibWorkInstructions.Structs.OpSpec>
-                    {
-                        new LibWorkInstructions.Structs.OpSpec {Id = specId1},
-                        new LibWorkInstructions.Structs.OpSpec {Id = specId2}
-                    }));
+            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.QualityClause>>(data[1])[0].Id == clauseId1);
+            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.QualityClause>>(data[1])[1].Id == clauseId2);
+            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.OpSpec>>(data[2])[0].Id == specId1);
+            Assert.True(JsonSerializer.Deserialize<List<LibWorkInstructions.Structs.OpSpec>>(data[2])[1].Id == specId2);
         }
     }
 }
