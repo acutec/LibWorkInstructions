@@ -1418,6 +1418,8 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostUpdate.OpSpecs[groupId1].Count == 2);
             Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Name == "spec56");
             Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Comment == "This is a test");
+            Assert.True(dbPostUpdate.OpSpecs[groupId1][0].IdRevGroup == groupId1);
+            Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Id == specId1);
         }
 
         [Test]
