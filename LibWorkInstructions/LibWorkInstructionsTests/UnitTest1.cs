@@ -625,6 +625,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbVarPostUpdate.WorkInstructions[groupId1][1].Approved);
             Assert.True(dbVarPostUpdate.WorkInstructions[groupId1][1].Images.SequenceEqual(new List<string> { "image23" }));
             Assert.True(dbVarPostUpdate.WorkInstructions[groupId1].Count == 2);
+            Assert.True(dbVarPostUpdate.WorkInstructions[groupId1][1].IdRevGroup == groupId1);
         }
 
         [Test]
