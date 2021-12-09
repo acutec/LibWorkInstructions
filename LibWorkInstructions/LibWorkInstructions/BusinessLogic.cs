@@ -59,7 +59,7 @@ namespace LibWorkInstructions
         {
             if (!db.Jobs.ContainsKey(jobId)) // if the job doesn't already exist in the database
             {
-                Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev}; // create and configure it
+                Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev, RevPlan = revPlan}; // create and configure it
                 db.Jobs[job.Id] = new List<Job> { job }; // add the job to the database
                 db.JobRevs.Add(rev);
                 db.JobRefToJobRevRefs[job.Id] = new List<string> { job.Rev }; // manage the references

@@ -1135,7 +1135,7 @@ namespace LibWorkInstructionsTests
             };
 
             n.DataImport(sampleData);
-            n.CloneWorkInstructionRevs(workId1, workId3, false);
+            n.CloneWorkInstructionRevs(groupId1, groupId2, false);
             var dbPostClone = n.DataExport();
 
             Assert.True(dbPostClone.WorkInstructions[groupId2].Count == 2);
