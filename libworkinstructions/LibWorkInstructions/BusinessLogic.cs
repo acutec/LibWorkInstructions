@@ -946,9 +946,9 @@ namespace LibWorkInstructions
             {
                 if (db.WorkInstructions[groupId].Any(y => y.Id == sourceWorkInstructionRev)) // if the source work instruction revision is in the rev group
                 {
-                    WorkInstruction sourceWorkInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // configure the work instruction revision
+                    WorkInstruction sourceWorkInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // get a reference to the source work instruction revision
                     Guid sourceId = sourceWorkInstruction.Id;
-                    WorkInstruction newWorkInstruction = new WorkInstruction
+                    WorkInstruction newWorkInstruction = new WorkInstruction // create and configure the new work instruction revision
                     {
                         Id = Guid.NewGuid(),
                         IdRevGroup = sourceWorkInstruction.IdRevGroup,
