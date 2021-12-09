@@ -691,15 +691,18 @@ namespace LibWorkInstructions
             {
                 if (db.OpSpecs[groupId].Any(y => y.Id == sourceSpecRev)) // if the source op spec revision is in the rev group
                 {
-                    OpSpec opSpec = db.OpSpecs[groupId].First(y => y.Id == sourceSpecRev); // configure the op spec revision
-                    Guid sourceId = opSpec.Id;
-                    opSpec.Id = Guid.NewGuid();
-                    opSpec.RevSeq = db.OpSpecs[groupId].Count;
-                    opSpec.Name = name;
-                    db.OpSpecs[groupId].Add(opSpec); // add the op spec revision to the database
-                    db.OpSpecRevs.Add(opSpec.Id);
-                    db.OpSpecRevRefToOpRefs[opSpec.Id] = db.OpSpecRevRefToOpRefs[sourceId]; // manage references
-                    db.OpSpecRefToOpSpecRevRefs[groupId].Add(opSpec.Id);
+                    OpSpec sourceOpSpec = db.OpSpecs[groupId].First(y => y.Id == sourceSpecRev); // configure the op spec revision
+                    Guid sourceId = sourceOpSpec.Id;
+                    OpSpec newSpec = new OpSpec
+                    {
+                        Id = Guid.NewGuid(),
+                        RevSeq = db.OpSpecs[groupId].Count,
+                        Name = name
+                    };
+                    db.OpSpecs[groupId].Add(newSpec); // add the op spec revision to the database
+                    db.OpSpecRevs.Add(newSpec.Id);
+                    db.OpSpecRevRefToOpRefs[newSpec.Id] = db.OpSpecRevRefToOpRefs[sourceId]; // manage references
+                    db.OpSpecRefToOpSpecRevRefs[groupId].Add(newSpec.Id);
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["GroupId"] = groupId.ToString();

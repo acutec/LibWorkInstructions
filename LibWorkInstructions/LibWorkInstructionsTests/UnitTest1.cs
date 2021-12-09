@@ -1278,6 +1278,10 @@ namespace LibWorkInstructionsTests
                 {
                     {specId1, new List<int>{4,5,6} },
                     {specId2, new List<int>{5,6,7} }
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid> {specId1, specId2} }
                 }
             };
 
@@ -1314,11 +1318,15 @@ namespace LibWorkInstructionsTests
                 {
                     {specId1, new List<int>{4,5,6} },
                     {specId2, new List<int>{5,6,7} }
+                },
+                OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>
+                {
+                    {groupId1, new List<Guid>{specId1, specId2} }
                 }
             };
 
             n.DataImport(sampleData);
-            n.CreateOpSpec(opSpec);
+            n.CreateOpSpecRev(opSpec);
             var dbPostDelete = n.DataExport();
             Assert.True(dbPostDelete.OpSpecs[groupId1].Count == 3);
             Assert.True(dbPostDelete.OpSpecs[groupId1][2].Name == "spec3");
