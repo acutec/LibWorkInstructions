@@ -1832,47 +1832,6 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeWorkInstructionRevs()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            Guid groupId1 = Guid.NewGuid();
-            Guid groupId2 = Guid.NewGuid();
-            Guid workId1 = Guid.NewGuid();
-            Guid workId2 = Guid.NewGuid();
-            Guid workId3 = Guid.NewGuid();
-            Guid workId4 = Guid.NewGuid();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>
-                {
-                    { groupId1, new List<Guid> { workId1, workId2 } },
-                    { groupId2, new List<Guid> { workId3, workId4 } },
-                },
-                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>>
-                {
-                    { groupId1, new List<LibWorkInstructions.Structs.WorkInstruction> {
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId1, IdRevGroup = groupId1, OpId = 5 },
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId2, IdRevGroup = groupId1, OpId = 5 } } },
-                    { groupId2, new List<LibWorkInstructions.Structs.WorkInstruction> {
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId3, IdRevGroup = groupId2, OpId = 8 },
-                        new LibWorkInstructions.Structs.WorkInstruction {
-                            Id = workId4, IdRevGroup = groupId2, OpId = 8 } } },
-                },
-                WorkInstructionRevs = new List<Guid> { workId1, workId2, workId3, workId4 }
-            };
-            n.DataImport(sampleData);
-            n.MergeWorkInstructionRevs(groupId1, groupId2);
-            var dbPostMerge = n.DataExport();
-            Assert.True(dbPostMerge.WorkInstructions[groupId1].Count == 4);
-            Assert.True(dbPostMerge.WorkInstructions[groupId2].Count == 4);
-            Assert.True(dbPostMerge.WorkInstructions[groupId1].All(y => y.IdRevGroup == groupId1));
-            Assert.True(dbPostMerge.WorkInstructions[groupId2].All(y => y.IdRevGroup == groupId2));
-        }
-
-        [Test]
         public void TestSplitWorkInstructionRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();

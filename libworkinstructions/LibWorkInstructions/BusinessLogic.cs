@@ -2034,39 +2034,6 @@ namespace LibWorkInstructions
             }
         }
         /// <summary>
-        /// Merge given WorkInstructionRevs if they exist.
-        /// </summary>
-        /// <param name="workInstruction1"></param>
-        /// <param name="workInstruction2"></param>
-        public void MergeWorkInstructionRevs(Guid groupId1, Guid groupId2)
-        {
-            if (db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(groupId1) && db.WorkInstructionRefToWorkInstructionRevRefs.ContainsKey(groupId2)) // if both rev groups exist in the database
-            {
-                List<Guid> mergedIdList = db.WorkInstructionRevs.Where(y => db.WorkInstructionRefToWorkInstructionRevRefs[groupId1].Contains(y) || db.WorkInstructionRefToWorkInstructionRevRefs[groupId2].Contains(y)).ToList(); // create a merged id list and object list
-                List<WorkInstruction> mergedWorkInstructionList = mergedIdList.Select(y => db.WorkInstructions.First(x => x.Value.Any(z => mergedIdList.Contains(y))).Value.First(x => mergedIdList.Contains(y))).ToList();
-                db.WorkInstructions[groupId1] = mergedWorkInstructionList;
-                db.WorkInstructions[groupId2] = mergedWorkInstructionList;
-                db.WorkInstructions[groupId1] = db.WorkInstructions[groupId1].Select(y => { y.IdRevGroup = groupId1; y.RevSeq = db.WorkInstructions[groupId1].IndexOf(y); return y; }).ToList(); // reconfigure the revisions
-                db.WorkInstructions[groupId2] = db.WorkInstructions[groupId2].Select(y => { y.IdRevGroup = groupId2; y.RevSeq = db.WorkInstructions[groupId2].IndexOf(y); return y; }).ToList();
-                db.WorkInstructionRefToWorkInstructionRevRefs[groupId1] = mergedIdList; // manage references
-                db.WorkInstructionRefToWorkInstructionRevRefs[groupId2] = mergedIdList;
-
-                var args = new Dictionary<string, string>(); // add the event
-                args["GroupId1"] = groupId1.ToString();
-                args["GroupId2"] = groupId2.ToString();
-                db.AuditLog.Add(new Event
-                {
-                    Action = "MergeWorkInstructionRevs",
-                    Args = args,
-                    When = DateTime.Now
-                });
-            }
-            else
-            {
-                throw new Exception("One or both of the rev groups doesn't exist in the database");
-            }
-        }
-        /// <summary>
         /// Split WorkInstructionRev within given WorkInstruction if they exist.
         /// </summary>
         /// <param name="workInstructionRev"></param>
