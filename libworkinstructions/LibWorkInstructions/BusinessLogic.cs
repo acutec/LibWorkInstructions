@@ -1304,7 +1304,7 @@ namespace LibWorkInstructions
                 {
                     string jobRevKey = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Key; // unlink the quality clause revision from the job revision
                     int jobRevIndex = db.Jobs.First(y => y.Value.Any(x => x.Rev == jobRev)).Value.FindIndex(y => y.Rev == jobRev);
-                    db.Jobs[jobRevKey][jobRevIndex].QualityClauses.Remove(db.QualityClauses.Values.First(y => y.Any(x => x.Id == qualityClauseRev)).First(y => y.Id == qualityClauseRev));
+                    db.Jobs[jobRevKey][jobRevIndex].QualityClauses.Remove(db.Jobs[jobRevKey][jobRevIndex].QualityClauses.First(y => y.Id == qualityClauseRev));
                     db.JobRevRefToQualityClauseRevRefs[jobRev].Remove(qualityClauseRev); // manage references
                     db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev);
 
