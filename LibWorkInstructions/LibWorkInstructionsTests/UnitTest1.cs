@@ -303,6 +303,7 @@ namespace LibWorkInstructionsTests
                                     new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"},
                                     new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"},}} } },
                 },
+                JobRevs = new List<string> {"job1-A", "job1-B", "job2-A", "job2-B" },
                 Ops = new Dictionary<int, LibWorkInstructions.Structs.Op>
                 {
                     {1, new LibWorkInstructions.Structs.Op { Id = 1, JobId = "job1"}},
@@ -1399,7 +1400,7 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.UpdateOpSpecRev(newSpec);
             var dbPostUpdate = n.DataExport();
-            Assert.True(dbPostUpdate.OpSpecs.Count == 2);
+            Assert.True(dbPostUpdate.OpSpecs[groupId1].Count == 2);
             Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Name == "spec56");
             Assert.True(dbPostUpdate.OpSpecs[groupId1][0].Comment == "This is a test");
         }

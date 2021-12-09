@@ -771,23 +771,16 @@ namespace LibWorkInstructions
             {
                 if (db.OpSpecs[newSpecRev.IdRevGroup].Any(y => y.Id == newSpecRev.Id)) // if the op spec revision is in the rev group
                 {
-                    if (db.OpSpecs[newSpecRev.IdRevGroup][0].Id != newSpecRev.Id) // if the id refers to a revision of a spec, not an original spec
-                    {
-                        db.OpSpecs[newSpecRev.IdRevGroup][db.OpSpecs[newSpecRev.IdRevGroup].FindIndex(y => y.Id == newSpecRev.Id)] = newSpecRev; // update the spec
+                    db.OpSpecs[newSpecRev.IdRevGroup][db.OpSpecs[newSpecRev.IdRevGroup].FindIndex(y => y.Id == newSpecRev.Id)] = newSpecRev; // update the spec
 
-                        var args = new Dictionary<string, string>(); // add the event
-                        args["newSpecRev"] = JsonSerializer.Serialize(newSpecRev);
-                        db.AuditLog.Add(new Event
-                        {
-                            Action = "UpdateOpSpecRev",
-                            Args = args,
-                            When = DateTime.Now,
-                        });
-                    }
-                    else
+                    var args = new Dictionary<string, string>(); // add the event
+                    args["newSpecRev"] = JsonSerializer.Serialize(newSpecRev);
+                    db.AuditLog.Add(new Event
                     {
-                        throw new Exception("The id refers to an original op spec, not a rev of one");
-                    }
+                        Action = "UpdateOpSpecRev",
+                        Args = args,
+                        When = DateTime.Now,
+                    });
                 }
                 else
                 {
