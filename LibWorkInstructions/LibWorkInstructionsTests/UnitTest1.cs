@@ -1983,7 +1983,7 @@ namespace LibWorkInstructionsTests
             n.MergeJobRevsBasedOnQualityClauseRevs(jobRev1, jobRev5);
             var dbPostMerge = n.DataExport();
             Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 2);
-            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][2].QualityClauses));
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][1].QualityClauses));
             Assert.True(dbPostMerge.JobRevRefToQualityClauseRevRefs[jobRev1].SequenceEqual(dbPostMerge.JobRevRefToQualityClauseRevRefs[jobRev5]));
         }
 
