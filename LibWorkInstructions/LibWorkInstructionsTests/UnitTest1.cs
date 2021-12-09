@@ -1795,7 +1795,11 @@ namespace LibWorkInstructionsTests
                         new LibWorkInstructions.Structs.WorkInstruction {
                             Id = workId4, IdRevGroup = groupId2, OpId = 8 } } },
                 },
-                OpRefToWorkInstructionRef = new Dictionary<int, Guid>()
+                OpRefToWorkInstructionRef = new Dictionary<int, Guid>
+                {
+                    {5, groupId1 },
+                    {8, groupId2 }
+                }
             };
             n.DataImport(sampleData);
             n.UnlinkWorkInstructionFromJobOp(groupId1, 5);
