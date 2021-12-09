@@ -14,63 +14,6 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void ExampleCallingTheLibrary()
-        {
-            var n = new LibWorkInstructions.BusinessLogic();
-            var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
-            {
-                Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>> {
-            { "F110", new List<LibWorkInstructions.Structs.Job> { new LibWorkInstructions.Structs.Job {
-            Id = "F110",
-            Rev = "A",
-            RevCustomer = "CUSTX",
-            RevPlan = "1.0.0",
-          }} },
-          { "E444", new List<LibWorkInstructions.Structs.Job> { new LibWorkInstructions.Structs.Job {
-            Id = "E444",
-            Rev = "C",
-            RevCustomer = "CUSTY",
-            RevPlan = "7.1.12",
-          }} },
-        },
-                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>> {
-          { Guid.NewGuid(), new List<LibWorkInstructions.Structs.QualityClause> { { new LibWorkInstructions.Structs.QualityClause{
-            Id = Guid.NewGuid(),
-            Clause = "Workmanship...",
-              }
-              }
-          }},
-        },
-                OpSpecs = new Dictionary<Guid, List<LibWorkInstructions.Structs.OpSpec>> {
-          { Guid.NewGuid(), new List<LibWorkInstructions.Structs.OpSpec> { {new LibWorkInstructions.Structs.OpSpec
-          {
-            Id = Guid.NewGuid(),
-            IdRevGroup = Guid.NewGuid(),
-          }
-              }
-            // FIXME: some more fields could get set.
-          }},
-        },
-                WorkInstructions = new Dictionary<Guid, List<LibWorkInstructions.Structs.WorkInstruction>> {
-          { Guid.NewGuid(), new List<LibWorkInstructions.Structs.WorkInstruction> { new LibWorkInstructions.Structs.WorkInstruction
-          {
-            Id = Guid.NewGuid(),
-            IdRevGroup = Guid.NewGuid(),
-            Approved = true,
-            HtmlBlob = "<h1>do something</h1>",
-            Images = new List<string>{ },
-          }
-          }},
-        },
-            };
-            n.DataImport(sampleData);
-            // FIXME: call some methods...
-            // FIXME: maybe assert some things on returned values...
-            var export = n.DataExport();
-            // FIXME: assert some things on the exported data...
-        }
-
-        [Test]
         public void TestCreateJob()
         {
             var n = new LibWorkInstructions.BusinessLogic();
