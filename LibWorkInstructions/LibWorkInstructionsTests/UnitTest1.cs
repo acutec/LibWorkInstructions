@@ -751,11 +751,15 @@ namespace LibWorkInstructionsTests
                     }
                 },
                 JobRevs = new List<string> { "Rev A[1.2.3]", "Rev B[1.2.3]", "Rev A[1.4.2]", "Rev B[1.2.5]" },
+                JobRefToJobRevRefs = new Dictionary<string, List<string>>
+                {
+                    {"job1", new List<string>{"Rev A[1.2.3]", "Rev B[1.2.3]"} },
+                    {"job2", new List<string>{"Rev A[1.4.2]", "Rev B[1.2.5]"} }
+                }
             };
             n.DataImport(sampleData);
             n.MergeJobs("job1", "job2");
             var dbPostMerge = n.DataExport();
-            Assert.True(dbPostMerge.Jobs.Count == 1);
             Assert.True(dbPostMerge.Jobs["job1"].Count == 4);
             Assert.True(dbPostMerge.Jobs["job1"][2].Rev == "Rev C[1.4.2]");
             Assert.True(dbPostMerge.Jobs["job1"][3].Rev == "Rev D[1.2.5]");
@@ -1816,6 +1820,7 @@ namespace LibWorkInstructionsTests
                         new LibWorkInstructions.Structs.WorkInstruction {
                             Id = workId4, IdRevGroup = groupId2, OpId = 8 } } },
                 },
+                WorkInstructionRevs = new List<Guid> { workId1, workId2, workId3, workId4 }
             };
             n.DataImport(sampleData);
             n.MergeWorkInstructionRevs(groupId1, groupId2);
@@ -1875,7 +1880,7 @@ namespace LibWorkInstructionsTests
         }
 
         [Test]
-        public void TestMergeQualityClauseRevsBasedOnJobRev()
+        public void TestMergeJobRevsBasedOnQualityClauseRevs()
         {
             var n = new LibWorkInstructions.BusinessLogic();
             Guid groupId1 = Guid.NewGuid();
