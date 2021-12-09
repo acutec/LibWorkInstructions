@@ -148,19 +148,33 @@ Revisions for a specific Job.  Many Revisions can exist to one Job, but only one
 
 ### Links
 
-**LinkWorkInstructionToJobOp():**
+**LinkJobOpAndJobRev():**
   - **Parameters:**
-    - guid: revGroup
     - int: opId
+    - guid: jobRev
   - **Description:**
-    - Link selected `WorkInstruction` to selected `JobOp`, if they exist.
+    - Link selected `JobOp` to selected `JobRev`, if they exist.
 
-**UnlinkWorkInstructionToJobOp():**
+**UnlinkJobOpAndJobRev():**
   - **Parameters:**
-    - guid: revGroup
     - int: opId
+    - guid: jobRev
   - **Description:**
-    - Unlink selected `WorkInstruction` from selected `JobOp`, if they exist.
+    - Unlink selected `JobOp` to selected `JobRev`, if they exist.
+
+**LinkJobOpAndOpSpecRev():**
+  - **Parameters:**
+    - int: opId
+    - guid: opSpecRev
+  - **Description:**
+    - Link selected `JobOp` to selected `OpSpecRev`, if they exist.
+
+**UnlinkJobOpAndOpSpecRev():**
+  - **Parameters:**
+    - int: opId
+    - guid: opSpecRev
+  - **Description:**
+    - Unlink selected `JobOp` to selected `OpSpecRev`, if they exist.
 
 
 ## Quality Clause Revisions (QualityClauseRevs)
@@ -364,6 +378,16 @@ Revision for selected `OpSpecs`
   - **Description:**
     - Change the active status of selected `OpSpec` to False, if it exists.
 
+**CloneOpSpec():**
+  - **Parameters:**
+    - guid: sourceRevGroup
+    - guid: targetRevGroup
+    - bool: additive
+  - **Description:**
+  - Clone the content of the `sourceRevGroup` into the `targetRevGroup`, if they exist.
+    - Data transfer behaves differently depending on the `additive` parameter.
+      - Data will be added instead of overwritten if `additive` is true
+
 
 
 ## Work Instructions (WorkInstructions)
@@ -390,6 +414,22 @@ Holds the information needed to complete a necessary action for the Job
     - guid: idRevGroup
   - **Description:**
     - Change the active status of selected `WorkInstruction` to False, if it exists.
+
+### Links
+
+**LinkWorkInstructionToJobOp():**
+  - **Parameters:**
+    - guid: revGroup
+    - int: opId
+  - **Description:**
+    - Links the selected `WorkInstruction` to the selected `JobOp`, if they both exist.
+
+**UnlinkWorkInstructionToJobOp():**
+  - **Parameters:**
+    - guid: revGroup
+    - int: opId
+  - **Description:**
+    - Unlinks the selected `WorkInstruction` to the selected `JobOp`, if they both exist.
 
 ## Work Instruction Revs (WorkInstructionRevs)
 
