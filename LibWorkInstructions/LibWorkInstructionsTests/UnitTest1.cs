@@ -1186,6 +1186,8 @@ namespace LibWorkInstructionsTests
 
             Assert.True(dbPostClone.WorkInstructions[groupId2].Count == 4);
             Assert.True(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId2].OrderBy(y => y).SequenceEqual(new List<Guid> { workId1, workId2, workId3, workId4}.OrderBy(y => y)));
+            Assert.True(dbPostClone.WorkInstructions[groupId2].All(y => y.RevSeq == dbPostClone.WorkInstructions[groupId2].IndexOf(y)));
+            Assert.True(dbPostClone.WorkInstructions[groupId2].All(y => y.IdRevGroup == groupId2));
         }
 
         [Test]
