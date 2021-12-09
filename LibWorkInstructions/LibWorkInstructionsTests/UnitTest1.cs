@@ -2098,14 +2098,15 @@ namespace LibWorkInstructionsTests
                     {10, new LibWorkInstructions.Structs.Op { Id = 10, JobId = "job2"} },
                     {11, new LibWorkInstructions.Structs.Op { Id = 11, JobId = "job2"} },
                     {12, new LibWorkInstructions.Structs.Op { Id = 12, JobId = "job2"} },
+                    {13, new LibWorkInstructions.Structs.Op { Id = 13} }
                 }
             };
             n.DataImport(sampleData);
-            n.LinkJobOpAndJobRev(10, "Rev A[1.2.3]");
+            n.LinkJobOpAndJobRev(13, "Rev A[1.2.3]");
             var dbPostLink = n.DataExport();
             Assert.True(dbPostLink.JobRevRefToOpRefs["Rev A[1.2.3]"].Count == 4);
             Assert.True(dbPostLink.Jobs["job1"][0].Ops.Count == 4);
-            Assert.True(dbPostLink.Jobs["job1"][0].Ops[3].Id == 10);
+            Assert.True(dbPostLink.Jobs["job1"][0].Ops[3].Id == 13);
         }
 
         [Test]
