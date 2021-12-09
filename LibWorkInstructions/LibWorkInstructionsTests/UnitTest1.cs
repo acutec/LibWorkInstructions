@@ -1663,7 +1663,10 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.CloneOpSpec(groupId1, groupId2, false);
             var dbPostClone = n.DataExport();
+            Assert.True(dbPostClone.OpSpecs[groupId2].Count == 3);
             Assert.True(dbPostClone.OpSpecs[groupId2].SequenceEqual(dbPostClone.OpSpecs[groupId1]));
+            Assert.True(dbPostClone.OpSpecs[groupId2].All(y => y.IdRevGroup == groupId2));
+            Assert.True(dbPostClone.OpSpecs[groupId2].All(y => y.RevSeq == dbPostClone.OpSpecs[groupId2].IndexOf(y)));
         }
 
         [Test]
