@@ -2087,9 +2087,19 @@ namespace LibWorkInstructions
                 if (db.WorkInstructionRefToWorkInstructionRevRefs[revGroup].Contains(workInstructionRev)) // if the work instruction has the revision
                 {
                     int newRevPosition = db.WorkInstructions[revGroup].Count;
-                    db.WorkInstructions[revGroup].Add(db.WorkInstructions[revGroup].First(y => y.Id == workInstructionRev)); // split the revision in the database
-                    db.WorkInstructions[revGroup][newRevPosition].Id = Guid.NewGuid(); // configure the new revision
-                    db.WorkInstructions[revGroup][newRevPosition].RevSeq = newRevPosition;
+                    WorkInstruction sourceWorkInstructionRev = db.WorkInstructions[revGroup].First(y => y.Id == workInstructionRev);
+                    WorkInstruction newWorkInstructionRev = new WorkInstruction // configure the new revision
+                    {
+                        Id = Guid.NewGuid(),
+                        IdRevGroup = revGroup,
+                        RevSeq = newRevPosition,
+                        Images = sourceWorkInstructionRev.Images,
+                        Approved = sourceWorkInstructionRev.Approved,
+                        HtmlBlob = sourceWorkInstructionRev.HtmlBlob,
+                        OpId = sourceWorkInstructionRev.OpId,
+                        Active = sourceWorkInstructionRev.Active
+                    };
+                    db.WorkInstructions[revGroup].Add(newWorkInstructionRev); // split the revision in the database
                     db.WorkInstructionRevs.Add(db.WorkInstructions[revGroup][newRevPosition].Id); // add the new revision to the database
                     db.WorkInstructionRefToWorkInstructionRevRefs[revGroup].Add(db.WorkInstructions[revGroup][newRevPosition].Id); // manage references
 
