@@ -3408,9 +3408,8 @@ namespace LibWorkInstructionsTests
             };
             n.DataImport(sampleData);
             var qualityClauses = n.PullQualityClausesFromJob("job1", "cust1", "plan1");
-            Assert.True(qualityClauses.SequenceEqual(new List<LibWorkInstructions.Structs.QualityClause> {
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
-                            new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}));
+            Assert.True(qualityClauses[0].Id == clauseId1);
+            Assert.True(qualityClauses[1].Id == clauseId2);
         }
 
         [Test]
