@@ -1453,6 +1453,7 @@ namespace LibWorkInstructions
                     db.QualityClauses[revGroup].Add(db.QualityClauses[revGroup].First(y => y.Id == qualityClauseRev)); // split the revision in the database
                     db.QualityClauses[revGroup][newRevPosition].Id = Guid.NewGuid(); // reconfigure the revision
                     db.QualityClauses[revGroup][newRevPosition].RevSeq = newRevPosition;
+                    db.QualityClauses[revGroup][newRevPosition].IdRevGroup = revGroup;
                     db.QualityClauseRevs.Add(db.QualityClauses[revGroup][newRevPosition].Id); // add the new revision to the database
                     db.QualityClauseRefToQualityClauseRevRefs[revGroup].Add(qualityClauseRev); // manage references
                     db.QualityClauseRevRefToJobRevRefs[db.QualityClauses[revGroup][newRevPosition].Id] = db.QualityClauseRevRefToJobRevRefs[qualityClauseRev];

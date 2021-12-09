@@ -1996,6 +1996,11 @@ namespace LibWorkInstructionsTests
                 {
                     {groupId1, new List<Guid> { clauseId1 } },
                     {groupId2, new List<Guid> { clauseId2 } }
+                },
+                QualityClauseRevRefToJobRevRefs = new Dictionary<Guid, List<string>>
+                {
+                    {clauseId1, new List<string>{ "rev1", "rev2" } },
+                    {clauseId2, new List<string>{ "rev3", "rev4" } }
                 }
             };
             n.DataImport(sampleData);
