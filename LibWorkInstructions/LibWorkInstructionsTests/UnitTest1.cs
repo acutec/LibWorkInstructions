@@ -1960,6 +1960,7 @@ namespace LibWorkInstructionsTests
                     } }
                 },
                 QualityClauseRevs = new List<Guid> { clause1, clause2, clause3, clause4, clause5, clause6 },
+                JobRevs = new List<string> { "job1-A", "job1-B", "job1-C", "job2-A", "job2-B", "job2-C" },
                 JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>
                 {
                     {"job1-A", new List<Guid> {clause1} },
@@ -1973,8 +1974,8 @@ namespace LibWorkInstructionsTests
             n.DataImport(sampleData);
             n.MergeJobRevsBasedOnQualityClauseRevs("job1-A", "job2-C");
             var dbPostMerge = n.DataExport();
-            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 3);
-            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][3].QualityClauses));
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.Count == 2);
+            Assert.True(dbPostMerge.Jobs["job1"][0].QualityClauses.SequenceEqual(dbPostMerge.Jobs["job2"][2].QualityClauses));
             Assert.True(dbPostMerge.JobRevRefToQualityClauseRevRefs["job1-A"].SequenceEqual(dbPostMerge.JobRevRefToQualityClauseRevRefs["job2-C"]));
         }
 
