@@ -96,7 +96,7 @@ namespace LibWorkInstructions
                 db.JobRefToJobRevRefs.Remove(jobId); // manage the references
                 db.JobRevRefToOpRefs = db.JobRevRefToOpRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
                 db.JobRevRefToQualityClauseRevRefs = db.JobRevRefToQualityClauseRevRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
-                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<string>>(y.Key, y.Value.Where(x => jobRevs.Contains(x)).ToList())).ToDictionary(y => y.Key, y => y.Value);
+                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<string>>(y.Key, y.Value.Where(x => !jobRevs.Contains(x)).ToList())).ToDictionary(y => y.Key, y => y.Value);
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId"] = jobId;
