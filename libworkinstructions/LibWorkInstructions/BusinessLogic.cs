@@ -1213,7 +1213,7 @@ namespace LibWorkInstructions
                     mergedJobRevList = mergedJobRevList.Select(y => // reconfigure the job revisions
                     {
                         y.RevSeq = mergedJobRevList.IndexOf(y);
-                        y.Ops = y.Ops.Select(x => { x.JobId = y.Id; return x; }).ToList();
+                        y.Ops = y.Ops.Select(x => { x.JobId = targetJob; return x; }).ToList();
                         return y;
                     }).ToList();
                     db.Jobs[targetJob] = mergedJobRevList; // add the merged revisions to the target job

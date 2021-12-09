@@ -881,6 +881,8 @@ namespace LibWorkInstructionsTests
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"].Count == 4);
             Assert.True(dbPostClone.JobRefToJobRevRefs["job2"].SequenceEqual(new List<Guid> { jobRev1, jobRev2, jobRev3, jobRev4 }));
+            Assert.True(dbPostClone.Jobs["job2"].All(y => y.Ops.All(x => x.JobId == "job2")));
+            Assert.True(dbPostClone.Jobs["job2"].All(y => y.RevSeq == dbPostClone.Jobs["job2"].IndexOf(y)));
         }
 
         [Test]
