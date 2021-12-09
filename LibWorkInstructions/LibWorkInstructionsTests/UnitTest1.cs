@@ -926,6 +926,10 @@ namespace LibWorkInstructionsTests
         public void TestLinkJobRevAndQualityClauseRev()
         {
             var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
+            Guid groupId3 = Guid.NewGuid();
+            Guid groupId4 = Guid.NewGuid();
             Guid clauseId1 = Guid.NewGuid();
             Guid clauseId2 = Guid.NewGuid();
             Guid clauseId3 = Guid.NewGuid();
@@ -938,7 +942,6 @@ namespace LibWorkInstructionsTests
             Guid clauseId10 = Guid.NewGuid();
             Guid clauseId11 = Guid.NewGuid();
             Guid clauseId12 = Guid.NewGuid();
-            Guid clauseId13 = Guid.NewGuid();
             var sampleData = new LibWorkInstructions.BusinessLogic.MockDB
             {
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
@@ -974,8 +977,7 @@ namespace LibWorkInstructionsTests
                 },
                 QualityClauseRevs = new List<Guid> { clauseId1, clauseId2, clauseId3, clauseId4, 
                                                      clauseId5, clauseId6, clauseId7, clauseId8, 
-                                                     clauseId9, clauseId10, clauseId11, clauseId12,
-                                                     clauseId13},
+                                                     clauseId9, clauseId10, clauseId11, clauseId12},
                 JobRevs = new List<string> { "rev1", "rev2", "rev3", "rev4" },
                 JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>
                 {
@@ -998,17 +1000,35 @@ namespace LibWorkInstructionsTests
                     {clauseId10, new List<string> { "rev4" } },
                     {clauseId11, new List<string> { "rev4" } },
                     {clauseId12, new List<string> { "rev4" } },
-                    {clauseId13, new List<string>() }
+                },
+                 QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    {groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId2},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId3}} },
+                    {groupId2, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId4},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId5},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId6},} },
+                    {groupId3, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId7},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId8},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId9}} },
+                    {groupId4, new List<LibWorkInstructions.Structs.QualityClause> {
+                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId10},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId11},
+                    new LibWorkInstructions.Structs.QualityClause {Id = clauseId12},} },
                 }
             };
             n.DataImport(sampleData);
-            n.LinkJobRevAndQualityClauseRev("rev4", clauseId13);
+            n.LinkJobRevAndQualityClauseRev("rev4", clauseId8);
             var dbPostLink = n.DataExport();
             Assert.True(dbPostLink.Jobs["job2"][1].QualityClauses.Count == 4);
-            Assert.True(dbPostLink.Jobs["job2"][1].QualityClauses[3].Id == clauseId13);
+            Assert.True(dbPostLink.Jobs["job2"][1].QualityClauses[3].Id == clauseId8);
             Assert.True(dbPostLink.JobRevRefToQualityClauseRevRefs["rev4"].Count == 4);
-            Assert.True(dbPostLink.JobRevRefToQualityClauseRevRefs["rev4"][3] == clauseId13);
-            Assert.True(dbPostLink.QualityClauseRevRefToJobRevRefs[clauseId13].Contains("rev4"));
+            Assert.True(dbPostLink.JobRevRefToQualityClauseRevRefs["rev4"][3] == clauseId8);
+            Assert.True(dbPostLink.QualityClauseRevRefToJobRevRefs[clauseId8].Contains("rev4"));
         }
 
         [Test]
