@@ -2930,10 +2930,19 @@ namespace LibWorkInstructionsTests
                 {
                     {groupId1, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause1, sampleClause4, sampleClause3} },
                     {groupId2, new List<LibWorkInstructions.Structs.QualityClause>{sampleClause2, sampleClause5, sampleClause6} },
+                },
+                QualityClauseRevRefToJobRevRefs = new Dictionary<Guid, List<string>>
+                {
+                    {clause1, new List<string>() },
+                    {clause2, new List<string>() },
+                    {clause3, new List<string>() },
+                    {clause4, new List<string>() },
+                    {clause5, new List<string>() },
+                    {clause6, new List<string>() }
                 }
             };
             n.DataImport(sampleData);
-            n.CreateQualityClauseRev(groupId1, clause2);
+            n.CreateQualityClauseRev(groupId1, clause4);
             var dbPostCreate = n.DataExport();
             Assert.True(dbPostCreate.QualityClauses[groupId1].Count == 4);
         }
