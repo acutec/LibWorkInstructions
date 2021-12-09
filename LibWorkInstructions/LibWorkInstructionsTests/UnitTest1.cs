@@ -1229,6 +1229,8 @@ namespace LibWorkInstructionsTests
 
             Assert.True(dbPostClone.WorkInstructions[groupId2].Count == 2);
             Assert.True(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId2].SequenceEqual(dbPostClone.WorkInstructionRefToWorkInstructionRevRefs[groupId1]));
+            Assert.True(dbPostClone.WorkInstructions[groupId2].All(y => y.RevSeq == dbPostClone.WorkInstructions[groupId2].IndexOf(y)));
+            Assert.True(dbPostClone.WorkInstructions[groupId2].All(y => y.IdRevGroup == groupId2));
         }
 
         [Test]
