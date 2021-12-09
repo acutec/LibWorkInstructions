@@ -1953,7 +1953,7 @@ namespace LibWorkInstructionsTests
             Assert.True(dbPostClone.QualityClauses[groupId2].Count == 2);
             Assert.True(dbPostClone.QualityClauses[groupId2].Last().IdRevGroup == groupId2);
             Assert.True(dbPostClone.QualityClauseRefToQualityClauseRevRefs[groupId2].Count == 2);
-            Assert.True(dbPostClone.QualityClauseRefToQualityClauseRevRefs[groupId2][1] == clauseId1);
+            Assert.True(dbPostClone.QualityClauseRefToQualityClauseRevRefs[groupId2][0] == clauseId1);
         }
 
         [Test]
@@ -2525,6 +2525,8 @@ namespace LibWorkInstructionsTests
         public void TestCloneQualityClauseRevsBasedOnJobRevAdditive()
         {
             var n = new LibWorkInstructions.BusinessLogic();
+            Guid groupId1 = Guid.NewGuid();
+            Guid groupId2 = Guid.NewGuid();
             Guid clauseId1 = Guid.NewGuid();
             Guid clauseId2 = Guid.NewGuid();
             Guid clauseId3 = Guid.NewGuid();
@@ -2537,35 +2539,52 @@ namespace LibWorkInstructionsTests
             {
                 Jobs = new Dictionary<string, List<LibWorkInstructions.Structs.Job>>
                 {
-                    {"job1", new List<LibWorkInstructions.Structs.Job>{
-                        new LibWorkInstructions.Structs.Job {Rev = "job1-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId1},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId2}}, },
-                        new LibWorkInstructions.Structs.Job {Rev = "job1-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId3},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId4}}, } } },
-                    {"job2", new List<LibWorkInstructions.Structs.Job>{
-                        new LibWorkInstructions.Structs.Job {Rev = "job2-A" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId5},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId6}}, },
-                        new LibWorkInstructions.Structs.Job {Rev = "job2-B" , QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId7},
-                        new LibWorkInstructions.Structs.QualityClause {Id = clauseId8}}, } } },
+                    { "job1", new List<LibWorkInstructions.Structs.Job> {
+                        new LibWorkInstructions.Structs.Job { Rev = "job1-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId1 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId2 } }, },
+                        new LibWorkInstructions.Structs.Job { Rev = "job1-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId3 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId4 } }, } } },
+                    { "job2", new List<LibWorkInstructions.Structs.Job> {
+                        new LibWorkInstructions.Structs.Job { Rev = "job2-A", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId5 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId6 } }, },
+                        new LibWorkInstructions.Structs.Job { Rev = "job2-B", QualityClauses = new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId7 },
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId8 } }, } } },
                 },
                 JobRevs = new List<string> { "job1-A", "job1-B", "job2-A", "job2-B" },
+                QualityClauseRevs = new List<Guid> { clauseId1, clauseId2, clauseId3, clauseId4, clauseId5, clauseId6, clauseId7, clauseId8 },
                 JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>
                 {
                     {"job1-A", new List<Guid> {clauseId1, clauseId2} },
                     {"job1-B", new List<Guid> {clauseId3, clauseId4} },
                     {"job2-A", new List<Guid> {clauseId5, clauseId6} },
                     {"job2-B", new List<Guid> {clauseId7, clauseId8} },
-                }
+                },
+                QualityClauses = new Dictionary<Guid, List<LibWorkInstructions.Structs.QualityClause>>
+                {
+                    { groupId1, new List<LibWorkInstructions.Structs.QualityClause> {
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId1, IdRevGroup = groupId1},
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId2, IdRevGroup = groupId1},
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId3, IdRevGroup = groupId1},
+                            new LibWorkInstructions.Structs.QualityClause { Id = clauseId4, IdRevGroup = groupId1},}
+                    },
+                    { groupId2, new List<LibWorkInstructions.Structs.QualityClause>
+                    {
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId5, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId6, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId7, IdRevGroup = groupId2},
+                        new LibWorkInstructions.Structs.QualityClause { Id = clauseId8, IdRevGroup = groupId2},
+                    } }
+                },
             };
             n.DataImport(sampleData);
             n.CloneQualityClauseRevsBasedOnJobRev("job1-A", "job2-B", true);
             var dbPostClone = n.DataExport();
             Assert.True(dbPostClone.Jobs["job2"][1].QualityClauses.Count == 4);
-            Assert.True(dbPostClone.Jobs["job1"].All(y => dbPostClone.Jobs["job2"].Contains(y)));
+            Assert.True(dbPostClone.Jobs["job1"][0].QualityClauses.All(y => dbPostClone.Jobs["job2"][1].QualityClauses.Any(x => x.Id == y.Id)));
         }
 
         [Test]

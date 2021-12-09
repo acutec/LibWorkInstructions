@@ -1383,7 +1383,7 @@ namespace LibWorkInstructions
                 else
                 {
                     List<Guid> mergedIdList = db.QualityClauseRevs.Where(y => db.JobRevRefToQualityClauseRevRefs[targetJobRev].Contains(y) || db.JobRevRefToQualityClauseRevRefs[sourceJobRev].Contains(y)).ToList(); // create a merged id list and object list
-                    List<QualityClause> mergedClauseRevList = mergedIdList.Select(y => db.QualityClauses.First(x => x.Value.Any(z => mergedIdList.Contains(y))).Value.First(x => mergedIdList.Contains(y))).ToList();
+                    List<QualityClause> mergedClauseRevList = mergedIdList.Select(y => db.QualityClauses.First(x => x.Value.Any(z => z.Id == y)).Value.First(z => z.Id == y)).ToList();
                     db.Jobs[db.Jobs.First(y => y.Value.Any(x => x.Rev == targetJobRev)).Key][db.Jobs.First(y => y.Value.Any(x => x.Rev == targetJobRev)).Value.FindIndex(y => y.Rev == targetJobRev)].QualityClauses = mergedClauseRevList; // clone the quality clause revs in the database
                     db.JobRevRefToQualityClauseRevRefs[targetJobRev] = mergedIdList; // manage references
                 }
