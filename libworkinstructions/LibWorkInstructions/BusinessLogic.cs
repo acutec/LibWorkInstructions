@@ -20,19 +20,19 @@ namespace LibWorkInstructions
             public Dictionary<Guid, List<WorkInstruction>> WorkInstructions = new Dictionary<Guid, List<WorkInstruction>>();
 
             // references to revisions
-            public List<string> JobRevs = new List<string>();
+            public List<Guid> JobRevs = new List<Guid>();
             public List<Guid> QualityClauseRevs = new List<Guid>();
             public List<Guid> OpSpecRevs = new List<Guid>();
             public List<Guid> WorkInstructionRevs = new List<Guid>();
 
             // associations between entities
-            public Dictionary<string, List<string>> JobRefToJobRevRefs = new Dictionary<string, List<string>>();
-            public Dictionary<string, List<Guid>> JobRevRefToQualityClauseRevRefs = new Dictionary<string, List<Guid>>();
-            public Dictionary<string, List<int>> JobRevRefToOpRefs = new Dictionary<string, List<int>>();
+            public Dictionary<string, List<Guid>> JobRefToJobRevRefs = new Dictionary<string, List<Guid>>();
+            public Dictionary<Guid, List<Guid>> JobRevRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>();
+            public Dictionary<Guid, List<int>> JobRevRefToOpRefs = new Dictionary<Guid, List<int>>();
             public Dictionary<Guid, List<int>> OpSpecRevRefToOpRefs = new Dictionary<Guid, List<int>>();
             public Dictionary<int, List<Guid>> OpRefToOpSpecRevRefs = new Dictionary<int, List<Guid>>();
             public Dictionary<Guid, List<Guid>> OpSpecRefToOpSpecRevRefs = new Dictionary<Guid, List<Guid>>();
-            public Dictionary<Guid, List<string>> QualityClauseRevRefToJobRevRefs = new Dictionary<Guid, List<string>>();
+            public Dictionary<Guid, List<Guid>> QualityClauseRevRefToJobRevRefs = new Dictionary<Guid, List<Guid>>();
             public Dictionary<Guid, List<Guid>> QualityClauseRefToQualityClauseRevRefs = new Dictionary<Guid, List<Guid>>();
             public Dictionary<int, Guid> OpRefToWorkInstructionRef = new Dictionary<int, Guid>();
             public Dictionary<Guid, List<Guid>> WorkInstructionRefToWorkInstructionRevRefs = new Dictionary<Guid, List<Guid>>();
@@ -55,20 +55,20 @@ namespace LibWorkInstructions
         /// <param name="revCustomer"></param>
         /// <param name="revPlan"></param>
         /// <param name="rev"></param>
-        public void CreateJob(string jobId, string revCustomer, string revPlan, string rev)
+        public void CreateJob(string jobId, string revCustomer, string revPlan, Guid rev)
         {
             if (!db.Jobs.ContainsKey(jobId)) // if the job doesn't already exist in the database
             {
                 Job job = new Job { Id = jobId, RevSeq = 0, RevCustomer = revCustomer, Rev = rev, RevPlan = revPlan}; // create and configure it
                 db.Jobs[job.Id] = new List<Job> { job }; // add the job to the database
                 db.JobRevs.Add(rev);
-                db.JobRefToJobRevRefs[job.Id] = new List<string> { job.Rev }; // manage the references
+                db.JobRefToJobRevRefs[job.Id] = new List<Guid> { job.Rev }; // manage the references
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId"] = jobId;
                 args["RevCustomer"] = revCustomer;
                 args["RevPlan"] = revPlan;
-                args["Rev"] = rev;
+                args["Rev"] = rev.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "CreateJob",
@@ -89,14 +89,14 @@ namespace LibWorkInstructions
         {
             if (db.Jobs.ContainsKey(jobId)) // if the jobs dictionary has the job
             {
-                List<string> jobRevs = db.JobRefToJobRevRefs[jobId];
+                List<Guid> jobRevs = db.JobRefToJobRevRefs[jobId];
                 List<Op> ops = db.Ops.Values.Where(y => db.Jobs[jobId].Any(x => x.Ops.Contains(y))).ToList();
                 List<int> opIds = ops.Select(y => y.Id).ToList();
                 db.Jobs.Remove(jobId); // remove it and anything related to it from the database
                 db.JobRefToJobRevRefs.Remove(jobId); // manage the references
                 db.JobRevRefToOpRefs = db.JobRevRefToOpRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
                 db.JobRevRefToQualityClauseRevRefs = db.JobRevRefToQualityClauseRevRefs.Where(y => !jobRevs.Contains(y.Key)).ToDictionary(y => y.Key, y => y.Value);
-                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<string>>(y.Key, y.Value.Where(x => !jobRevs.Contains(x)).ToList())).ToDictionary(y => y.Key, y => y.Value);
+                db.QualityClauseRevRefToJobRevRefs = db.QualityClauseRevRefToJobRevRefs.Select(y => y = new KeyValuePair<Guid, List<Guid>>(y.Key, y.Value.Where(x => !jobRevs.Contains(x)).ToList())).ToDictionary(y => y.Key, y => y.Value);
 
                 var args = new Dictionary<string, string>(); // add the event
                 args["JobId"] = jobId;
@@ -118,7 +118,7 @@ namespace LibWorkInstructions
         /// <param name="jobId"></param>
         /// <param name="sourceJobRev"></param>
         /// <param name="newJobRev"></param>
-        public void CreateJobRev(string jobId, string sourceJobRev, string newJobRev)
+        public void CreateJobRev(string jobId, Guid sourceJobRev, Guid newJobRev)
         {
             if (!db.JobRevs.Contains(newJobRev)) // if the job revision isn't already in the database
             {
@@ -126,10 +126,19 @@ namespace LibWorkInstructions
                 {
                     if (db.Jobs[jobId].Any(y => y.Rev == sourceJobRev)) // if the job has the revision
                     {
-                        Job job = db.Jobs[jobId].First(y => y.Rev == sourceJobRev); // create a new instance of a job revision
-                        job.Rev = newJobRev; // configure the job revision
-                        job.RevSeq = db.Jobs[jobId].Count;
-                        db.Jobs[jobId].Add(job); // add the job revision to the database
+                        Job sourceJob = db.Jobs[jobId].First(y => y.Rev == sourceJobRev); // create a reference to the source job revision
+                        Job newJob = new Job // create and configure the new job revision
+                        {
+                            Id = jobId,
+                            RevCustomer = sourceJob.RevCustomer,
+                            RevPlan = sourceJob.RevPlan,
+                            Rev = newJobRev,
+                            RevSeq = db.Jobs[jobId].Count,
+                            Active = sourceJob.Active,
+                            Ops = sourceJob.Ops,
+                            QualityClauses = sourceJob.QualityClauses
+                        };
+                        db.Jobs[jobId].Add(newJob); // add the job revision to the database
                         db.JobRevs.Add(newJobRev);
                         db.JobRevRefToQualityClauseRevRefs[newJobRev] = db.JobRevRefToQualityClauseRevRefs[sourceJobRev]; // manage the references
                         db.JobRevRefToOpRefs[newJobRev] = db.JobRevRefToOpRefs[sourceJobRev];
@@ -137,8 +146,8 @@ namespace LibWorkInstructions
 
                         var args = new Dictionary<string, string>(); // add the event
                         args["JobId"] = jobId;
-                        args["SourceJobRev"] = sourceJobRev;
-                        args["NewJobRev"] = newJobRev;
+                        args["SourceJobRev"] = sourceJobRev.ToString();
+                        args["NewJobRev"] = newJobRev.ToString();
                         db.AuditLog.Add(new Event
                         {
                             Action = "CreateJobRev",
@@ -235,7 +244,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobId"></param>
         /// <param name="jobRev"></param>
-        public void DeactivateJobRev(string jobId, string jobRev)
+        public void DeactivateJobRev(string jobId, Guid jobRev)
         {
             if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
@@ -245,7 +254,7 @@ namespace LibWorkInstructions
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["JobId"] = jobId;
-                    args["JobRev"] = jobRev;
+                    args["JobRev"] = jobRev.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "DeactivateJobRev",
@@ -268,7 +277,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobId"></param>
         /// <param name="jobRev"></param>
-        public void ActivateJobRev(string jobId, string jobRev)
+        public void ActivateJobRev(string jobId, Guid jobRev)
         {
             if (db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
@@ -278,7 +287,7 @@ namespace LibWorkInstructions
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["JobId"] = jobId;
-                    args["JobRev"] = jobRev;
+                    args["JobRev"] = jobRev.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "ActivateJobRev",
@@ -419,7 +428,7 @@ namespace LibWorkInstructions
                     newClauseRev.RevSeq = db.QualityClauses[newClauseRev.IdRevGroup].Count; // configure it
                     db.QualityClauses[newClauseRev.IdRevGroup].Add(newClauseRev); // add quality clause revision to the database
                     db.QualityClauseRevs.Add(newClauseRev.Id);
-                    db.QualityClauseRevRefToJobRevRefs[newClauseRev.Id] = new List<string>(); // manage references
+                    db.QualityClauseRevRefToJobRevRefs[newClauseRev.Id] = new List<Guid>(); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["NewClauseRev"] = JsonSerializer.Serialize(newClauseRev);
@@ -566,7 +575,7 @@ namespace LibWorkInstructions
         /// Remove JobOp from database if it exists.
         /// </summary>
         /// <param name="opId"></param>
-        public void DeleteJobOp(string jobRev, int opId)
+        public void DeleteJobOp(Guid jobRev, int opId)
         {
             if (db.Ops.ContainsKey(opId)) // if the op is in the database
             {
@@ -577,7 +586,7 @@ namespace LibWorkInstructions
                     db.JobRevRefToOpRefs[jobRev] = db.JobRevRefToOpRefs[jobRev].Where(y => y != opId).ToList(); // manage references
 
                     var args = new Dictionary<string, string>(); // add the event
-                    args["JobRev"] = jobRev;
+                    args["JobRev"] = jobRev.ToString();
                     args["OpId"] = opId.ToString();
                     db.AuditLog.Add(new Event
                     {
@@ -937,9 +946,9 @@ namespace LibWorkInstructions
             {
                 if (db.WorkInstructions[groupId].Any(y => y.Id == sourceWorkInstructionRev)) // if the source work instruction revision is in the rev group
                 {
-                    WorkInstruction sourceWorkInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // configure the work instruction revision
+                    WorkInstruction sourceWorkInstruction = db.WorkInstructions[groupId].First(y => y.Id == sourceWorkInstructionRev); // get a reference to the source work instruction revision
                     Guid sourceId = sourceWorkInstruction.Id;
-                    WorkInstruction newWorkInstruction = new WorkInstruction
+                    WorkInstruction newWorkInstruction = new WorkInstruction // create and configure the new work instruction revision
                     {
                         Id = Guid.NewGuid(),
                         IdRevGroup = sourceWorkInstruction.IdRevGroup,
@@ -1109,15 +1118,13 @@ namespace LibWorkInstructions
         {
             if(db.Jobs.ContainsKey(jobId1) && db.Jobs.ContainsKey(jobId2)) // if both jobs exist in the database
             {
-                List<string> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[jobId1].Contains(y) || db.JobRefToJobRevRefs[jobId2].Contains(y)).ToList(); // create a merged id list and object list
+                List<Guid> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[jobId1].Contains(y) || db.JobRefToJobRevRefs[jobId2].Contains(y)).ToList(); // create a merged id list and object list
                 List<Job> mergedJobRevList = mergedIdList.Select(y => db.Jobs.Values.First(x => x.Any(z => z.Rev == y)).First(x => x.Rev == y)).ToList();
                 mergedJobRevList = mergedJobRevList.Select(y =>
                 {
                     y.RevSeq = mergedJobRevList.IndexOf(y);
-                    y.Rev = y.Rev.Replace(y.Rev[4], (char)(65 + y.RevSeq));
                     return y;
                 }).ToList();
-                mergedIdList = mergedIdList.Select(y => y = y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)))).ToList();
                 db.Jobs[jobId1] = mergedJobRevList; // add merged list to the jobs
                 db.Jobs[jobId1] = db.Jobs[jobId1].Select(y => { y.Id = jobId1; return y; }).ToList();
                 db.Jobs[jobId2] = mergedJobRevList;
@@ -1146,7 +1153,7 @@ namespace LibWorkInstructions
         /// <param name="jobId"></param>
         /// <param name="jobRev"></param>
         /// <param name="newJobRev"></param>
-        public void SplitJobRev(string jobId, string jobRev, string newJobRev)
+        public void SplitJobRev(string jobId, Guid jobRev, Guid newJobRev)
         {
             if(db.Jobs.ContainsKey(jobId)) // if the job exists in the database
             {
@@ -1163,8 +1170,8 @@ namespace LibWorkInstructions
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["JobId"] = jobId;
-                    args["JobRev"] = jobRev;
-                    args["NewJobRev"] = newJobRev;
+                    args["JobRev"] = jobRev.ToString();
+                    args["NewJobRev"] = newJobRev.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "SplitJobRevInJob",
@@ -1201,16 +1208,14 @@ namespace LibWorkInstructions
                 }
                 else
                 {
-                    List<string> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[sourceJob].Contains(y) || db.JobRefToJobRevRefs[targetJob].Contains(y)).ToList(); // create a merged id list and object list
+                    List<Guid> mergedIdList = db.JobRevs.Where(y => db.JobRefToJobRevRefs[sourceJob].Contains(y) || db.JobRefToJobRevRefs[targetJob].Contains(y)).ToList(); // create a merged id list and object list
                     List<Job> mergedJobRevList = mergedIdList.Select(y => db.Jobs.Values.First(x => x.Any(z => z.Rev == y)).First(x => x.Rev == y)).ToList();
                     mergedJobRevList = mergedJobRevList.Select(y => // reconfigure the job revisions
                     {
                         y.RevSeq = mergedJobRevList.IndexOf(y);
-                        y.Rev = y.Rev.Replace(y.Rev[4], (char)(65 + y.RevSeq));
-                        y.Ops = y.Ops.Select(x => { x.JobId = y.Id; return x; }).ToList();
+                        y.Ops = y.Ops.Select(x => { x.JobId = targetJob; return x; }).ToList();
                         return y;
                     }).ToList();
-                    mergedIdList = mergedIdList.Select(y => y = y.Replace(y[4], (char)(65 + mergedIdList.IndexOf(y)))).ToList();
                     db.Jobs[targetJob] = mergedJobRevList; // add the merged revisions to the target job
                     db.Jobs[targetJob] = db.Jobs[targetJob].Select(y => { y.Id = targetJob;  return y; }).ToList(); // reconfigure the revisions
                     db.JobRefToJobRevRefs[targetJob] = mergedIdList; // manage references
@@ -1237,7 +1242,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev"></param>
         /// <param name="qualityClauseRev"></param>
-        public void LinkJobRevAndQualityClauseRev(string jobRev, Guid qualityClauseRev)
+        public void LinkJobRevAndQualityClauseRev(Guid jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
             {
@@ -1253,7 +1258,7 @@ namespace LibWorkInstructions
                         db.JobRevRefToQualityClauseRevRefs[jobRev].Add(qualityClauseRev); // link the quality clause revision to the job revision
 
                         var args = new Dictionary<string, string>(); // add the event
-                        args["JobRev"] = jobRev;
+                        args["JobRev"] = jobRev.ToString();
                         args["QualityClauseRev"] = qualityClauseRev.ToString();
                         db.AuditLog.Add(new Event
                         {
@@ -1282,7 +1287,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev"></param>
         /// <param name="qualityClauseRev"></param>
-        public void UnlinkJobRevAndQualityClauseRev(string jobRev, Guid qualityClauseRev)
+        public void UnlinkJobRevAndQualityClauseRev(Guid jobRev, Guid qualityClauseRev)
         {
             if (db.QualityClauseRevs.Contains(qualityClauseRev)) // if the quality clause revision exists in the database
             {
@@ -1295,7 +1300,7 @@ namespace LibWorkInstructions
                     db.QualityClauseRevRefToJobRevRefs[qualityClauseRev].Remove(jobRev);
 
                     var args = new Dictionary<string, string>(); // add the event
-                    args["JobRev"] = jobRev;
+                    args["JobRev"] = jobRev.ToString();
                     args["QualityClauseRev"] = qualityClauseRev.ToString();
                     db.AuditLog.Add(new Event
                     {
@@ -1319,7 +1324,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev1"></param>
         /// <param name="jobRev2"></param>
-        public void MergeJobRevsBasedOnQualityClauseRevs(string jobRev1, string jobRev2)
+        public void MergeJobRevsBasedOnQualityClauseRevs(Guid jobRev1, Guid jobRev2)
         {
             if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2)) // if both job revisions exist in the database
             {
@@ -1336,8 +1341,8 @@ namespace LibWorkInstructions
                 db.JobRevRefToQualityClauseRevRefs[jobRev2] = mergedIdList;
 
                 var args = new Dictionary<string, string>(); // add the event 
-                args["JobRev1"] = jobRev1;
-                args["JobRev2"] = jobRev2;
+                args["JobRev1"] = jobRev1.ToString();
+                args["JobRev2"] = jobRev2.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "MergeJobRevsBasedOnQualityClauseRevs",
@@ -1357,7 +1362,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJobRev"></param>
         /// <param name="targetJobRev"></param>
         /// <param name="additive"></param>
-        public void CloneJobRevBasedOnQualityClauseRevs(string sourceJobRev, string targetJobRev, bool additive)
+        public void CloneJobRevBasedOnQualityClauseRevs(Guid sourceJobRev, Guid targetJobRev, bool additive)
         {
             if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev)) // if both job revisions exist in the database
             {
@@ -1376,8 +1381,8 @@ namespace LibWorkInstructions
                 }
 
                 var args = new Dictionary<string, string>(); // add the event 
-                args["SourceJobRev"] = sourceJobRev;
-                args["TargetJobRev"] = targetJobRev;
+                args["SourceJobRev"] = sourceJobRev.ToString();
+                args["TargetJobRev"] = targetJobRev.ToString();
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {
@@ -1511,7 +1516,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="jobRev"></param>
-        public void LinkJobOpAndJobRev(int opId, string jobRev)
+        public void LinkJobOpAndJobRev(int opId, Guid jobRev)
         {
             if(db.JobRevs.Contains(jobRev)) // if the job revision exists in the database
             {
@@ -1526,7 +1531,7 @@ namespace LibWorkInstructions
                         db.JobRevRefToOpRefs[jobRev].Add(opId); // manage references
 
                         var args = new Dictionary<string, string>(); // add the event
-                        args["JobRev"] = jobRev;
+                        args["JobRev"] = jobRev.ToString();
                         args["OpId"] = opId.ToString();
                         db.AuditLog.Add(new Event
                         {
@@ -1555,7 +1560,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="opId"></param>
         /// <param name="jobRev"></param>
-        public void UnlinkJobOpAndJobRev(int opId, string jobRev)
+        public void UnlinkJobOpAndJobRev(int opId, Guid jobRev)
         {
             if (db.JobRevs.Contains(jobRev))
             {
@@ -1568,7 +1573,7 @@ namespace LibWorkInstructions
 
                     var args = new Dictionary<string, string>(); // add the event
                     args["OpId"] = opId.ToString();
-                    args["JobRev"] = jobRev;
+                    args["JobRev"] = jobRev.ToString();
                     db.AuditLog.Add(new Event
                     {
                         Action = "UnlinkJobOpAndJobRev",
@@ -1591,7 +1596,7 @@ namespace LibWorkInstructions
         /// </summary>
         /// <param name="jobRev1"></param>
         /// <param name="jobRev2"></param>
-        public void MergeJobRevsBasedOnJobOps(string jobRev1, string jobRev2)
+        public void MergeJobRevsBasedOnJobOps(Guid jobRev1, Guid jobRev2)
         {
             if (db.JobRevs.Contains(jobRev1) && db.JobRevs.Contains(jobRev2)) // if both job revisions exist in the database
             {
@@ -1608,8 +1613,8 @@ namespace LibWorkInstructions
                 db.JobRevRefToOpRefs[jobRev2] = mergedIdList;
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["JobRev1"] = jobRev1;
-                args["JobRev2"] = jobRev2;
+                args["JobRev1"] = jobRev1.ToString();
+                args["JobRev2"] = jobRev2.ToString();
                 db.AuditLog.Add(new Event
                 {
                     Action = "MergeJobRevsBasedOnJobOps",
@@ -1629,7 +1634,7 @@ namespace LibWorkInstructions
         /// <param name="sourceJobRev"></param>
         /// <param name="targetJobRev"></param>
         /// <param name="additive"></param>
-        public void CloneJobRevBasedOnJobOps(string sourceJobRev, string targetJobRev, bool additive)
+        public void CloneJobRevBasedOnJobOps(Guid sourceJobRev, Guid targetJobRev, bool additive)
         {
             if (db.JobRevs.Contains(sourceJobRev) && db.JobRevs.Contains(targetJobRev)) // if both job revisions exist in the database
             {
@@ -1653,8 +1658,8 @@ namespace LibWorkInstructions
                 }
 
                 var args = new Dictionary<string, string>(); // add the event
-                args["SourceJobRev"] = sourceJobRev;
-                args["TargetJobRev"] = targetJobRev;
+                args["SourceJobRev"] = sourceJobRev.ToString();
+                args["TargetJobRev"] = targetJobRev.ToString();
                 args["Additive"] = additive.ToString();
                 db.AuditLog.Add(new Event
                 {

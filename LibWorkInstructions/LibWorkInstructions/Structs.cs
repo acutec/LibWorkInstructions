@@ -12,7 +12,7 @@ namespace LibWorkInstructions {
       // Jobs have a revision identifier representing our internal process, that can change over time.
       public string RevPlan { get; set; }
       // Operations have a particular revision that needs to be referred to in order to ensure the correct operation is being executed for a job
-      public string Rev { get; set; }
+      public Guid Rev { get; set; }
       // Position of an operation revision
       public int RevSeq { get; set; }
       // Status of the job revision
