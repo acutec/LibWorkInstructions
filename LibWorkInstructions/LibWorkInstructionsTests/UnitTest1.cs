@@ -204,6 +204,11 @@ namespace LibWorkInstructionsTests
                 JobRefToJobRevRefs = new Dictionary<string, List<Guid>>
                 {
                     {"job1", new List<Guid>{jobRev1, jobRev2} }
+                },
+                JobRevRefToOpRefs = new Dictionary<Guid, List<int>>
+                {
+                    {jobRev1, new List<int>{1, 2, 3} },
+                    {jobRev2, new List<int>{4, 5, 6} }
                 }
             };
             n.DataImport(sampleData);
@@ -223,8 +228,9 @@ namespace LibWorkInstructionsTests
             });
             var dbPostCreate = n.DataExport();
             Assert.True(dbPostCreate.Jobs["job1"].Count == 3);
-            Assert.True(dbPostCreate.Jobs["job1"].Last().Rev == jobRev3);
-            Assert.True(dbPostCreate.Jobs["job1"].Last().RevSeq == 2);
+            Assert.True(dbPostCreate.Jobs["job1"][2].Rev == jobRev3);
+            Assert.True(dbPostCreate.Jobs["job1"][2].RevSeq == 2);
+            Assert.True(dbPostCreate.Jobs["job1"][2].Ops.All(y => dbPostCreate.JobRevRefToOpRefs.Count(x => x.Value.Contains(y.Id)) == 1));
         }
 
         [Test]
